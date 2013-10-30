@@ -200,10 +200,24 @@
         
         CGFloat scaleW = viewWidth/width;
         CGFloat scaleH = viewHeight/height;
-        CGFloat scale = MAX(scaleW, scaleH);
         
-        width *= scale;
-        height *= scale;
+        if(self.fillMode == kGPUImageFillModeStretch)
+        {
+            //  まんま伸ばすのでscaleはそのまま
+        }
+        else if(self.fillMode == kGPUImageFillModePreserveAspectRatio)
+        {
+            //  アスペクト守ってフィットなので最小の方
+            scaleH = scaleW = MIN(scaleW, scaleH);
+        }
+        else if(self.fillMode == kGPUImageFillModePreserveAspectRatioAndFill)
+        {
+            //  アスペクト守って画面はみ出してfillさせるので最大の方
+            scaleH = scaleW = MAX(scaleW, scaleH);
+        }
+        
+        width *= scaleW;
+        height *= scaleH;
         
         CGRect rect = CGRectMake(viewWidth/2.0 - width/2.0, viewHeight/2.0 - height/2.0, width, height);
                 
@@ -406,6 +420,12 @@
             
             //  ビュー類の状態を戻す処理
             [self restartCamera];
+            
+            //  delegate
+            if([_delegate respondsToSelector:@selector(cameraView:didCapturedImage:)])
+            {
+                [_delegate cameraView:self didCapturedImage:processedImage];
+            }
             
             //
             if(_autoSaveToCameraroll)
