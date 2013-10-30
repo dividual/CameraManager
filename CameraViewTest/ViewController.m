@@ -25,6 +25,14 @@
     [_cameraView addGestureRecognizer:_tapGesture];
 }
 
+-(void)cameraView:(CameraView *)sender didCapturedImage:(UIImage *)image{
+	NSLog( @"写真撮影しました" );
+}
+
+
+-(void)cameraView:(CameraView *)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice *)device{
+}
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];

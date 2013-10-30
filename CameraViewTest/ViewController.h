@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "CameraView.h"
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController <CameraViewDelegate>
 
 @property (weak, nonatomic) IBOutlet CameraView *cameraView;
 
