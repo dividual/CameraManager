@@ -50,6 +50,9 @@ enum CVFlashMode    //この順でモードが切り替わる
 @property (assign, nonatomic) BOOL autoSaveToCameraroll;
 @property (assign, nonatomic) float jpegQuality;
 
+//  Filter
+@property (readonly, nonatomic) NSArray *filterNameArray;
+
 //  delegate
 @property (weak, nonatomic) id <CameraViewDelegate> delegate;
 
@@ -68,5 +71,8 @@ enum CVFlashMode    //この順でモードが切り替わる
 
 //  フォーカスを合わせるとき
 - (void)setFocusPoint:(CGPoint)pos; //view内の座標値で指定
+
+//  フィルターを選択
+- (void)setFilterWithName:(NSString*)name;
 
 @end

@@ -11,6 +11,7 @@
 @interface ViewController () <CameraViewDelegate>
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
 @property (strong, nonatomic) UITapGestureRecognizer *doubleTapGesture;
+@property (assign, nonatomic) NSInteger curFilterIndex;
 @end
 
 @implementation ViewController
@@ -31,8 +32,8 @@
     _doubleTapGesture.numberOfTapsRequired = 2;
     [_cameraView addGestureRecognizer:_doubleTapGesture];
     
-    //  カメラロールへの保存をなしで
-    _cameraView.autoSaveToCameraroll = NO;
+    //  カメラロールへの保存するかどうか
+    _cameraView.autoSaveToCameraroll = YES;
     
     //  フィルモードを変えてみる
     _cameraView.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;    //kGPUImageFillModePreserveAspectRatioAndFillがフルスクリーンで使うとき
@@ -105,6 +106,21 @@
 - (void)cameraView:(CameraView *)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice *)device
 {
     NSLog(@"didChangeAdjustingFocus:%d device:%@", isAdjustingFocus, device);
+}
+
+#pragma mark -
+
+- (IBAction)pushedChangeFilter:(id)sender
+{
+    _curFilterIndex++;
+    NSArray *filters = _cameraView.filterNameArray;
+    _curFilterIndex = _curFilterIndex%filters.count;
+    
+    NSString *filterName = filters[_curFilterIndex];
+    
+    [_cameraView setFilterWithName:filterName];
+    
+    _filterNameLabel.text = filterName;
 }
 
 @end

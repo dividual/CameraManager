@@ -41,6 +41,14 @@
 		D52A8B301817F71100F4ADFD /* focusFrame@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B241817F71100F4ADFD /* focusFrame@2x.png */; };
 		D52A8B311817F71100F4ADFD /* shutterButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B251817F71100F4ADFD /* shutterButton.png */; };
 		D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B261817F71100F4ADFD /* shutterButton@2x.png */; };
+		D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */; };
+		D5D035681827741800233B58 /* 02.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035611827741800233B58 /* 02.acv */; };
+		D5D035691827741800233B58 /* 06.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035621827741800233B58 /* 06.acv */; };
+		D5D0356A1827741800233B58 /* 17.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035631827741800233B58 /* 17.acv */; };
+		D5D0356B1827741800233B58 /* aqua.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035641827741800233B58 /* aqua.acv */; };
+		D5D0356C1827741800233B58 /* crossprocess.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035651827741800233B58 /* crossprocess.acv */; };
+		D5D0356D1827741800233B58 /* purple-green.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035661827741800233B58 /* purple-green.acv */; };
+		D5D0356E1827741800233B58 /* yellow-red.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035671827741800233B58 /* yellow-red.acv */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -116,6 +124,15 @@
 		D52A8B241817F71100F4ADFD /* focusFrame@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "focusFrame@2x.png"; sourceTree = "<group>"; };
 		D52A8B251817F71100F4ADFD /* shutterButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = shutterButton.png; sourceTree = "<group>"; };
 		D52A8B261817F71100F4ADFD /* shutterButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shutterButton@2x.png"; sourceTree = "<group>"; };
+		D5D0355B1827713700233B58 /* DLCGrayscaleContrastFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DLCGrayscaleContrastFilter.h; sourceTree = "<group>"; };
+		D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DLCGrayscaleContrastFilter.m; sourceTree = "<group>"; };
+		D5D035611827741800233B58 /* 02.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = 02.acv; sourceTree = "<group>"; };
+		D5D035621827741800233B58 /* 06.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = 06.acv; sourceTree = "<group>"; };
+		D5D035631827741800233B58 /* 17.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = 17.acv; sourceTree = "<group>"; };
+		D5D035641827741800233B58 /* aqua.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = aqua.acv; sourceTree = "<group>"; };
+		D5D035651827741800233B58 /* crossprocess.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = crossprocess.acv; sourceTree = "<group>"; };
+		D5D035661827741800233B58 /* purple-green.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = "purple-green.acv"; sourceTree = "<group>"; };
+		D5D035671827741800233B58 /* yellow-red.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = "yellow-red.acv"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -241,6 +258,8 @@
 		D52A8B131817F69100F4ADFD /* CameraView */ = {
 			isa = PBXGroup;
 			children = (
+				D5D035601827741800233B58 /* Filters */,
+				D5D0355A1827713700233B58 /* FilterClass */,
 				D52A8B141817F69100F4ADFD /* CameraView.h */,
 				D52A8B151817F69100F4ADFD /* CameraView.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
@@ -266,6 +285,29 @@
 				D52A8B261817F71100F4ADFD /* shutterButton@2x.png */,
 			);
 			path = Images;
+			sourceTree = "<group>";
+		};
+		D5D0355A1827713700233B58 /* FilterClass */ = {
+			isa = PBXGroup;
+			children = (
+				D5D0355B1827713700233B58 /* DLCGrayscaleContrastFilter.h */,
+				D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */,
+			);
+			path = FilterClass;
+			sourceTree = "<group>";
+		};
+		D5D035601827741800233B58 /* Filters */ = {
+			isa = PBXGroup;
+			children = (
+				D5D035611827741800233B58 /* 02.acv */,
+				D5D035621827741800233B58 /* 06.acv */,
+				D5D035631827741800233B58 /* 17.acv */,
+				D5D035641827741800233B58 /* aqua.acv */,
+				D5D035651827741800233B58 /* crossprocess.acv */,
+				D5D035661827741800233B58 /* purple-green.acv */,
+				D5D035671827741800233B58 /* yellow-red.acv */,
+			);
+			path = Filters;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -368,18 +410,25 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5D035681827741800233B58 /* 02.acv in Resources */,
 				D52A8B301817F71100F4ADFD /* focusFrame@2x.png in Resources */,
 				D52A8B2C1817F71100F4ADFD /* flashOFF@2x.png in Resources */,
+				D5D0356B1827741800233B58 /* aqua.acv in Resources */,
 				D52A8B2B1817F71100F4ADFD /* flashOFF.png in Resources */,
 				D52A8B2E1817F71100F4ADFD /* flashON@2x.png in Resources */,
 				D52A8ADF1817F2EA00F4ADFD /* Images.xcassets in Resources */,
 				D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */,
+				D5D0356D1827741800233B58 /* purple-green.acv in Resources */,
 				D52A8B2F1817F71100F4ADFD /* focusFrame.png in Resources */,
 				D52A8B2D1817F71100F4ADFD /* flashON.png in Resources */,
 				D52A8B311817F71100F4ADFD /* shutterButton.png in Resources */,
 				D52A8B291817F71100F4ADFD /* flashAuto.png in Resources */,
 				D52A8B271817F71100F4ADFD /* cameraFrontBack.png in Resources */,
+				D5D0356C1827741800233B58 /* crossprocess.acv in Resources */,
 				D52A8AD11817F2EA00F4ADFD /* InfoPlist.strings in Resources */,
+				D5D035691827741800233B58 /* 06.acv in Resources */,
+				D5D0356A1827741800233B58 /* 17.acv in Resources */,
+				D5D0356E1827741800233B58 /* yellow-red.acv in Resources */,
 				D52A8B2A1817F71100F4ADFD /* flashAuto@2x.png in Resources */,
 				D52A8B281817F71100F4ADFD /* cameraFrontBack@2x.png in Resources */,
 				D52A8ADA1817F2EA00F4ADFD /* Main.storyboard in Resources */,
@@ -406,6 +455,7 @@
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
 				D52A8B181817F69100F4ADFD /* CameraView.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
+				D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -535,6 +585,7 @@
 		D52A8AF61817F2EB00F4ADFD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -549,6 +600,7 @@
 		D52A8AF71817F2EB00F4ADFD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;

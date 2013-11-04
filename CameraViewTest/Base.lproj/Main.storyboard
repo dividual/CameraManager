@@ -70,6 +70,30 @@
                                         <rect key="frame" x="129" y="253" width="62" height="62"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                     </imageView>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tcU-OO-YIn">
+                                        <rect key="frame" x="118" y="20" width="85" height="30"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="85" id="4Nt-Qe-xsR"/>
+                                            <constraint firstAttribute="height" constant="30" id="cVV-2l-b3C"/>
+                                        </constraints>
+                                        <state key="normal" title="changeFilter">
+                                            <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="pushedChangeFilter:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="lzD-wM-ICg"/>
+                                        </connections>
+                                    </button>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="normal" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IaG-BQ-oKl">
+                                        <rect key="frame" x="20" y="58" width="280" height="21"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="21" id="hhx-Tf-web"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                                        <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
                                 </subviews>
                                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                 <constraints>
@@ -77,8 +101,13 @@
                                     <constraint firstAttribute="trailing" secondItem="qIM-lB-Ebw" secondAttribute="trailing" constant="20" id="7QI-Zg-WxF"/>
                                     <constraint firstAttribute="bottom" secondItem="TXc-Kc-e3M" secondAttribute="bottom" constant="24" id="DoI-17-fHl"/>
                                     <constraint firstAttribute="bottom" secondItem="qIM-lB-Ebw" secondAttribute="bottom" constant="24" id="KG9-KS-ojr"/>
+                                    <constraint firstAttribute="trailing" secondItem="IaG-BQ-oKl" secondAttribute="trailing" constant="20" id="Vii-Yi-WBs"/>
                                     <constraint firstItem="TXc-Kc-e3M" firstAttribute="leading" secondItem="q82-qm-Vu9" secondAttribute="leading" constant="20" id="ayb-xK-qjK"/>
+                                    <constraint firstItem="IaG-BQ-oKl" firstAttribute="top" secondItem="tcU-OO-YIn" secondAttribute="bottom" constant="8" id="fCN-X9-M6I"/>
+                                    <constraint firstAttribute="centerX" secondItem="tcU-OO-YIn" secondAttribute="centerX" id="iVH-00-ufx"/>
+                                    <constraint firstItem="IaG-BQ-oKl" firstAttribute="leading" secondItem="q82-qm-Vu9" secondAttribute="leading" constant="20" id="lSB-8w-UlL"/>
                                     <constraint firstAttribute="centerX" secondItem="qCt-oi-usQ" secondAttribute="centerX" id="oeV-TE-arF"/>
+                                    <constraint firstItem="tcU-OO-YIn" firstAttribute="top" secondItem="q82-qm-Vu9" secondAttribute="top" constant="20" id="vPz-KU-phi"/>
                                 </constraints>
                                 <connections>
                                     <outlet property="cameraFrontBackButton" destination="qIM-lB-Ebw" id="YHz-nP-amT"/>
@@ -98,6 +127,7 @@
                     </view>
                     <connections>
                         <outlet property="cameraView" destination="q82-qm-Vu9" id="Jlu-Ek-cho"/>
+                        <outlet property="filterNameLabel" destination="IaG-BQ-oKl" id="YKB-eM-8x3"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>

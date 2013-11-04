@@ -9,8 +9,12 @@
 #import "CameraView.h"
 #import "UIView+utility.h"
 #import <AssetsLibrary/AssetsLibrary.h>
+#import "DLCGrayscaleContrastFilter.h"
 
 @interface CameraView ()
+{
+    NSArray *_filterNameArray;
+}
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput<GPUImageInput> *filter;
 @property (assign, nonatomic) BOOL hasCamera;
@@ -41,6 +45,9 @@
     
     //  表示はめいっぱいに広げる
     self.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
+    
+    //  Filterを用意
+    _filterNameArray = @[ @"normal", @"HiContrast", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06", @"purpleGreen" ];
 }
 
 #pragma mark -
@@ -88,6 +95,7 @@
             //  GPUImageStillCamera作る
             _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:AVCaptureSessionPresetPhoto cameraPosition:AVCaptureDevicePositionBack];
             _stillCamera.outputImageOrientation = UIInterfaceOrientationPortrait;
+            _stillCamera.horizontallyMirrorFrontFacingCamera = YES;
             
             //  forcusの監視をする
             [_stillCamera.inputCamera addObserver:self forKeyPath:@"adjustingFocus" options:NSKeyValueObservingOptionNew context:nil];
@@ -480,4 +488,78 @@
         }
     }
 }
+
+#pragma mark - Filter
+
+- (NSArray*)filterNameArray
+{
+    return _filterNameArray;
+}
+
+//  フィルターを選択
+- (void)setFilterWithName:(NSString*)name
+{
+    if(![_filterNameArray containsObject:name])
+    {
+        //  フィルター名がない
+        NSLog(@"error:not exist filter %@", name);
+        return;
+    }
+    //  一旦接続を切る
+    [self removeAllTargets];
+    
+    //  フィルターを作る
+    NSInteger index = [_filterNameArray indexOfObject:name];
+    
+    switch (index) {
+        case 0:{
+            _filter = [[GPUImageFilter alloc] init];
+        } break;
+            
+        case 1:{
+            _filter = [[GPUImageContrastFilter alloc] init];
+            [(GPUImageContrastFilter *)_filter setContrast:1.75];
+        } break;
+            
+        case 2: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"crossprocess"];
+        } break;
+            
+        case 3: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"02"];
+        } break;
+            
+        case 4: {
+            _filter = [[DLCGrayscaleContrastFilter alloc] init];
+        } break;
+            
+        case 5: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"17"];
+        } break;
+            
+        case 6: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"aqua"];
+        } break;
+            
+        case 7: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"yellow-red"];
+        } break;
+            
+        case 8: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"06"];
+        } break;
+            
+        case 9: {
+            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"purple-green"];
+        } break;
+            
+        default:
+            _filter = [[GPUImageFilter alloc] init];
+            break;
+    }
+    
+    //  フィルターを設定
+    [self prepareFilter];
+}
+
 @end
