@@ -49,6 +49,10 @@
 		D5D0356C1827741800233B58 /* crossprocess.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035651827741800233B58 /* crossprocess.acv */; };
 		D5D0356D1827741800233B58 /* purple-green.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035661827741800233B58 /* purple-green.acv */; };
 		D5D0356E1827741800233B58 /* yellow-red.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035671827741800233B58 /* yellow-red.acv */; };
+		D5D035721827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D035711827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m */; };
+		D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357A1827C14B00233B58 /* DeviceOrientation.m */; };
+		D5D0357D1827C22A00233B58 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D5D0357C1827C22A00233B58 /* CoreMotion.framework */; };
+		D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357F1827D03600233B58 /* UIImage+Normalize.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -133,6 +137,13 @@
 		D5D035651827741800233B58 /* crossprocess.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = crossprocess.acv; sourceTree = "<group>"; };
 		D5D035661827741800233B58 /* purple-green.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = "purple-green.acv"; sourceTree = "<group>"; };
 		D5D035671827741800233B58 /* yellow-red.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = "yellow-red.acv"; sourceTree = "<group>"; };
+		D5D035701827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageStillCamera+CaptureOrientation.h"; sourceTree = "<group>"; };
+		D5D035711827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageStillCamera+CaptureOrientation.m"; sourceTree = "<group>"; };
+		D5D035791827C14B00233B58 /* DeviceOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceOrientation.h; sourceTree = "<group>"; };
+		D5D0357A1827C14B00233B58 /* DeviceOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceOrientation.m; sourceTree = "<group>"; };
+		D5D0357C1827C22A00233B58 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
+		D5D0357E1827D03600233B58 /* UIImage+Normalize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Normalize.h"; sourceTree = "<group>"; };
+		D5D0357F1827D03600233B58 /* UIImage+Normalize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Normalize.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +151,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D5D0357D1827C22A00233B58 /* CoreMotion.framework in Frameworks */,
 				D52A8B0E1817F64500F4ADFD /* AVFoundation.framework in Frameworks */,
 				D52A8B0F1817F64500F4ADFD /* CoreMedia.framework in Frameworks */,
 				D52A8B101817F64500F4ADFD /* CoreVideo.framework in Frameworks */,
@@ -189,6 +201,7 @@
 		D52A8AC51817F2EA00F4ADFD /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D5D0357C1827C22A00233B58 /* CoreMotion.framework */,
 				D52A8B091817F64400F4ADFD /* AVFoundation.framework */,
 				D52A8B0A1817F64400F4ADFD /* CoreMedia.framework */,
 				D52A8B0B1817F64500F4ADFD /* CoreVideo.framework */,
@@ -264,6 +277,12 @@
 				D52A8B151817F69100F4ADFD /* CameraView.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
 				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
+				D5D035701827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.h */,
+				D5D035711827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m */,
+				D5D035791827C14B00233B58 /* DeviceOrientation.h */,
+				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
+				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
+				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
 			);
 			path = CameraView;
 			sourceTree = "<group>";
@@ -455,6 +474,9 @@
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
 				D52A8B181817F69100F4ADFD /* CameraView.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
+				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
+				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
+				D5D035721827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m in Sources */,
 				D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

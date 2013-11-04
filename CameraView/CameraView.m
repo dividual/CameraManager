@@ -10,6 +10,9 @@
 #import "UIView+utility.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "DLCGrayscaleContrastFilter.h"
+#import "GPUImageStillCamera+CaptureOrientation.h"
+#import "DeviceOrientation.h"
+#import "UIImage+Normalize.h"
 
 @interface CameraView ()
 {
@@ -18,6 +21,7 @@
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput<GPUImageInput> *filter;
 @property (assign, nonatomic) BOOL hasCamera;
+@property (assign, nonatomic) UIDeviceOrientation orientation;
 @end
 
 #pragma mark -
@@ -100,6 +104,12 @@
             //  forcusの監視をする
             [_stillCamera.inputCamera addObserver:self forKeyPath:@"adjustingFocus" options:NSKeyValueObservingOptionNew context:nil];
             
+            //  Deviceの状態を常に監視してみる（ロックの時も）
+            [[DeviceOrientation sharedManager] startAccelerometer];
+
+            //  orientationの監視をする
+            [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:nil];
+            
             //
             runOnMainQueueWithoutDeadlocking(^{
                 
@@ -130,6 +140,12 @@
     
     //  forcusの監視をやめる
     [_stillCamera.inputCamera removeObserver:self forKeyPath:@"adjustingFocus"];
+    
+    //  orientationの監視をやめる
+    [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation"];
+    
+    //  orientationのアップデート止める
+    [[DeviceOrientation sharedManager] stopAccelerometer];
     
     //
     _stillCamera = nil;
@@ -410,18 +426,23 @@
     }
 }
 
+
 - (void)captureImage
 {
     //  キャプチャー処理
     [_filter prepareForImageCapture];
     
-    [_stillCamera capturePhotoAsImageProcessedUpToFilter:_filter withCompletionHandler:^(UIImage *processedImage, NSError *error) {
+    [_stillCamera captureFixFlipPhotoAsImageProcessedUpToFilter:_filter orientation:_orientation withCompletionHandler:^(UIImage *processedImage, NSError *error) {
         
         //  キャプチャー完了処理
         if([_stillCamera.inputCamera hasTorch])
             [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOff];
         
+        //  アンロック
         [_stillCamera.inputCamera unlockForConfiguration];
+        
+        //  回転がおかしくなる時があるので、UIImageを作りなおす
+        UIImage *fixImage = [processedImage normalizedImage];
         
         //  mainThread
         runOnMainQueueWithoutDeadlocking(^{
@@ -432,14 +453,15 @@
             //  delegate
             if([_delegate respondsToSelector:@selector(cameraView:didCapturedImage:)])
             {
-                [_delegate cameraView:self didCapturedImage:processedImage];
+                [_delegate cameraView:self didCapturedImage:fixImage];
             }
             
             //
             if(_autoSaveToCameraroll)
             {
                 ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(processedImage, 1.0) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
+                
+                [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(fixImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
                  {
                      if(error)
                      {
@@ -485,6 +507,35 @@
         if([_delegate respondsToSelector:@selector(cameraView:didChangeAdjustingFocus:devide:)])
         {
             [_delegate cameraView:self didChangeAdjustingFocus:state devide:_stillCamera.inputCamera];
+        }
+    }
+    else if([keyPath isEqualToString:@"orientation"])
+    {
+        if([DeviceOrientation sharedManager].orientation == UIDeviceOrientationFaceDown || [DeviceOrientation sharedManager].orientation == UIDeviceOrientationFaceUp)
+            return;
+        
+        if(_orientation != [DeviceOrientation sharedManager].orientation)
+        {
+            _orientation = [DeviceOrientation sharedManager].orientation;
+            
+            //  UIを回す
+            CGAffineTransform transform = CGAffineTransformIdentity;
+            
+            if(_orientation == UIDeviceOrientationPortrait)
+                transform = CGAffineTransformMakeRotation(0.0);
+            else if(_orientation == UIDeviceOrientationPortraitUpsideDown)
+                transform = CGAffineTransformMakeRotation(M_PI);
+            else if(_orientation == UIDeviceOrientationLandscapeLeft)
+                transform = CGAffineTransformMakeRotation(M_PI*0.5);
+            else if(_orientation == UIDeviceOrientationLandscapeRight)
+                transform = CGAffineTransformMakeRotation(M_PI*1.5);
+            
+            //
+            [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+                
+                _flashButton.transform = transform;
+                _cameraFrontBackButton.transform = transform;
+            } completion:nil];
         }
     }
 }

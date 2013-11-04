@@ -147,9 +147,7 @@ static void *openGLESContextQueueKey;
 
 + (CGSize)sizeThatFitsWithinATextureForSize:(CGSize)inputSize;
 {
-    GLint maxTextureSize = [self maximumTextureSizeForThisDevice];
-    NSLog(@"maxTextureSize:%d", maxTextureSize);
-    
+    GLint maxTextureSize = [self maximumTextureSizeForThisDevice]; 
     if ( (inputSize.width < maxTextureSize) && (inputSize.height < maxTextureSize) )
     {
         return inputSize;
