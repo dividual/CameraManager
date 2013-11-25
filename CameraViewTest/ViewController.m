@@ -119,7 +119,6 @@
         
     } completion:^(BOOL finished) {
         
-#warning ここは消すのが本当なんだけど、消さないと表示が止まっていたので、あえてそうしてる。
         [imageView removeFromSuperview];
     }];
 }

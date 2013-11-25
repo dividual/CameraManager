@@ -46,7 +46,7 @@
     _delayTimeForFlash = 0.25;
     
     //  デフォルトはカメラロール保存自動
-    _autoSaveToCameraroll = NO;
+    _autoSaveToCameraroll = YES;
     
     //  デフォルトのJpegQuality
     _jpegQuality = 0.8;
@@ -103,7 +103,11 @@
             //  カメラある
             
             //  GPUImageStillCamera作る
-            _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:AVCaptureSessionPresetPhoto cameraPosition:AVCaptureDevicePositionBack];
+            BOOL isFrontCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceFront];
+            BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
+            
+            _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:AVCaptureSessionPresetPhoto cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
+            
             _stillCamera.outputImageOrientation = UIInterfaceOrientationPortrait;
             _stillCamera.horizontallyMirrorFrontFacingCamera = YES;
             
@@ -128,6 +132,12 @@
                 if(![_stillCamera.inputCamera hasTorch])
                 {
                     _flashButton.hidden = YES;
+                }
+                
+                //  フロントカメラ、もしくはリアカメラのみの場合にrotateアイコン消す
+                if(!isFrontCameraAvailable || !isRearCameraAvailable)
+                {
+                    _cameraFrontBackButton.hidden = YES;
                 }
             });
         }
@@ -451,7 +461,6 @@
 
         //  mainThread
         runOnMainQueueWithoutDeadlocking(^{
-            
             
             //  delegate
             if([_delegate respondsToSelector:@selector(cameraView:didCapturedImage:)])
