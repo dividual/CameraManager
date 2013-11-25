@@ -1,4 +1,4 @@
-#import "GPUImageFilter.h"
+#import <GPUImage/GPUImage.h>
 
 extern NSString *const kGrayscaleContrastFragmentShaderString;
 

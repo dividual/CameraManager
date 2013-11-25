@@ -12,7 +12,7 @@
 //      delegateで管理するイベント、blockで管理するイベントがある
 //      GPUImageの組み込み時には、User Header PathにGPUImage/frameworkを追加する必要あります
 
-#import "GPUImage.h"
+#import <GPUImage/GPUImage.h>
 
 enum CVFlashMode    //この順でモードが切り替わる
 {

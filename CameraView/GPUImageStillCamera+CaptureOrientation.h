@@ -6,8 +6,7 @@
 //  Copyright (c) 2013 Shinya Matsuyama. All rights reserved.
 //
 
-#import "GPUImageStillCamera.h"
-#import "GPUImage.h"
+#import <GPUImage/GPUImage.h>
 
 @interface GPUImageStillCamera (CaptureOrientation)
 
