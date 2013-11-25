@@ -46,7 +46,7 @@
     _delayTimeForFlash = 0.25;
     
     //  デフォルトはカメラロール保存自動
-    _autoSaveToCameraroll = YES;
+    _autoSaveToCameraroll = NO;
     
     //  デフォルトのJpegQuality
     _jpegQuality = 0.8;
@@ -462,19 +462,22 @@
             //
             if(_autoSaveToCameraroll)
             {
-                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                
-                [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(fixImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
-                 {
-                     if(error)
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    
+                    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                    
+                    [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(fixImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
                      {
-                         NSLog(@"ERROR: the image failed to be written");
-                     }
-                     else
-                     {
-                         NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
-                     }
-                 }];
+                         if(error)
+                         {
+                             NSLog(@"ERROR: the image failed to be written");
+                         }
+                         else
+                         {
+                             NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
+                         }
+                     }];
+                });
             }
             
             //  ビュー類の状態を戻す処理

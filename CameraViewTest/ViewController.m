@@ -36,7 +36,7 @@
     _doubleTapGesture.enabled = NO;
     
     //  カメラロールへの保存するかどうか
-    _cameraView.autoSaveToCameraroll = YES;
+    _cameraView.autoSaveToCameraroll = NO;
     
     //  フィルモードを変えてみる
     _cameraView.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;    //kGPUImageFillModePreserveAspectRatioAndFillがフルスクリーンで使うとき
@@ -101,11 +101,12 @@
 
 #pragma mark - CameraViewDelegate
 
-- (void)cameraView:(CameraView *)sender didCapturedImage:(UIImage *)image
-{
+- (void)cameraView:(CameraView *)sender didCapturedImage:(UIImage *)image{
+//	return;
 	NSLog(@"didCapturedImage:size(%f,%f)", image.size.width, image.size.height);
     
     UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+//	imageView.alpha = 0.2;
     
     CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
     imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
