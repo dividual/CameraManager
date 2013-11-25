@@ -116,6 +116,10 @@
                                     <outlet property="shutterButton" destination="qCt-oi-usQ" id="t1N-ns-Pf4"/>
                                 </connections>
                             </view>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PSm-e4-q5l">
+                                <rect key="frame" x="80" y="142" width="160" height="284"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
@@ -127,6 +131,7 @@
                     </view>
                     <connections>
                         <outlet property="cameraView" destination="q82-qm-Vu9" id="Jlu-Ek-cho"/>
+                        <outlet property="effectView" destination="PSm-e4-q5l" id="sdh-lr-Cey"/>
                         <outlet property="filterNameLabel" destination="IaG-BQ-oKl" id="YKB-eM-8x3"/>
                     </connections>
                 </viewController>

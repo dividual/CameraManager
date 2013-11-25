@@ -13,5 +13,6 @@
 
 @property (weak, nonatomic) IBOutlet CameraView *cameraView;
 @property (weak, nonatomic) IBOutlet UILabel *filterNameLabel;
+@property (weak, nonatomic) IBOutlet UIView *effectView;
 
 @end

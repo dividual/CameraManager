@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import "UIImage+Normalize.h"
 
 @interface ViewController () <CameraViewDelegate>
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
@@ -26,11 +27,13 @@
     //  フォーカスの処理を呼ぶためのジェスチャ
     _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
     [_cameraView addGestureRecognizer:_tapGesture];
+    _tapGesture.enabled = NO;
     
     //  fillモードを切り替えてみる実験のためのジェスチャー
     _doubleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)];
     _doubleTapGesture.numberOfTapsRequired = 2;
     [_cameraView addGestureRecognizer:_doubleTapGesture];
+    _doubleTapGesture.enabled = NO;
     
     //  カメラロールへの保存するかどうか
     _cameraView.autoSaveToCameraroll = YES;
@@ -100,7 +103,24 @@
 
 - (void)cameraView:(CameraView *)sender didCapturedImage:(UIImage *)image
 {
-	NSLog( @"didCapturedImage:size(%f,%f)", image.size.width, image.size.height);
+	NSLog(@"didCapturedImage:size(%f,%f)", image.size.width, image.size.height);
+    
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+    
+    CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
+    imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
+    
+    //
+    [self.view addSubview:imageView];
+    [UIView animateWithDuration:0.5 delay:0.0 options:0 animations:^{
+        //
+        imageView.transform = CGAffineTransformScale(CGAffineTransformMakeRotation(90.0), 0.0, 0.0);
+        
+    } completion:^(BOOL finished) {
+        
+#warning ここは消すのが本当なんだけど、消さないと表示が止まっていたので、あえてそうしてる。
+        [imageView removeFromSuperview];
+    }];
 }
 
 - (void)cameraView:(CameraView *)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice *)device

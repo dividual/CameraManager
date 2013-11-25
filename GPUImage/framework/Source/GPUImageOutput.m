@@ -148,7 +148,7 @@ void reportAvailableMemoryForGPUImage(NSString *tag)
     NSInteger nextAvailableTextureIndex = [newTarget nextAvailableTextureIndex];
     [self addTarget:newTarget atTextureLocation:nextAvailableTextureIndex];
     
-    if([newTarget shouldIgnoreUpdatesToThisTarget])
+    if ([newTarget shouldIgnoreUpdatesToThisTarget])
     {
         _targetToIgnoreForUpdates = newTarget;
     }
@@ -163,7 +163,6 @@ void reportAvailableMemoryForGPUImage(NSString *tag)
     
     cachedMaximumOutputSize = CGSizeZero;
     runSynchronouslyOnVideoProcessingQueue(^{
-        
         [self setInputTextureForTarget:newTarget atIndex:textureLocation];
         [newTarget setTextureDelegate:self atIndex:textureLocation];
         [targets addObject:newTarget];

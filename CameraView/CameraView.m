@@ -22,6 +22,10 @@
 @property (strong, nonatomic) GPUImageOutput<GPUImageInput> *filter;
 @property (assign, nonatomic) BOOL hasCamera;
 @property (assign, nonatomic) UIDeviceOrientation orientation;
+@property (strong, nonatomic) NSString *currentFilterName;
+
+@property (assign, nonatomic) BOOL isFilterChanging;
+
 @end
 
 #pragma mark -
@@ -52,6 +56,8 @@
     
     //  Filterを用意
     _filterNameArray = @[ @"normal", @"HiContrast", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06", @"purpleGreen" ];
+    
+    _currentFilterName = _filterNameArray[0];
 }
 
 #pragma mark -
@@ -426,14 +432,13 @@
     }
 }
 
-
 - (void)captureImage
 {
     //  キャプチャー処理
     [_filter prepareForImageCapture];
     
     [_stillCamera captureFixFlipPhotoAsImageProcessedUpToFilter:_filter orientation:_orientation withCompletionHandler:^(UIImage *processedImage, NSError *error) {
-        
+
         //  キャプチャー完了処理
         if([_stillCamera.inputCamera hasTorch])
             [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOff];
@@ -443,12 +448,10 @@
         
         //  回転がおかしくなる時があるので、UIImageを作りなおす
         UIImage *fixImage = [processedImage normalizedImage];
-        
+
         //  mainThread
         runOnMainQueueWithoutDeadlocking(^{
             
-            //  ビュー類の状態を戻す処理
-            [self restartCamera];
             
             //  delegate
             if([_delegate respondsToSelector:@selector(cameraView:didCapturedImage:)])
@@ -473,6 +476,9 @@
                      }
                  }];
             }
+            
+            //  ビュー類の状態を戻す処理
+            [self performSelector:@selector(restartCamera) withObject:nil afterDelay:0.2];
         });
     }];
 }
@@ -556,6 +562,10 @@
         NSLog(@"error:not exist filter %@", name);
         return;
     }
+    
+    //
+    _currentFilterName = name;
+
     //  一旦接続を切る
     [self removeAllTargets];
     
