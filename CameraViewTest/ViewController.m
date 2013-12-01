@@ -8,8 +8,9 @@
 
 #import "ViewController.h"
 #import "UIImage+Normalize.h"
+#import "CameraManager.h"
 
-@interface ViewController () <CameraViewDelegate>
+@interface ViewController () <CameraManagerDelegate>
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
 @property (strong, nonatomic) UITapGestureRecognizer *doubleTapGesture;
 @property (assign, nonatomic) NSInteger curFilterIndex;
@@ -20,29 +21,38 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
     
-    [_cameraView openCamera];
+    //  PreviewViewの設定
+    _previewViewA.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
+    _previewViewB.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
+    _previewViewC.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
+    _previewViewD.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
+    
+    [[CameraManager sharedManager] addPreviewViewsFromArray:@[ _previewViewA, _previewViewB, _previewViewC, _previewViewD ]];
+    [[CameraManager sharedManager] addFocusView:_focusView];
+    
+    //  カメラを開く
+    [[CameraManager sharedManager] openCamera];
     
     //  フォーカスの処理を呼ぶためのジェスチャ
     _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
-    [_cameraView addGestureRecognizer:_tapGesture];
-    _tapGesture.enabled = NO;
-    
-    //  fillモードを切り替えてみる実験のためのジェスチャー
-    _doubleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)];
-    _doubleTapGesture.numberOfTapsRequired = 2;
-    [_cameraView addGestureRecognizer:_doubleTapGesture];
-    _doubleTapGesture.enabled = NO;
+    [_previewViewA addGestureRecognizer:_tapGesture];
+    _tapGesture.enabled = YES;
     
     //  カメラロールへの保存するかどうか
-    _cameraView.autoSaveToCameraroll = NO;
-    
-    //  フィルモードを変えてみる
-    _cameraView.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;    //kGPUImageFillModePreserveAspectRatioAndFillがフルスクリーンで使うとき
+    [CameraManager sharedManager].autoSaveToCameraroll = YES;
     
     //  デリゲート設定
-    _cameraView.delegate = self;
+    [CameraManager sharedManager].delegate = self;
+    
+    //  各ボタン類をつなぐ
+    [CameraManager sharedManager].flashButton = _flashButton;
+    [CameraManager sharedManager].shutterButton = _shutterButton;
+    [CameraManager sharedManager].cameraFrontBackButton = _cameraRotateButton;
+    
+    [_flashButton addTarget:[CameraManager sharedManager] action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
+    [_shutterButton addTarget:[CameraManager sharedManager] action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
+    [_cameraRotateButton addTarget:[CameraManager sharedManager] action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
 }
 
 - (void)didReceiveMemoryWarning
@@ -55,7 +65,7 @@
 {
     [super viewDidDisappear:animated];
     
-    [_cameraView closeCamera];
+    [[CameraManager sharedManager] closeCamera];
 }
 
 #pragma mark -
@@ -77,31 +87,15 @@
 {
     if(tapGesture == _tapGesture)
     {
-        CGPoint pos = [_tapGesture locationInView:_cameraView];
+        CGPoint pos = [_tapGesture locationInView:_previewViewA];
         
-        [_cameraView setFocusPoint:pos];
-    }
-}
-
-- (void)handleDoubleTap:(UITapGestureRecognizer*)tapGesture
-{
-    if(tapGesture == _doubleTapGesture)
-    {
-        //  モードを変える
-        if(_cameraView.fillMode == kGPUImageFillModePreserveAspectRatioAndFill)
-        {
-            _cameraView.fillMode = kGPUImageFillModePreserveAspectRatio;
-        }
-        else
-        {
-            _cameraView.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
-        }
+        [[CameraManager sharedManager] setFocusPoint:pos inView:_previewViewA];
     }
 }
 
 #pragma mark - CameraViewDelegate
 
-- (void)cameraView:(CameraView *)sender didCapturedImage:(UIImage *)image{
+- (void)cameraManager:(CameraManager *)sender didCapturedImage:(UIImage *)image{
 //	return;
 	NSLog(@"didCapturedImage:size(%f,%f)", image.size.width, image.size.height);
     
@@ -123,7 +117,7 @@
     }];
 }
 
-- (void)cameraView:(CameraView *)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice *)device
+- (void)cameraManager:(CameraManager *)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice *)device
 {
     NSLog(@"didChangeAdjustingFocus:%d device:%@", isAdjustingFocus, device);
 }
@@ -133,14 +127,19 @@
 - (IBAction)pushedChangeFilter:(id)sender
 {
     _curFilterIndex++;
-    NSArray *filters = _cameraView.filterNameArray;
+    NSArray *filters = [CameraManager sharedManager].filterNameArray;
     _curFilterIndex = _curFilterIndex%filters.count;
     
     NSString *filterName = filters[_curFilterIndex];
     
-    [_cameraView setFilterWithName:filterName];
+    [[CameraManager sharedManager] setFilterWithName:filterName];
     
     _filterNameLabel.text = filterName;
+}
+
+- (IBAction)didChangeSilentSwitch:(id)sender
+{
+    [CameraManager sharedManager].silentShutterMode = _silentSwitch.isOn;
 }
 
 @end

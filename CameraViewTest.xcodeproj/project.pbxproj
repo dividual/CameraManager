@@ -27,7 +27,7 @@
 		D52A8B101817F64500F4ADFD /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D52A8B0B1817F64500F4ADFD /* CoreVideo.framework */; };
 		D52A8B111817F64500F4ADFD /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D52A8B0C1817F64500F4ADFD /* OpenGLES.framework */; };
 		D52A8B121817F64500F4ADFD /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D52A8B0D1817F64500F4ADFD /* QuartzCore.framework */; };
-		D52A8B181817F69100F4ADFD /* CameraView.m in Sources */ = {isa = PBXBuildFile; fileRef = D52A8B151817F69100F4ADFD /* CameraView.m */; };
+		D52A8B181817F69100F4ADFD /* CameraManager.m in Sources */ = {isa = PBXBuildFile; fileRef = D52A8B151817F69100F4ADFD /* CameraManager.m */; };
 		D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */ = {isa = PBXBuildFile; fileRef = D52A8B171817F69100F4ADFD /* UIView+utility.m */; };
 		D52A8B271817F71100F4ADFD /* cameraFrontBack.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B1B1817F71100F4ADFD /* cameraFrontBack.png */; };
 		D52A8B281817F71100F4ADFD /* cameraFrontBack@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B1C1817F71100F4ADFD /* cameraFrontBack@2x.png */; };
@@ -92,8 +92,8 @@
 		D52A8B0B1817F64500F4ADFD /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		D52A8B0C1817F64500F4ADFD /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		D52A8B0D1817F64500F4ADFD /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		D52A8B141817F69100F4ADFD /* CameraView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraView.h; sourceTree = "<group>"; };
-		D52A8B151817F69100F4ADFD /* CameraView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraView.m; sourceTree = "<group>"; };
+		D52A8B141817F69100F4ADFD /* CameraManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraManager.h; sourceTree = "<group>"; };
+		D52A8B151817F69100F4ADFD /* CameraManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraManager.m; sourceTree = "<group>"; };
 		D52A8B161817F69100F4ADFD /* UIView+utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+utility.h"; sourceTree = "<group>"; };
 		D52A8B171817F69100F4ADFD /* UIView+utility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+utility.m"; sourceTree = "<group>"; };
 		D52A8B1B1817F71100F4ADFD /* cameraFrontBack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cameraFrontBack.png; sourceTree = "<group>"; };
@@ -245,8 +245,8 @@
 			children = (
 				D5D035601827741800233B58 /* Filters */,
 				D5D0355A1827713700233B58 /* FilterClass */,
-				D52A8B141817F69100F4ADFD /* CameraView.h */,
-				D52A8B151817F69100F4ADFD /* CameraView.m */,
+				D52A8B141817F69100F4ADFD /* CameraManager.h */,
+				D52A8B151817F69100F4ADFD /* CameraManager.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
 				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
 				D5D035701827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.h */,
@@ -256,7 +256,8 @@
 				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
 				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
 			);
-			path = CameraView;
+			name = CameraView;
+			path = CameraManager;
 			sourceTree = "<group>";
 		};
 		D52A8B1A1817F71100F4ADFD /* Images */ = {
@@ -458,7 +459,7 @@
 				D52A8ADD1817F2EA00F4ADFD /* ViewController.m in Sources */,
 				D52A8AD71817F2EA00F4ADFD /* AppDelegate.m in Sources */,
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
-				D52A8B181817F69100F4ADFD /* CameraView.m in Sources */,
+				D52A8B181817F69100F4ADFD /* CameraManager.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
 				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
