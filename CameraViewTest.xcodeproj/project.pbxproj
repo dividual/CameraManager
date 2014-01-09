@@ -41,6 +41,8 @@
 		D52A8B301817F71100F4ADFD /* focusFrame@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B241817F71100F4ADFD /* focusFrame@2x.png */; };
 		D52A8B311817F71100F4ADFD /* shutterButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B251817F71100F4ADFD /* shutterButton.png */; };
 		D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B261817F71100F4ADFD /* shutterButton@2x.png */; };
+		D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABAE187E425B00392583 /* recButton@2x.png */; };
+		D5CAABB1187E427100392583 /* recButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABB0187E427100392583 /* recButton.png */; };
 		D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */; };
 		D5D035681827741800233B58 /* 02.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035611827741800233B58 /* 02.acv */; };
 		D5D035691827741800233B58 /* 06.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035621827741800233B58 /* 06.acv */; };
@@ -108,6 +110,8 @@
 		D52A8B241817F71100F4ADFD /* focusFrame@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "focusFrame@2x.png"; sourceTree = "<group>"; };
 		D52A8B251817F71100F4ADFD /* shutterButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = shutterButton.png; sourceTree = "<group>"; };
 		D52A8B261817F71100F4ADFD /* shutterButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shutterButton@2x.png"; sourceTree = "<group>"; };
+		D5CAABAE187E425B00392583 /* recButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "recButton@2x.png"; sourceTree = "<group>"; };
+		D5CAABB0187E427100392583 /* recButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = recButton.png; sourceTree = "<group>"; };
 		D5D0355B1827713700233B58 /* DLCGrayscaleContrastFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DLCGrayscaleContrastFilter.h; sourceTree = "<group>"; };
 		D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DLCGrayscaleContrastFilter.m; sourceTree = "<group>"; };
 		D5D035611827741800233B58 /* 02.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = 02.acv; sourceTree = "<group>"; };
@@ -275,6 +279,8 @@
 				D52A8B241817F71100F4ADFD /* focusFrame@2x.png */,
 				D52A8B251817F71100F4ADFD /* shutterButton.png */,
 				D52A8B261817F71100F4ADFD /* shutterButton@2x.png */,
+				D5CAABB0187E427100392583 /* recButton.png */,
+				D5CAABAE187E425B00392583 /* recButton@2x.png */,
 			);
 			path = Images;
 			sourceTree = "<group>";
@@ -397,6 +403,7 @@
 				D52A8B311817F71100F4ADFD /* shutterButton.png in Resources */,
 				D52A8B291817F71100F4ADFD /* flashAuto.png in Resources */,
 				D52A8B271817F71100F4ADFD /* cameraFrontBack.png in Resources */,
+				D5CAABB1187E427100392583 /* recButton.png in Resources */,
 				D5D0356C1827741800233B58 /* crossprocess.acv in Resources */,
 				D52A8AD11817F2EA00F4ADFD /* InfoPlist.strings in Resources */,
 				D5D035691827741800233B58 /* 06.acv in Resources */,
@@ -404,6 +411,7 @@
 				D5D0356E1827741800233B58 /* yellow-red.acv in Resources */,
 				D52A8B2A1817F71100F4ADFD /* flashAuto@2x.png in Resources */,
 				D52A8B281817F71100F4ADFD /* cameraFrontBack@2x.png in Resources */,
+				D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */,
 				D52A8ADA1817F2EA00F4ADFD /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

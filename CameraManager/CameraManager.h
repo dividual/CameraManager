@@ -28,11 +28,17 @@
 
 #import <GPUImage/GPUImage.h>
 
-enum CMFlashMode    //この順でモードが切り替わる
+typedef NS_ENUM(NSInteger, CMFlashMode)
 {
-    FLASH_MODE_AUTO = 0,
-    FLASH_MODE_OFF,
-    FLASH_MODE_ON
+    CMFlashModeAuto = 0,
+    CMFlashModeOff = 1,
+    CMFlashModeOn = 2
+};
+
+typedef NS_ENUM(NSInteger, CMCameraMode)
+{
+    CMCameraModeStill = 0,
+    CMCameraModeVideo = 1
 };
 
 
@@ -46,6 +52,9 @@ enum CMFlashMode    //この順でモードが切り替わる
 - (void)cameraManager:(CameraManager*)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice*)device;
 - (void)cameraManager:(CameraManager*)sender didChangeDeviceOrientation:(UIDeviceOrientation)orientation;
 - (void)cameraManager:(CameraManager*)sender didChangeFilter:(NSString*)filterName;
+- (void)cameraManagerWillStartRecordVideo:(CameraManager*)sender;
+- (void)cameraManager:(CameraManager*)sender didRecordMovie:(NSURL*)tmpFileURL;
+- (void)cameraManager:(CameraManager *)sender recordingTime:(NSTimeInterval)recordedTime remainTime:(NSTimeInterval)remainTime;
 
 @end
 
@@ -57,12 +66,21 @@ enum CMFlashMode    //この順でモードが切り替わる
 @property (strong, nonatomic) NSString *flashAutoImageName;
 @property (strong, nonatomic) NSString *flashOffmageName;
 @property (strong, nonatomic) NSString *flashOnImageName;
-@property (assign, nonatomic) NSInteger flashMode;
+@property (strong, nonatomic) NSString *stillShutterButtonImageName;
+@property (strong, nonatomic) NSString *videoShutterButtonImageName;
+@property (assign, nonatomic) CMFlashMode flashMode;
 @property (assign, nonatomic) NSTimeInterval delayTimeForFlash;
 @property (assign, nonatomic) BOOL autoSaveToCameraroll;
 @property (assign, nonatomic) float jpegQuality;
 @property (assign, nonatomic) BOOL silentShutterMode;
-@property NSString* sessionPreset;
+
+@property (strong, nonatomic) NSString *sessionPresetForStill;
+@property (strong, nonatomic) NSString *sessionPresetForVideo;
+
+@property (assign, nonatomic) CMCameraMode cameraMode;
+@property (assign, nonatomic) NSTimeInterval videoDuration;
+@property (assign, nonatomic) NSTimeInterval recordedTime;      //  録画済みの時間
+@property (assign, nonatomic) NSTimeInterval remainRecordTime;  //  録画残り時間
 
 //  GPUImageViewをつなぎこんで使う前提
 @property (readonly, nonatomic) NSArray *previewViews;
@@ -148,5 +166,8 @@ enum CMFlashMode    //この順でモードが切り替わる
 
 //  エフェクト選択モードを終了
 - (void)dissmissChooseEffect;
+
+//  カメラモードを切り替える
+- (void)toggleCameraMode;
 
 @end

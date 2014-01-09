@@ -31,7 +31,15 @@
     [CameraManager sharedManager].flashAutoImageName = @"flashAuto";
     [CameraManager sharedManager].flashOffmageName = @"flashOFF";
     [CameraManager sharedManager].flashOnImageName = @"flashON";
+
+    [CameraManager sharedManager].stillShutterButtonImageName = @"shutterButton";
+    [CameraManager sharedManager].videoShutterButtonImageName = @"recButton";
     
+    [CameraManager sharedManager].videoDuration = 4.0; //   動画撮影時間
+
+    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
+    [CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPreset1280x720;
+
     //  カメラを開く
     [[CameraManager sharedManager] openCamera];
     
@@ -114,6 +122,11 @@
     }];
 }
 
+- (void)cameraManager:(CameraManager*)sender didPlayShutterSoundWithImage:(UIImage*)image
+{
+    
+}
+
 - (void)cameraManager:(CameraManager *)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice *)device
 {
     NSLog(@"didChangeAdjustingFocus:%d device:%@", isAdjustingFocus, device);
@@ -160,6 +173,34 @@
     }];
 }
 
+- (void)cameraManagerWillStartRecordVideo:(CameraManager*)sender
+{
+    NSLog(@"record start");
+    
+    //  録画開始の音をだすならここかな 0.5秒以下
+    
+    //  操作してほしくないGUIを消す
+    _changeCameraModeButton.hidden = YES;
+    _chooseFilterButton.hidden = YES;
+}
+
+- (void)cameraManager:(CameraManager*)sender didRecordMovie:(NSURL*)tmpFileURL
+{
+    //  録画完了時
+    NSLog(@"finish record");
+    
+    //  操作してほしくないGUIをもとに戻す
+    _changeCameraModeButton.hidden = NO;
+    _chooseFilterButton.hidden = NO;
+}
+
+- (void)cameraManager:(CameraManager *)sender recordingTime:(NSTimeInterval)recordedTime remainTime:(NSTimeInterval)remainTime
+{
+    float percent = recordedTime / sender.videoDuration;
+    
+    NSLog(@"recording:%f", percent);
+}
+
 #pragma mark -
 
 - (IBAction)pushedChangeFilter:(id)sender
@@ -187,6 +228,11 @@
 - (IBAction)didChangeSilentSwitch:(id)sender
 {
     [CameraManager sharedManager].silentShutterMode = _silentSwitch.isOn;
+}
+
+- (IBAction)pushedChangeModeButton:(id)sender
+{
+    [[CameraManager sharedManager] toggleCameraMode];
 }
 
 @end
