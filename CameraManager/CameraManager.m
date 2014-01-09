@@ -18,6 +18,9 @@
     NSArray *_filterNameArray;
     NSMutableArray *_previewViews;
     NSMutableArray *_focusViews;
+    NSMutableArray *_flashButons;
+    NSMutableArray *_shutterButtons;
+    NSMutableArray *_cameraRotateButtons;
 }
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput<GPUImageInput> *filter;
@@ -27,6 +30,15 @@
 
 @property (assign, nonatomic) BOOL isFilterChanging;
 @property (assign, nonatomic) BOOL isCameraRunning;
+
+@property (strong, nonatomic) NSArray *chooseFilterFilters;
+@property (strong, nonatomic) NSArray *chooseFilterViews;
+@property (strong, nonatomic) UIView *chooseFilterBaseView;
+@property (strong, nonatomic) UITapGestureRecognizer *chooseFilterTapGesture;
+@property (strong, nonatomic) GPUImageView *chooseFilterPreviewView;
+
+@property (assign, nonatomic) BOOL isChooseFilterMode;
+@property (assign, nonatomic) BOOL isCameraOpened;
 
 @end
 
@@ -71,10 +83,10 @@
     _silentShutterMode = NO;
     
     //  デフォルトのJpegQuality
-    _jpegQuality = 0.8;
+    _jpegQuality = 0.9;
     
     //  Filterを用意
-    _filterNameArray = @[ @"normal", @"HiContrast", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06", @"purpleGreen" ];
+    _filterNameArray = @[ @"normal", @"HiContrast", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06" ];
     
     _currentFilterName = _filterNameArray[0];
     
@@ -83,46 +95,58 @@
     
     //  FocusViews
     _focusViews = [NSMutableArray array];
+    
+    //  flashButtons
+    _flashButons = [NSMutableArray array];
+    
+    //  flashButtons
+    _shutterButtons = [NSMutableArray array];
+    
+    //  flashButtons
+    _cameraRotateButtons = [NSMutableArray array];
+    
 }
 
 #pragma mark -
 
 - (void)openCamera
 {
+    if(_isCameraOpened)
+    {
+        NSLog( @"カメラはすでにオープンされています" );
+        return;
+    }
+    
     NSLog(@"setUpCamera");
     
+    _isCameraOpened = YES;
+    
+    //
     for(UIView *focuview in _focusViews)
     {
         //  フォーカスのImageViewを消しておく
         focuview.alpha = 0.0;
-    
+        
         //  念のためフォーカスのImageViewを最前面にしておく
         [focuview.superview bringSubviewToFront:focuview];
     }
     
-    //  各ボタン類の繋ぎ込み
-    if(_shutterButton)
-        [_shutterButton addTarget:self action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
-    
-    if(_flashButton)
-        [_flashButton addTarget:self action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
-    
-    if(_cameraFrontBackButton)
-        [_cameraFrontBackButton addTarget:self action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
-    
     //  バックグラウンドで実行
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-
+        
         //  カメラが使えるかどうか調べる
         if([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
         {
             //  カメラある
             
             //  GPUImageStillCamera作る
-            BOOL isFrontCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceFront];
             BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
             
-            _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:AVCaptureSessionPresetPhoto cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
+			if( !self.sessionPreset ){
+				self.sessionPreset = AVCaptureSessionPresetiFrame1280x720;
+			}
+            //            _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:AVCaptureSessionPresetPhoto cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
+			_stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:self.sessionPreset cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
             
             _stillCamera.outputImageOrientation = UIInterfaceOrientationPortrait;
             _stillCamera.horizontallyMirrorFrontFacingCamera = YES;
@@ -132,7 +156,7 @@
             
             //  Deviceの状態を常に監視してみる（ロックの時も）
             [[DeviceOrientation sharedManager] startAccelerometer];
-
+            
             //  orientationの監視をする
             [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:nil];
             
@@ -144,43 +168,51 @@
                 //  出力するように設定
                 [self prepareFilter];
                 
-                //  フラッシュがないときは表示消す
-                if(![_stillCamera.inputCamera hasTorch])
-                {
-                    _flashButton.hidden = YES;
-                }
-                
-                //  フロントカメラ、もしくはリアカメラのみの場合にrotateアイコン消す
-                if(!isFrontCameraAvailable || !isRearCameraAvailable)
-                {
-                    _cameraFrontBackButton.hidden = YES;
-                }
+                [self updateButtons];
             });
         }
         else
         {
             //  カメラがないときはとりあえずなにもしない
         }
-
+        
     });
 }
 
 - (void)closeCamera
 {
-    [_stillCamera stopCameraCapture];
-    [self removeAllTargets];
+    if(!_isCameraOpened)
+    {
+        NSLog( @"すでにカメラは閉じています" );
+        return;
+    }
     
-    //  forcusの監視をやめる
-    [_stillCamera.inputCamera removeObserver:self forKeyPath:@"adjustingFocus"];
+    if([_stillCamera.captureSession isRunning])
+    {
+        NSLog(@"closeCamera");
+        
+        if([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera])
+        {
+            //  forcusの監視をやめる
+            //  エラーがでるのでremoveするのをやめた。オブジェクトが消されるはずだからよしとする
+            //[_stillCamera.inputCamera removeObserver:self forKeyPath:@"adjustingFocus"];
+            
+            //  orientationの監視をやめる
+            [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation"];
+            
+            //  orientationのアップデート止める
+            [[DeviceOrientation sharedManager] stopAccelerometer];
+            
+            //
+            [_stillCamera stopCameraCapture];
+            [self removeAllTargets];
+            
+            //
+            _stillCamera = nil;
+        }
+    }
     
-    //  orientationの監視をやめる
-    [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation"];
-    
-    //  orientationのアップデート止める
-    [[DeviceOrientation sharedManager] stopAccelerometer];
-    
-    //
-    _stillCamera = nil;
+    _isCameraOpened = NO;
 }
 
 -(void)prepareFilter
@@ -240,52 +272,38 @@
 
 #pragma mark - PreviewViews
 
-- (void)updatePreviewViewsWithBlock:(void(^)(void))block
-{
-    BOOL isrunning = _isCameraRunning;
-    
-    //  一旦接続を切る
-    if(isrunning)
-        [self removeAllTargets];
-    
-    //  変更処理
-    block();
-    
-    //  再接続
-    if(isrunning)
-        [self prepareFilter];
-}
-
 - (void)addPreviewView:(GPUImageView*)view
 {
-    [self updatePreviewViewsWithBlock:^{
-        //  previewViewsに追加
-        [_previewViews addObject:view];
-    }];
+    //  previewViewsに追加
+    [_previewViews addObject:view];
+    
+    [_filter addTarget:view];
 }
 
 - (void)addPreviewViewsFromArray:(NSArray*)viewsArray
 {
-    [self updatePreviewViewsWithBlock:^{
-        //  previewViewsに追加
-        [_previewViews addObjectsFromArray:viewsArray];
-    }];
+    //  previewViewsに追加
+    [_previewViews addObjectsFromArray:viewsArray];
+    
+    for(GPUImageView *view in viewsArray)
+        [_filter addTarget:view];
 }
 
 - (void)removeAllPreviewViews
 {
-    [self updatePreviewViewsWithBlock:^{
-        //  削除
-        [_previewViews removeAllObjects];
-    }];
+    //  削除
+    [_previewViews removeAllObjects];
+    
+    for(GPUImageView *view in _previewViews)
+        [_filter removeTarget:view];
 }
 
 - (void)removePreviewView:(GPUImageView*)view
 {
-    [self updatePreviewViewsWithBlock:^{
-        //  削除
-        [_previewViews removeObject:view];
-    }];
+    //  削除
+    [_previewViews removeObject:view];
+    
+    [_filter removeTarget:view];
 }
 
 - (NSArray*)previewViews
@@ -295,57 +313,176 @@
 
 #pragma mark - FocusViews
 
-- (void)updateFocusViewsWithBlock:(void(^)(void))block
-{
-    BOOL isrunning = _isCameraRunning;
-    
-    //  一旦接続を切る
-    if(isrunning)
-        [self removeAllTargets];
-    
-    //  変更処理
-    block();
-    
-    //  再接続
-    if(isrunning)
-        [self prepareFilter];
-}
-
 - (void)addFocusView:(UIView*)view
 {
-    [self updateFocusViewsWithBlock:^{
-        //  FocusViewsに追加
-        [_focusViews addObject:view];
-    }];
+    //  FocusViewsに追加
+    [_focusViews addObject:view];
+    
+    //
+    if(!_stillCamera.inputCamera.adjustingFocus)
+        view.alpha = 0.0;
 }
 
 - (void)addFocusViewsFromArray:(NSArray*)viewsArray
 {
-    [self updateFocusViewsWithBlock:^{
-        //  FocusViewsに追加
-        [_focusViews addObjectsFromArray:viewsArray];
-    }];
+    //  FocusViewsに追加
+    [_focusViews addObjectsFromArray:viewsArray];
+    
+    //
+    for(UIView *view in viewsArray)
+        if(!_stillCamera.inputCamera.adjustingFocus)
+            view.alpha = 0.0;
 }
 
 - (void)removeAllFocusViews
 {
-    [self updateFocusViewsWithBlock:^{
-        //  削除
-        [_focusViews removeAllObjects];
-    }];
+    //  削除
+    [_focusViews removeAllObjects];
 }
 
 - (void)removeFocusView:(UIView*)view
 {
-    [self updateFocusViewsWithBlock:^{
-        //  削除
-        [_focusViews removeObject:view];
-    }];
+    //  削除
+    [_focusViews removeObject:view];
 }
 
 - (NSArray*)focusViews
 {
     return _focusViews;
+}
+
+#pragma mark - FlashButtons
+
+- (void)addFlashButton:(UIButton*)button
+{
+    button.exclusiveTouch = YES;
+    [_flashButons addObject:button];
+    [button addTarget:self action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)addFlashButtonsFromArray:(NSArray*)buttonsArray
+{
+    [_flashButons addObjectsFromArray:buttonsArray];
+    
+    for(UIButton *button in buttonsArray)
+    {
+        button.exclusiveTouch = YES;
+        [button addTarget:self action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
+    }
+}
+
+- (void)removeAllFlashButtons
+{
+    for(UIButton *button in _flashButons)
+    {
+        [button removeTarget:self action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    [_flashButons removeAllObjects];
+}
+
+- (void)removeFlashButton:(UIButton*)button
+{
+    [button removeTarget:self action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
+    [_flashButons removeObject:button];
+}
+
+#pragma mark - ShutterButtons
+
+- (void)addShutterButton:(UIButton*)button
+{
+    button.exclusiveTouch = YES;
+    [_shutterButtons addObject:button];
+    [button addTarget:self action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)addShutterButtonsFromArray:(NSArray*)buttonsArray
+{
+    [_shutterButtons addObjectsFromArray:buttonsArray];
+    
+    for(UIButton *button in buttonsArray)
+    {
+        button.exclusiveTouch = YES;
+        [button addTarget:self action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
+    }
+}
+
+- (void)removeAllShutterButtons
+{
+    for(UIButton *button in _flashButons)
+    {
+        [button removeTarget:self action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    [_shutterButtons removeAllObjects];
+}
+
+- (void)removeShutterButton:(UIButton*)button
+{
+    [button removeTarget:self action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
+    [_shutterButtons removeObject:button];
+}
+
+#pragma mark - CameraRotateButtons
+
+- (void)addCameraRotateButton:(UIButton*)button
+{
+    button.exclusiveTouch = YES;
+    [_cameraRotateButtons addObject:button];
+    [button addTarget:self action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)addCameraRotateButtonsFromArray:(NSArray*)buttonsArray
+{
+    [_cameraRotateButtons addObjectsFromArray:buttonsArray];
+    
+    for(UIButton *button in buttonsArray)
+    {
+        button.exclusiveTouch = YES;
+        [button addTarget:self action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
+    }
+}
+
+- (void)removeAllCameraRotateButtons
+{
+    for(UIButton *button in _flashButons)
+    {
+        [button removeTarget:self action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    
+    [_cameraRotateButtons removeAllObjects];
+}
+
+- (void)removeCameraRotateButton:(UIButton*)button
+{
+    [button removeTarget:self action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
+    [_cameraRotateButtons removeObject:button];
+}
+
+#pragma mark -
+
+- (void)updateButtons
+{
+    //  フラッシュがないときは表示消す
+    if(![_stillCamera.inputCamera hasTorch])
+    {
+        for(UIButton *button in _flashButons)
+            button.hidden = YES;
+    }
+    else
+    {
+        for(UIButton *button in _flashButons)
+            button.hidden = NO;
+    }
+    
+    //  フロントカメラ、もしくはリアカメラのみの場合にrotateアイコン消す
+    BOOL isFrontCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceFront];
+    BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
+    if(!isFrontCameraAvailable || !isRearCameraAvailable)
+    {
+        for(UIButton *button in _cameraRotateButtons)
+            button.hidden = YES;
+    }
 }
 
 #pragma mark -
@@ -385,7 +522,7 @@
         height *= scaleH;
         
         CGRect rect = CGRectMake(viewWidth/2.0 - width/2.0, viewHeight/2.0 - height/2.0, width, height);
-                
+        
         return rect;
     }
     
@@ -488,26 +625,31 @@
         UIImage *img = [UIImage imageNamed:imgName];
         if(img)
         {
-            [_flashButton setImage:img forState:UIControlStateNormal];
+            for(UIButton *button in _flashButons)
+                [button setImage:img forState:UIControlStateNormal];
         }
     }
 }
 
 #pragma mark - IBAction
 
-- (IBAction)changeFlashMode:(id)sender
+- (void)changeFlashMode:(id)sender
 {
     //  flashモードのボタンを押された
     self.flashMode = (_flashMode+1)%3;
 }
 
-- (IBAction)takePhoto:(id)sender
+- (void)takePhoto:(id)sender
 {
     //  シャッターボタンを押された
-    _shutterButton.enabled = NO;
+    for(UIButton *button in _shutterButtons)
+        button.enabled = NO;
     
-    _cameraFrontBackButton.alpha = 0.0;
-    _flashButton.alpha = 0.0;
+    for(UIButton *button in _cameraRotateButtons)
+        button.alpha = 0.0;
+    
+    for(UIButton *button in _flashButons)
+        button.alpha = 0.0;
     
     if (_hasCamera)
     {
@@ -519,21 +661,27 @@
     }
 }
 
-- (IBAction)rotateCameraPosition:(id)sender
+- (void)rotateCameraPosition:(id)sender
 {
-    _cameraFrontBackButton.enabled = NO;
+    for(UIButton *button in _cameraRotateButtons)
+        button.enabled = NO;
+    
     [_stillCamera rotateCamera];
-    _cameraFrontBackButton.enabled = YES;
+    
+    for(UIButton *button in _cameraRotateButtons)
+        button.enabled = YES;
     
     if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera] && _stillCamera)
     {
         if ([_stillCamera.inputCamera hasFlash] && [_stillCamera.inputCamera hasTorch])
         {
-            _flashButton.alpha = 1.0;
+            for(UIButton *button in _flashButons)
+                button.hidden = NO;
         }
         else
         {
-            _flashButton.alpha = 0.0;
+            for(UIButton *button in _flashButons)
+                button.hidden = YES;
         }
     }
 }
@@ -570,8 +718,11 @@
     //  キャプチャー処理
     [_filter prepareForImageCapture];
     
+    
+    __block UIImage *originalImage = nil;
+    
     //  撮影後の処理をブロックで
-    void (^completion)(UIImage *processedImage, NSError *error) = ^(UIImage *processedImage, NSError *error){
+    void (^completion)(UIImage *processedImage, UIImage *imageForAnimation, NSError *error) = ^(UIImage *processedImage, UIImage *imageForAnimation, NSError *error){
         
         //  キャプチャー完了処理
         if([_stillCamera.inputCamera hasTorch])
@@ -580,54 +731,78 @@
         //  アンロック
         [_stillCamera.inputCamera unlockForConfiguration];
         
-        //  回転がおかしくなる時があるので、UIImageを作りなおす
-        UIImage *fixImage = [processedImage normalizedImage];
-        
-        //  mainThread
-        runOnMainQueueWithoutDeadlocking(^{
-            
+        dispatch_async(dispatch_get_main_queue(), ^{
             //  delegate
-            if([_delegate respondsToSelector:@selector(cameraManager:didCapturedImage:)])
+            if([_delegate respondsToSelector:@selector(cameraManager:didPlayShutterSoundWithImage:)])
             {
-                [_delegate cameraManager:self didCapturedImage:fixImage];
+                [_delegate cameraManager:self didPlayShutterSoundWithImage:imageForAnimation];
             }
-            
-            //
-            if(_autoSaveToCameraroll)
-            {
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                    
-                    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                    
-                    [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(fixImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
-                     {
-                         if(error)
-                         {
-                             NSLog(@"ERROR: the image failed to be written");
-                         }
-                         else
-                         {
-                             NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
-                         }
-                     }];
-                });
-            }
-            
-            //  ビュー類の状態を戻す処理
-            [self performSelector:@selector(restartCamera) withObject:nil afterDelay:0.2];
         });
         
+        originalImage = processedImage;
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            
+            //  回転がおかしくなる時があるので、UIImageを作りなおす
+            UIImage *fixImage = [originalImage normalizedImage];
+            originalImage = nil;
+            
+            //  mainThread
+            dispatch_async(dispatch_get_main_queue(), ^{
+                
+                //  delegate
+                if([_delegate respondsToSelector:@selector(cameraManager:didCapturedImage:)])
+                {
+                    [_delegate cameraManager:self didCapturedImage:fixImage];
+                }
+                
+                //
+                if(_autoSaveToCameraroll)
+                {
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                        
+                        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                        
+                        [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(fixImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
+                         {
+                             if(error)
+                             {
+                                 NSLog(@"ERROR: the image failed to be written");
+                             }
+                             else
+                             {
+                                 NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
+                             }
+                         }];
+                    });
+                }
+                
+                //  ビュー類の状態を戻す処理
+                [self performSelector:@selector(restartCamera) withObject:nil afterDelay:0.2];
+            });
+        });
     };
     
     if(_silentShutterMode)
     {
         //  サイレントモードの時は別処理
-        [self captureImageSilentWithCompletion:completion];
+        [self captureImageSilentWithCompletion:^(UIImage *processedImage, UIImage *imageForAnimation, NSError *error) {
+            
+            UIImage *fixImage = [imageForAnimation normalizedImage];
+            completion(processedImage, fixImage, error);
+        }];
     }
     else
     {
+        UIImage *imgForAnimation = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUp];
+        UIImage *fixImage = [imgForAnimation normalizedImage];
+        
+        [_filter prepareForImageCapture];
+        
         //  通常の撮影
-        [_stillCamera captureFixFlipPhotoAsImageProcessedUpToFilter:_filter orientation:_orientation withCompletionHandler:completion];
+        [_stillCamera captureFixFlipPhotoAsImageProcessedUpToFilter:_filter orientation:_orientation withCompletionHandler:^(UIImage *processedImage, NSError *error) {
+            //
+            completion(processedImage, fixImage, error);
+        }];
     }
 }
 
@@ -661,19 +836,24 @@
     return image;
 }
 
-- (void)captureImageSilentWithCompletion:(void(^)(UIImage *processedImage, NSError *error))compBlock
+- (void)captureImageSilentWithCompletion:(void(^)(UIImage *processedImage, UIImage *imageForAnimation, NSError *error))compBlock
 {
     UIImage *img = [self imageFromCurrentlyProcessedOutputFixFlipWithOrientation:_orientation stillCamera:_stillCamera];
-    NSLog(@"%f,%f", img.size.width, img.size.height);
+    UIImage *imageForAnimation = [UIImage imageWithCGImage:img.CGImage scale:1.0 orientation:UIImageOrientationUp];
     
-    compBlock(img, nil);
+    compBlock(img, imageForAnimation, nil);
 }
 
 - (void)restartCamera
 {
-    _shutterButton.enabled = YES;
-    _cameraFrontBackButton.alpha = 1.0;
-    _flashButton.alpha = 1.0;
+    for(UIButton *button in _shutterButtons)
+        button.enabled = YES;
+    
+    for(UIButton *button in _cameraRotateButtons)
+        button.alpha = 1.0;
+    
+    for(UIButton *button in _flashButons)
+        button.alpha = 1.0;
 }
 
 #pragma mark - kvo
@@ -688,10 +868,20 @@
         for(UIView *focusView in _focusViews)
         {
             GPUImageView *previewView = (GPUImageView*)focusView.superview;
-            if([previewView isKindOfClass:[GPUImageView class]])
+            //if([previewView isKindOfClass:[GPUImageView class]])
             {
                 if([_stillCamera.inputCamera isFocusPointOfInterestSupported])
-                    focusView.center = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
+                {
+                    CGPoint focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
+                    
+                    if(isnan(focusPos.x) || isnan(focusPos.y) || !CGRectContainsPoint(previewView.frame, focusPos))
+                    {
+                        //  なんかデータがおかしい時は中心にfocus表示しとく
+                        focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+                    }
+                    
+                    focusView.center = focusPos;
+                }
                 else
                     focusView.center = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
                 
@@ -700,8 +890,8 @@
                     focusView.alpha = state?1.0:0.0;
                 } completion:nil];
             }
-            else
-                NSLog(@"Error:focusViewがGPUImageViewのsubviewになっていません。");
+//            else
+//                NSLog(@"Error:focusViewがGPUImageViewのsubviewになっていません。");
         }
         
         //  delegate
@@ -720,24 +910,11 @@
         {
             _orientation = [DeviceOrientation sharedManager].orientation;
             
-            //  UIを回す
-            CGAffineTransform transform = CGAffineTransformIdentity;
-            
-            if(_orientation == UIDeviceOrientationPortrait)
-                transform = CGAffineTransformMakeRotation(0.0);
-            else if(_orientation == UIDeviceOrientationPortraitUpsideDown)
-                transform = CGAffineTransformMakeRotation(M_PI);
-            else if(_orientation == UIDeviceOrientationLandscapeLeft)
-                transform = CGAffineTransformMakeRotation(M_PI*0.5);
-            else if(_orientation == UIDeviceOrientationLandscapeRight)
-                transform = CGAffineTransformMakeRotation(M_PI*1.5);
-            
-            //
-            [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
-                
-                _flashButton.transform = transform;
-                _cameraFrontBackButton.transform = transform;
-            } completion:nil];
+            //  delegate
+            if([_delegate respondsToSelector:@selector(cameraManager:didChangeDeviceOrientation:)])
+            {
+                [_delegate cameraManager:self didChangeDeviceOrientation:_orientation];
+            }
         }
     }
 }
@@ -747,6 +924,63 @@
 - (NSArray*)filterNameArray
 {
     return _filterNameArray;
+}
+
+- (GPUImageFilter*)filterWithName:(NSString*)name
+{
+    //  filterを作って返す
+    NSInteger index = [_filterNameArray indexOfObject:name];
+    
+    GPUImageFilter *filter = nil;
+    
+    switch (index) {
+        case 0:{
+            filter = [[GPUImageFilter alloc] init];
+        } break;
+            
+        case 1:{
+            filter = [[GPUImageContrastFilter alloc] init];
+            [(GPUImageContrastFilter *)filter setContrast:1.75];
+        } break;
+            
+        case 2: {
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"crossprocess"];
+        } break;
+            
+        case 3: {
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"02"];
+        } break;
+            
+        case 4: {
+            filter = [[DLCGrayscaleContrastFilter alloc] init];
+        } break;
+            
+        case 5: {
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"17"];
+        } break;
+            
+        case 6: {
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"aqua"];
+        } break;
+            
+        case 7: {
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"yellow-red"];
+        } break;
+            
+        case 8: {
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"06"];
+        } break;
+            
+            //        case 9: {
+            //            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"purple-green"];
+            //        } break;
+            
+        default:
+            filter = [[GPUImageFilter alloc] init];
+            break;
+    }
+    
+    return filter;
 }
 
 //  フィルターを選択
@@ -761,62 +995,257 @@
     
     //
     _currentFilterName = name;
-
+    
     //  一旦接続を切る
     [self removeAllTargets];
     
-    //  フィルターを作る
-    NSInteger index = [_filterNameArray indexOfObject:name];
-    
-    switch (index) {
-        case 0:{
-            _filter = [[GPUImageFilter alloc] init];
-        } break;
-            
-        case 1:{
-            _filter = [[GPUImageContrastFilter alloc] init];
-            [(GPUImageContrastFilter *)_filter setContrast:1.75];
-        } break;
-            
-        case 2: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"crossprocess"];
-        } break;
-            
-        case 3: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"02"];
-        } break;
-            
-        case 4: {
-            _filter = [[DLCGrayscaleContrastFilter alloc] init];
-        } break;
-            
-        case 5: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"17"];
-        } break;
-            
-        case 6: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"aqua"];
-        } break;
-            
-        case 7: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"yellow-red"];
-        } break;
-            
-        case 8: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"06"];
-        } break;
-            
-        case 9: {
-            _filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"purple-green"];
-        } break;
-            
-        default:
-            _filter = [[GPUImageFilter alloc] init];
-            break;
-    }
+    //
+    _filter = [self filterWithName:_currentFilterName];
     
     //  フィルターを設定
     [self prepareFilter];
+}
+
+- (void)setFilterWithFilter:(GPUImageFilter*)filter name:(NSString*)name
+{
+    for(GPUImageView *view in _previewViews)
+        [_filter removeTarget:view];
+    
+    [_stillCamera removeTarget:_filter];
+    
+    _currentFilterName = name;
+    _filter = filter;
+    
+    for(GPUImageView *view in _previewViews)
+    {
+        [_filter addTarget:view];
+    }
+}
+
+//  プレビューに使ってる画像を即座に返す
+- (UIImage*)captureCurrentPreviewImage
+{
+    UIImage *img = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUp];
+    
+    return [img normalizedImage];
+}
+
+//  エフェクト一覧画面を表示するための画面を作る（指定するGPUImageViewはprevieViewsとして追加済みでないとダメ）
+- (void)showChooseEffectInPreviewView:(GPUImageView*)previewView
+{
+    if(_isChooseFilterMode)
+        return;
+    
+    if(![_previewViews containsObject:previewView])
+    {
+        NSLog(@"error:指定されたviewがpreviewViewsに入ってません。");
+        return;
+    }
+    
+    //
+    _chooseFilterPreviewView = previewView;
+    
+    //  Shutterなどを消す
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        for(UIView *view in _previewViews)
+        {
+            if(view != previewView)
+                view.alpha = 0.0;
+        }
+        for(UIView *view in _shutterButtons)
+            view.alpha = 0.0;
+        
+        for(UIView *view in _cameraRotateButtons)
+            view.alpha = 0.0;
+        
+        for(UIView *view in _flashButons)
+            view.alpha = 0.0;
+        
+    } completion:nil];
+    
+    
+    //  表示するUIViewを作る
+    UIView *baseView = [[UIView alloc] initWithFrame:previewView.frame];
+    
+    //  9つのGPUImageViewを作る（とりあえず配置してみる）
+    CGFloat width = CGRectGetWidth(previewView.frame);
+    CGFloat height = CGRectGetHeight(previewView.frame);
+    
+    CGFloat oneWidth = width/3.0;
+    CGFloat oneHeight = height/3.0;
+    
+    int filterNum = MAX(_filterNameArray.count, 9); //9個最大
+    
+    NSMutableArray *filters = [NSMutableArray array];
+    NSMutableArray *views = [NSMutableArray array];
+    
+    for(int i=0;i<filterNum;i++)
+    {
+        int x = i%3;
+        int y = i/3;
+        
+        CGRect frame = CGRectMake(x*oneWidth, y*oneHeight, oneWidth, oneHeight);
+        GPUImageView *view = [[GPUImageView alloc] initWithFrame:frame];
+        view.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
+        
+        GPUImageFilter *filter = [self filterWithName:_filterNameArray[i]];
+        
+        [_stillCamera addTarget:filter];
+        [filter addTarget:view];
+        
+        [filters addObject:filter];
+        [views addObject:view];
+        
+        [baseView addSubview:view];
+        
+        //
+        [filter prepareForImageCapture];
+    }
+    
+    //  現在のpreviewを止める
+    previewView.enabled = NO;
+    
+    //  後々消したりするために保持しとく
+    _chooseFilterFilters = filters;
+    _chooseFilterViews = views;
+    _chooseFilterBaseView = baseView;
+    
+    //  baseViewを画面に追加してみる
+    [previewView insertSubview:baseView atIndex:0];
+    
+    //  animationを実装してみる
+    //  とりあえず該当するviewだけアニメーションさせてみる
+    NSInteger curFilterIndex = [_filterNameArray indexOfObject:_currentFilterName];
+    
+    //
+    GPUImageView *curView = views[curFilterIndex];
+    CGRect toFrame = curView.frame;
+    curView.frame = baseView.bounds;
+    [baseView bringSubviewToFront:curView];
+    
+    //
+    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //
+        curView.frame = toFrame;
+        
+    } completion:^(BOOL finished) {
+        //
+    }];
+    
+    //  フラグたてる
+    _isChooseFilterMode = YES;
+    
+    //  タッチイベント処理を追加
+    _chooseFilterTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleChooseFilterTapGesture:)];
+    [baseView addGestureRecognizer:_chooseFilterTapGesture];
+}
+
+- (void)handleChooseFilterTapGesture:(UITapGestureRecognizer*)tapGesture
+{
+    if(tapGesture != _chooseFilterTapGesture)
+        return;
+    
+    CGPoint tapPos = [tapGesture locationInView:_chooseFilterBaseView];
+    
+    GPUImageView *tapView = nil;
+    
+    for(GPUImageView *view in _chooseFilterViews)
+    {
+        if(CGRectContainsPoint(view.frame, tapPos))
+        {
+            tapView = view;
+            break;
+        }
+    }
+    
+    //  選択されたfilterの名前割り出す
+    NSInteger tapFilterIndex = [_chooseFilterViews indexOfObject:tapView];
+    NSString *tapFilterName = _filterNameArray[tapFilterIndex];
+    
+    //
+    [self handleFinishChooseFilterWithFilterName:tapFilterName];
+}
+
+- (void)handleFinishChooseFilterWithFilterName:(NSString*)filterName
+{
+    NSInteger index = [_filterNameArray indexOfObject:filterName];
+    
+    GPUImageView *tapView = _chooseFilterViews[index];
+    GPUImageFilter *tapFilter = _chooseFilterFilters[index];
+    
+    //  選択されたviewを最前面に
+    [_chooseFilterBaseView bringSubviewToFront:tapView];
+    
+    //  アニメーションさせる
+    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //  選ばれたviewを最大化
+        tapView.frame = _chooseFilterBaseView.frame;
+        
+    } completion:^(BOOL finished) {
+        
+        //
+        //  choose系を消す
+        [_chooseFilterBaseView removeGestureRecognizer:_chooseFilterTapGesture];
+        
+        _chooseFilterViews = nil;
+        _chooseFilterTapGesture = nil;
+        
+        _isChooseFilterMode = NO;
+        
+        //  選択されたfilterを有効化
+        [self setFilterWithFilter:tapFilter name:filterName];
+        
+        //  タップしてないfilterの接続を解除
+        for(GPUImageFilter *filter in _chooseFilterFilters)
+        {
+            if(_filter != filter)
+            {
+                [_stillCamera removeTarget:filter];
+                [filter removeAllTargets];
+            }
+        }
+        _chooseFilterFilters = nil;
+        
+        
+        //  Shutterなどを表示する
+        [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+            //
+            for(UIView *view in _previewViews)
+                view.alpha = 1.0;
+            
+            for(UIView *view in _shutterButtons)
+                view.alpha = 1.0;
+            
+            for(UIView *view in _cameraRotateButtons)
+                view.alpha = 1.0;
+            
+            for(UIView *view in _flashButons)
+                view.alpha = 1.0;
+            
+            //
+            //_chooseFilterBaseView.alpha = 0.0;
+            
+        } completion:^(BOOL finished) {
+            //
+            [_filter removeTarget:tapView];
+            
+            [_chooseFilterBaseView removeFromSuperview];
+            _chooseFilterBaseView = nil;
+        }];
+        
+        //  delegate
+        if([_delegate respondsToSelector:@selector(cameraManager:didChangeFilter:)])
+        {
+            [_delegate cameraManager:self didChangeFilter:filterName];
+        }
+    }];
+}
+
+- (void)dissmissChooseEffect
+{
+    if(_isChooseFilterMode)
+        [self handleFinishChooseFilterWithFilterName:_currentFilterName];
 }
 
 @end

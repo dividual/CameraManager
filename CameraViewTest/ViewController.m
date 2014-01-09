@@ -24,12 +24,13 @@
     
     //  PreviewViewの設定
     _previewViewA.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
-    _previewViewB.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
-    _previewViewC.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
-    _previewViewD.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
     
-    [[CameraManager sharedManager] addPreviewViewsFromArray:@[ _previewViewA, _previewViewB, _previewViewC, _previewViewD ]];
+    [[CameraManager sharedManager] addPreviewView:_previewViewA];
     [[CameraManager sharedManager] addFocusView:_focusView];
+    
+    [CameraManager sharedManager].flashAutoImageName = @"flashAuto";
+    [CameraManager sharedManager].flashOffmageName = @"flashOFF";
+    [CameraManager sharedManager].flashOnImageName = @"flashON";
     
     //  カメラを開く
     [[CameraManager sharedManager] openCamera];
@@ -46,13 +47,9 @@
     [CameraManager sharedManager].delegate = self;
     
     //  各ボタン類をつなぐ
-    [CameraManager sharedManager].flashButton = _flashButton;
-    [CameraManager sharedManager].shutterButton = _shutterButton;
-    [CameraManager sharedManager].cameraFrontBackButton = _cameraRotateButton;
-    
-    [_flashButton addTarget:[CameraManager sharedManager] action:@selector(changeFlashMode:) forControlEvents:UIControlEventTouchUpInside];
-    [_shutterButton addTarget:[CameraManager sharedManager] action:@selector(takePhoto:) forControlEvents:UIControlEventTouchUpInside];
-    [_cameraRotateButton addTarget:[CameraManager sharedManager] action:@selector(rotateCameraPosition:) forControlEvents:UIControlEventTouchUpInside];
+    [[CameraManager sharedManager] addFlashButton:_flashButton];
+    [[CameraManager sharedManager] addShutterButton:_shutterButton];
+    [[CameraManager sharedManager] addCameraRotateButton:_cameraRotateButton];
 }
 
 - (void)didReceiveMemoryWarning
@@ -122,19 +119,69 @@
     NSLog(@"didChangeAdjustingFocus:%d device:%@", isAdjustingFocus, device);
 }
 
+- (void)cameraManager:(CameraManager *)sender didChangeDeviceOrientation:(UIDeviceOrientation)orientation
+{
+    NSLog(@"didChangeDeviceOrientation");
+    
+    //  UIを回す
+    CGAffineTransform transform = CGAffineTransformIdentity;
+
+    if(orientation == UIDeviceOrientationPortrait)
+        transform = CGAffineTransformMakeRotation(0.0);
+    else if(orientation == UIDeviceOrientationPortraitUpsideDown)
+        transform = CGAffineTransformMakeRotation(M_PI);
+    else if(orientation == UIDeviceOrientationLandscapeLeft)
+        transform = CGAffineTransformMakeRotation(M_PI*0.5);
+    else if(orientation == UIDeviceOrientationLandscapeRight)
+        transform = CGAffineTransformMakeRotation(M_PI*1.5);
+
+    //
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+
+        _flashButton.transform = transform;
+        _shutterButton.transform = transform;
+        _cameraRotateButton.transform = transform;
+        
+    } completion:nil];
+}
+
+- (void)cameraManager:(CameraManager*)sender didChangeFilter:(NSString*)filterName
+{
+    _filterNameLabel.text = filterName;
+    
+    //
+    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //
+        _filterNameLabel.alpha = 1.0;
+        _silentSwitch.alpha = 1.0;
+        
+    } completion:^(BOOL finished) {
+        //
+    }];
+}
+
 #pragma mark -
 
 - (IBAction)pushedChangeFilter:(id)sender
 {
-    _curFilterIndex++;
-    NSArray *filters = [CameraManager sharedManager].filterNameArray;
-    _curFilterIndex = _curFilterIndex%filters.count;
-    
-    NSString *filterName = filters[_curFilterIndex];
-    
-    [[CameraManager sharedManager] setFilterWithName:filterName];
-    
-    _filterNameLabel.text = filterName;
+    if(![CameraManager sharedManager].isChooseFilterMode)
+    {
+        [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+            //
+            _filterNameLabel.alpha = 0.0;
+            _silentSwitch.alpha = 0.0;
+            
+        } completion:^(BOOL finished) {
+            //
+        }];
+        
+        //
+        [[CameraManager sharedManager] showChooseEffectInPreviewView:_previewViewA];
+    }
+    else
+    {
+        [[CameraManager sharedManager] dissmissChooseEffect];
+    }
 }
 
 - (IBAction)didChangeSilentSwitch:(id)sender
