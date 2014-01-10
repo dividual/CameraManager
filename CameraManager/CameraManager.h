@@ -47,6 +47,8 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @class CameraManager;
 
 @protocol CameraManagerDelegate <NSObject>
+
+@optional
 - (void)cameraManager:(CameraManager*)sender didCapturedImage:(UIImage*)image;
 - (void)cameraManager:(CameraManager*)sender didPlayShutterSoundWithImage:(UIImage*)image;
 - (void)cameraManager:(CameraManager*)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice*)device;
@@ -54,7 +56,9 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 - (void)cameraManager:(CameraManager*)sender didChangeFilter:(NSString*)filterName;
 - (void)cameraManagerWillStartRecordVideo:(CameraManager*)sender;
 - (void)cameraManager:(CameraManager*)sender didRecordMovie:(NSURL*)tmpFileURL;
-- (void)cameraManager:(CameraManager *)sender recordingTime:(NSTimeInterval)recordedTime remainTime:(NSTimeInterval)remainTime;
+- (void)cameraManager:(CameraManager*)sender recordingTime:(NSTimeInterval)recordedTime remainTime:(NSTimeInterval)remainTime;
+
+- (BOOL)cameraManager:(CameraManager*)sender shouldChangeShutterButtonImageTo:(NSString*)imageName;
 
 @end
 
@@ -68,6 +72,8 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (strong, nonatomic) NSString *flashOnImageName;
 @property (strong, nonatomic) NSString *stillShutterButtonImageName;
 @property (strong, nonatomic) NSString *videoShutterButtonImageName;
+@property (strong, nonatomic) NSString *videoStopButtonImageName;
+
 @property (assign, nonatomic) CMFlashMode flashMode;
 @property (assign, nonatomic) NSTimeInterval delayTimeForFlash;
 @property (assign, nonatomic) BOOL autoSaveToCameraroll;
@@ -79,8 +85,8 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 
 @property (assign, nonatomic) CMCameraMode cameraMode;
 @property (assign, nonatomic) NSTimeInterval videoDuration;
-@property (assign, nonatomic) NSTimeInterval recordedTime;      //  録画済みの時間
-@property (assign, nonatomic) NSTimeInterval remainRecordTime;  //  録画残り時間
+@property (readonly, nonatomic) NSTimeInterval recordedTime;      //  録画済みの時間
+@property (readonly, nonatomic) NSTimeInterval remainRecordTime;  //  録画残り時間
 
 //  GPUImageViewをつなぎこんで使う前提
 @property (readonly, nonatomic) NSArray *previewViews;
@@ -169,5 +175,9 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 
 //  カメラモードを切り替える
 - (void)toggleCameraMode;
+
+//  tmpFileはもういらないよの通知
+- (void)removeTempMovieFile:(NSURL*)tmpURL;
+
 
 @end

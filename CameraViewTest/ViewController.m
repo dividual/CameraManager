@@ -34,8 +34,9 @@
 
     [CameraManager sharedManager].stillShutterButtonImageName = @"shutterButton";
     [CameraManager sharedManager].videoShutterButtonImageName = @"recButton";
+    [CameraManager sharedManager].videoStopButtonImageName = @"recStopButton";
     
-    [CameraManager sharedManager].videoDuration = 4.0; //   動画撮影時間
+    [CameraManager sharedManager].videoDuration = 10.0; //   動画撮影時間
 
     [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
     [CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPreset1280x720;
@@ -58,6 +59,10 @@
     [[CameraManager sharedManager] addFlashButton:_flashButton];
     [[CameraManager sharedManager] addShutterButton:_shutterButton];
     [[CameraManager sharedManager] addCameraRotateButton:_cameraRotateButton];
+    
+    //
+    _movieRecordedTime.hidden = YES;
+    _movieRemainTime.hidden = YES;
 }
 
 - (void)didReceiveMemoryWarning
@@ -182,6 +187,12 @@
     //  操作してほしくないGUIを消す
     _changeCameraModeButton.hidden = YES;
     _chooseFilterButton.hidden = YES;
+    
+    //  秒数出すLabel表示
+    _movieRecordedTime.text = @"";
+    _movieRemainTime.text = @"";
+    _movieRecordedTime.hidden = NO;
+    _movieRemainTime.hidden = NO;
 }
 
 - (void)cameraManager:(CameraManager*)sender didRecordMovie:(NSURL*)tmpFileURL
@@ -192,13 +203,49 @@
     //  操作してほしくないGUIをもとに戻す
     _changeCameraModeButton.hidden = NO;
     _chooseFilterButton.hidden = NO;
+    
+    //  秒数出すLabel表示
+    _movieRecordedTime.hidden = YES;
+    _movieRemainTime.hidden = YES;
+    
+    //  本来ならここでアップロード処理など行う
+    {
+        //  あえて遅延してから消してもいいよの処理をする
+        double delayTime = 1.0;
+        dispatch_time_t startTime = dispatch_time(DISPATCH_TIME_NOW, delayTime * NSEC_PER_SEC);
+        dispatch_after(startTime, dispatch_get_main_queue(), ^(void){
+            
+            //  保存処理はここではしないのですぐに消してもいいよと伝える
+            [[CameraManager sharedManager] removeTempMovieFile:tmpFileURL];
+        });
+    }
 }
 
 - (void)cameraManager:(CameraManager *)sender recordingTime:(NSTimeInterval)recordedTime remainTime:(NSTimeInterval)remainTime
 {
     float percent = recordedTime / sender.videoDuration;
     
+    _movieRecordedTime.text = [NSString stringWithFormat:@"%.1f", recordedTime];
+    _movieRemainTime.text = [NSString stringWithFormat:@"-%.1f", remainTime];
+    
     NSLog(@"recording:%f", percent);
+}
+
+- (BOOL)cameraManager:(CameraManager*)sender shouldChangeShutterButtonImageTo:(NSString*)imageName
+{
+    //  自分で画像を変更する場合は、NOを返す
+    NSLog(@"shouldChangeShutterButtonImageTo:%@", imageName);
+    
+    for(UIButton *button in sender.shutterButtons)
+    {
+        [UIView transitionWithView:button duration:0.3 options:UIViewAnimationOptionTransitionCrossDissolve animations:^{
+            //
+            [button setImage:[UIImage imageNamed:imageName] forState:UIControlStateNormal];
+            
+        } completion:nil];
+    }
+    
+    return NO;
 }
 
 #pragma mark -
