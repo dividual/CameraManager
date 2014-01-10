@@ -20,25 +20,25 @@
         UIImage *filteredPhoto = nil;
         
         if(!error){
-            BOOL isFlipped = self.cameraPosition == AVCaptureDevicePositionFront && self.horizontallyMirrorFrontFacingCamera?YES:NO;
-            
+            BOOL isFront = self.cameraPosition == AVCaptureDevicePositionFront?YES:NO;
+        
             UIImageOrientation imageOrientation = UIImageOrientationLeft;
             switch (orientation)
             {
                 case UIDeviceOrientationPortrait:
-                    imageOrientation = isFlipped?UIImageOrientationUpMirrored:UIImageOrientationUp;
+                    imageOrientation = UIImageOrientationUp;
                     break;
                 case UIDeviceOrientationPortraitUpsideDown:
-                    imageOrientation = isFlipped?UIImageOrientationDownMirrored:UIImageOrientationDown;
+                    imageOrientation = UIImageOrientationDown;
                     break;
                 case UIDeviceOrientationLandscapeLeft:
-                    imageOrientation = isFlipped?UIImageOrientationRightMirrored:UIImageOrientationLeft;
+                    imageOrientation = isFront?UIImageOrientationRight:UIImageOrientationLeft;
                     break;
                 case UIDeviceOrientationLandscapeRight:
-                    imageOrientation = isFlipped?UIImageOrientationLeftMirrored:UIImageOrientationRight;
+                    imageOrientation = isFront?UIImageOrientationLeft:UIImageOrientationRight;
                     break;
                 default:
-                    imageOrientation = isFlipped?UIImageOrientationUpMirrored:UIImageOrientationUp;
+                    imageOrientation = UIImageOrientationUp;
                     break;
             }
             
@@ -59,25 +59,25 @@
         
         if(!error){
             @autoreleasepool {
-                BOOL isFlipped = self.cameraPosition == AVCaptureDevicePositionFront && self.horizontallyMirrorFrontFacingCamera?YES:NO;
+                BOOL isFront = self.cameraPosition == AVCaptureDevicePositionFront?YES:NO;
                 
                 UIImageOrientation imageOrientation = UIImageOrientationLeft;
                 switch (orientation)
                 {
                     case UIDeviceOrientationPortrait:
-                        imageOrientation = isFlipped?UIImageOrientationUpMirrored:UIImageOrientationUp;
+                        imageOrientation = UIImageOrientationUp;
                         break;
                     case UIDeviceOrientationPortraitUpsideDown:
-                        imageOrientation = isFlipped?UIImageOrientationDownMirrored:UIImageOrientationDown;
+                        imageOrientation = UIImageOrientationDown;
                         break;
                     case UIDeviceOrientationLandscapeLeft:
-                        imageOrientation = isFlipped?UIImageOrientationRightMirrored:UIImageOrientationLeft;
+                        imageOrientation = isFront?UIImageOrientationRight:UIImageOrientationLeft;
                         break;
                     case UIDeviceOrientationLandscapeRight:
-                        imageOrientation = isFlipped?UIImageOrientationLeftMirrored:UIImageOrientationRight;
+                        imageOrientation = isFront?UIImageOrientationLeft:UIImageOrientationRight;
                         break;
                     default:
-                        imageOrientation = isFlipped?UIImageOrientationUpMirrored:UIImageOrientationUp;
+                        imageOrientation = UIImageOrientationUp;
                         break;
                 }
                 

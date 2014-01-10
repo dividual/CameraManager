@@ -12,6 +12,8 @@
 #import "GPUImageStillCamera+CaptureOrientation.h"
 #import "DeviceOrientation.h"
 #import "UIImage+Normalize.h"
+#import <Overline/NSString+OVHash.h>
+#import "NSDate+stringUtility.h"
 
 @interface CameraManager ()
 {
@@ -39,6 +41,12 @@
 
 @property (assign, nonatomic) BOOL isChooseFilterMode;
 @property (assign, nonatomic) BOOL isCameraOpened;
+
+@property (strong, nonatomic) GPUImageMovieWriter *movieWriter;
+
+@property (strong, nonatomic) NSString *tmpMovieSavePath;
+@property (strong, nonatomic) NSTimer *recordingProgressTimer;
+@property (strong, nonatomic) NSMutableArray *tmpMovieSavePathArray;    //ここに残ってるというのは、まだ処理に使ってるかもしれないという意味
 
 @end
 
@@ -71,7 +79,7 @@
     _filter = [[GPUImageFilter alloc] init];
     
     //  デフォルトのフラッシュモード指定しておく
-    _flashMode = FLASH_MODE_OFF;
+    _flashMode = CMFlashModeOff;
     
     //  デフォルトのdelaytime
     _delayTimeForFlash = 0.25;
@@ -86,7 +94,7 @@
     _jpegQuality = 0.9;
     
     //  Filterを用意
-    _filterNameArray = @[ @"normal", @"HiContrast", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06" ];
+    _filterNameArray = @[ @"normal", @"sepia", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06" ];
     
     _currentFilterName = _filterNameArray[0];
     
@@ -105,6 +113,11 @@
     //  flashButtons
     _cameraRotateButtons = [NSMutableArray array];
     
+    //  デフォルト動画撮影時間は10秒としておく
+    _videoDuration = 10.0;
+    
+    //
+    _tmpMovieSavePathArray = [NSMutableArray array];
 }
 
 #pragma mark -
@@ -142,14 +155,16 @@
             //  GPUImageStillCamera作る
             BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
             
-			if( !self.sessionPreset ){
-				self.sessionPreset = AVCaptureSessionPresetiFrame1280x720;
-			}
-            //            _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:AVCaptureSessionPresetPhoto cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
-			_stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:self.sessionPreset cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
+			if( !_sessionPresetForStill )
+				_sessionPresetForStill = AVCaptureSessionPreset1920x1080;
+
+            if( !_sessionPresetForVideo)
+                _sessionPresetForVideo = AVCaptureSessionPreset1280x720;
+            
+            _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:self.sessionPresetForStill cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
             
             _stillCamera.outputImageOrientation = UIInterfaceOrientationPortrait;
-            _stillCamera.horizontallyMirrorFrontFacingCamera = YES;
+            //_stillCamera.horizontallyMirrorFrontFacingCamera = NO;
             
             //  forcusの監視をする
             [_stillCamera.inputCamera addObserver:self forKeyPath:@"adjustingFocus" options:NSKeyValueObservingOptionNew context:nil];
@@ -277,6 +292,13 @@
     //  previewViewsに追加
     [_previewViews addObject:view];
     
+    //  
+    if(_stillCamera.cameraPosition == AVCaptureDevicePositionFront)
+        [view setInputRotation:kGPUImageFlipHorizonal atIndex:0];
+    else
+        [view setInputRotation:kGPUImageNoRotation atIndex:0];
+    
+    //
     [_filter addTarget:view];
 }
 
@@ -490,7 +512,7 @@
 - (CGRect)inputImageRectInView:(GPUImageView*)view
 {
     //  GPUImageViewに表示してる元画像のサイズ
-    NSValue *inputSizeValue = [view valueForKey:@"inputImageSize"]; //TODO: ここはハードコーディング、気をつけるべし
+    NSValue *inputSizeValue = [view valueForKey:@"inputImageSize"]; //TODO: ここはちょっと強引なので注意
     if(inputSizeValue)
     {
         CGSize inputSize = [inputSizeValue CGSizeValue];
@@ -599,7 +621,7 @@
     }
 }
 
-- (void)setFlashMode:(NSInteger)flashMode
+- (void)setFlashMode:(CMFlashMode)flashMode
 {
     _flashMode = flashMode;
     
@@ -607,15 +629,15 @@
     NSString *imgName = nil;
     switch(_flashMode)
     {
-        case FLASH_MODE_AUTO:
+        case CMFlashModeAuto:
             imgName = _flashAutoImageName;
             break;
             
-        case FLASH_MODE_OFF:
+        case CMFlashModeOff:
             imgName = _flashOffmageName;
             break;
             
-        case FLASH_MODE_ON:
+        case CMFlashModeOn:
             imgName = _flashOnImageName;
             break;
     }
@@ -642,22 +664,28 @@
 - (void)takePhoto:(id)sender
 {
     //  シャッターボタンを押された
-    for(UIButton *button in _shutterButtons)
-        button.enabled = NO;
     
-    for(UIButton *button in _cameraRotateButtons)
-        button.alpha = 0.0;
-    
-    for(UIButton *button in _flashButons)
-        button.alpha = 0.0;
-    
-    if (_hasCamera)
+    if(_cameraMode == CMCameraModeStill)
     {
-        [self prepareForCapture];
+        //  静止画撮影
+        for(UIButton *button in _shutterButtons)
+            button.enabled = NO;
+        
+        for(UIButton *button in _cameraRotateButtons)
+            button.alpha = 0.0;
+        
+        for(UIButton *button in _flashButons)
+            button.alpha = 0.0;
+        
+        if (_hasCamera)
+        {
+            [self prepareForCapture];
+        }
     }
     else
     {
-        //  カメラがないときは何もしない
+        //  動画撮影
+        [self startVideoRec];
     }
 }
 
@@ -671,7 +699,7 @@
     for(UIButton *button in _cameraRotateButtons)
         button.enabled = YES;
     
-    if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera] && _stillCamera)
+    if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera] && _stillCamera)
     {
         if ([_stillCamera.inputCamera hasFlash] && [_stillCamera.inputCamera hasTorch])
         {
@@ -683,6 +711,23 @@
             for(UIButton *button in _flashButons)
                 button.hidden = YES;
         }
+
+        //
+        if(_stillCamera.cameraPosition == AVCaptureDevicePositionFront)
+        {
+            for(GPUImageView *view in _previewViews)
+            {
+                [view setInputRotation:kGPUImageFlipHorizonal atIndex:0];
+            }
+        }
+        else
+        {
+            for(GPUImageView *view in _previewViews)
+            {
+                [view setInputRotation:kGPUImageNoRotation atIndex:0];
+            }
+        }
+
     }
 }
 
@@ -694,13 +739,13 @@
     [_stillCamera.inputCamera lockForConfiguration:nil];
     
     //  フラッシュの準備（上記のロックをかけてからでないと処理できないっぽい）
-    if(_flashMode == FLASH_MODE_AUTO && [_stillCamera.inputCamera hasTorch])
+    if(_flashMode == CMFlashModeAuto && [_stillCamera.inputCamera hasTorch])
     {
         //  自動
         [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeAuto];
         [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
     }
-    else if(_flashMode == FLASH_MODE_ON && [_stillCamera.inputCamera hasTorch])
+    else if(_flashMode == CMFlashModeOn && [_stillCamera.inputCamera hasTorch])
     {
         //  ON
         [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOn];
@@ -717,7 +762,6 @@
 {
     //  キャプチャー処理
     [_filter prepareForImageCapture];
-    
     
     __block UIImage *originalImage = nil;
     
@@ -856,6 +900,313 @@
         button.alpha = 1.0;
 }
 
+#pragma mark - video
+
+- (CGAffineTransform)videoOrientation
+{
+    CGAffineTransform transform = CGAffineTransformMakeRotation(0.0);
+    
+    BOOL isFront = _stillCamera.cameraPosition == AVCaptureDevicePositionFront?YES:NO;
+    
+    //
+	switch(_orientation)
+    {
+		case UIDeviceOrientationPortrait:
+            transform = CGAffineTransformRotate(transform, 0.0);
+            break;
+        case UIDeviceOrientationPortraitUpsideDown:
+            transform = CGAffineTransformRotate(transform, M_PI);
+            break;
+        case UIDeviceOrientationLandscapeLeft:
+            transform = CGAffineTransformRotate(transform, isFront?M_PI_2:(M_PI+M_PI_2));
+            break;
+        case UIDeviceOrientationLandscapeRight:
+            transform = CGAffineTransformRotate(transform, isFront?(M_PI+M_PI_2):M_PI_2);
+            break;
+        default:
+            transform = CGAffineTransformRotate(transform, 0.0);
+            break;
+	}
+    
+    return transform;
+}
+
+- (CGSize)videoSize
+{
+    if([_sessionPresetForVideo isEqualToString:AVCaptureSessionPreset1920x1080])
+    {
+        return CGSizeMake(1080.0, 1920.0);
+    }
+    else if([_sessionPresetForVideo isEqualToString:AVCaptureSessionPreset1280x720])
+    {
+        return CGSizeMake(720.0, 1280.0);
+    }
+    else if([_sessionPresetForVideo isEqualToString:AVCaptureSessionPreset640x480])
+    {
+        return CGSizeMake(480.0, 640.0);
+    }
+    else if([_sessionPresetForVideo isEqualToString:AVCaptureSessionPreset352x288])
+    {
+        return CGSizeMake(288.0, 352.0);
+    }
+    
+    //  GPUImageViewに表示してる元画像のサイズ
+    NSValue *inputSizeValue = [_previewViews[0] valueForKey:@"inputImageSize"]; //TODO: ここはちょっと強引なので注意
+    if(inputSizeValue)
+    {
+        CGSize inputSize = [inputSizeValue CGSizeValue];
+        return inputSize;
+    }
+    
+    return CGSizeMake(720.0, 1280.0);
+}
+
+- (void)showHideVideoRecording:(BOOL)state
+{
+    //
+    if(!state)
+    {
+        //  シャッターボタンを録画中の停止ボタンに変える
+        [self changeShutterButtonImageTo:_videoStopButtonImageName];
+    }
+    else
+    {
+        //  シャッターボタンをビデオモードの録画開始ボタンに変える
+        [self changeShutterButtonImageTo:_videoShutterButtonImageName];
+    }
+    
+    for(UIButton *button in _cameraRotateButtons)
+        button.alpha = state?1.0:0.0;
+    
+    for(UIButton *button in _flashButons)
+        button.alpha = state?1.0:0.0;
+}
+
+- (void)setupTorch
+{
+    if([_stillCamera.inputCamera hasTorch])
+    {
+        //  フラッシュの設定
+        NSError *error = nil;
+        if (![_stillCamera.inputCamera lockForConfiguration:&error])
+        {
+            NSLog(@"Error locking for configuration: %@", error);
+        }
+        
+        //  フラッシュの準備（上記のロックをかけてからでないと処理できないっぽい）
+        if(_flashMode == CMFlashModeAuto && [_stillCamera.inputCamera hasTorch])
+        {
+            //  自動
+            [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeAuto];
+        }
+        else if(_flashMode == CMFlashModeOn && [_stillCamera.inputCamera hasTorch])
+        {
+            //  ON
+            [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOn];
+        }
+        else
+        {
+            //  もともと消えてる想定でOFFの指定はしない
+        }
+        
+        [_stillCamera.inputCamera unlockForConfiguration];
+    }
+}
+
+- (void)offTorch
+{
+    if([_stillCamera.inputCamera hasTorch])
+    {
+        [_stillCamera.inputCamera lockForConfiguration:nil];
+        [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOff];
+        [_stillCamera.inputCamera unlockForConfiguration];
+    }
+}
+
+- (NSString*)makeTempMovieFileName
+{
+    NSString *dateString = [[NSDate date] stringTimeStampFormat];
+    NSString *hash = [dateString md5];
+    
+    return [NSString stringWithFormat:@"%@.m4v", hash];
+}
+
+- (void)startVideoRec
+{
+    //  録画中に押された場合は停止処理する
+    if(_recordingProgressTimer)
+    {
+        [self stopVideoRec];
+        return;
+    }
+       
+    //  撮影中に操作できないようにボタン類を消す
+    [self showHideVideoRecording:NO];
+    
+    //  動画撮影開始
+    NSString *fileName = [self makeTempMovieFileName];
+    _tmpMovieSavePath = [NSHomeDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"tmp/%@", fileName]];    //アプリがアクティブ中は勝手には消されないので、自分で消す必要あり
+    unlink([_tmpMovieSavePath UTF8String]); // If a file already exists, AVAssetWriter won't let you record new frames, so delete the old movie
+    
+    //  arrayに追加しておく
+    [_tmpMovieSavePathArray addObject:_tmpMovieSavePath];
+    
+    //  URL
+    NSURL *movieURL = [NSURL fileURLWithPath:_tmpMovieSavePath];
+    
+    //
+    _movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:[self videoSize]];
+    
+    [_filter addTarget:_movieWriter];
+    
+    //  撮影直前のデリゲート
+    if([_delegate respondsToSelector:@selector(cameraManagerWillStartRecordVideo:)])
+    {
+        [_delegate cameraManagerWillStartRecordVideo:self];
+    }
+    
+    //  音の設定
+    _stillCamera.audioEncodingTarget = _movieWriter;
+    
+    //  フラッシュのセットアップ
+    [self setupTorch];
+    
+    //  遅延時間（オートフォーカスが動き出すので、それが収まったあたりを狙って開始するため固定の遅延）
+    double delayToStartRecording = 0.5;
+    dispatch_time_t startTime = dispatch_time(DISPATCH_TIME_NOW, delayToStartRecording * NSEC_PER_SEC);
+    dispatch_after(startTime, dispatch_get_main_queue(), ^(void){
+        
+        //  向きの設定をして録画スタート
+        [_movieWriter startRecordingInOrientation:[self videoOrientation]];
+        
+        //  タイマースタート
+        [self startRecordingProgressTimer];
+    });
+}
+
+- (void)startRecordingProgressTimer
+{
+    if(_recordingProgressTimer)
+        [self stopRecordingProgressTimer];
+    
+    _recordingProgressTimer = [NSTimer timerWithTimeInterval:1.0/10.0 target:self selector:@selector(doProgressRecording:) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:_recordingProgressTimer forMode:NSRunLoopCommonModes];
+}
+
+- (void)stopRecordingProgressTimer
+{
+    if(_recordingProgressTimer)
+    {
+        [_recordingProgressTimer invalidate];
+        _recordingProgressTimer = nil;
+    }
+}
+
+- (void)doProgressRecording:(NSTimer*)timer
+{
+    if(_recordingProgressTimer == timer)
+    {
+        //  残り時間のチェック
+        if(self.remainRecordTime<0.0)
+        {
+            //  終了
+            [self stopVideoRec];
+        }
+        else
+        {
+            //  プログレスのデリゲート
+            if([_delegate respondsToSelector:@selector(cameraManager:recordingTime:remainTime:)])
+            {
+                [_delegate cameraManager:self recordingTime:self.recordedTime remainTime:self.remainRecordTime];
+            }
+        }
+    }
+}
+
+- (void)stopVideoRec
+{
+    //  プログレスのタイマー止める
+    [self stopRecordingProgressTimer];
+    
+    //  movieWriteをtargetから消す
+    [_filter removeTarget:_movieWriter];
+    _stillCamera.audioEncodingTarget = nil;
+    [_movieWriter finishRecording];
+    NSLog(@"Movie completed");
+    
+    //  照明必ず消す
+    [self offTorch];
+    
+    //  GUIを元に戻す
+    [self showHideVideoRecording:YES];
+    
+    //  カメラロールに保存してみる
+    if(_autoSaveToCameraroll && UIVideoAtPathIsCompatibleWithSavedPhotosAlbum(_tmpMovieSavePath))
+    {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            UISaveVideoAtPathToSavedPhotosAlbum(_tmpMovieSavePath, self, @selector(video:didFinishSavingWithError:contextInfo:), nil);
+        });
+    }
+    
+    //  撮影完了時のデリゲート
+    if([_delegate respondsToSelector:@selector(cameraManager:didRecordMovie:)])
+    {
+        [_delegate cameraManager:self didRecordMovie:[NSURL fileURLWithPath:_tmpMovieSavePath]];
+    }
+}
+
+- (void)video:(NSString *)videoPath didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo
+{
+    NSLog(@"saveVideo to CameraRoll Finished:%@", videoPath);
+    
+    if([_tmpMovieSavePathArray containsObject:videoPath])
+    {
+        //  まだ消してはいけない
+        //  リストからは消しておく
+        [_tmpMovieSavePathArray removeObject:videoPath];
+    }
+    else
+    {
+        //  もう処理が終わってるらしいので消す
+        [[NSFileManager defaultManager] removeItemAtPath:videoPath error:nil];
+        
+        NSLog(@"removeFile:%@", videoPath);
+    }
+}
+
+//  tmpFileはもういらないよの通知
+- (void)removeTempMovieFile:(NSURL*)tmpURL
+{
+    NSString *path = tmpURL.path;
+    //
+    if([_tmpMovieSavePathArray containsObject:path])
+    {
+        //  まだ消してはいけない
+        //  リストからは消しておく
+        [_tmpMovieSavePathArray removeObject:path];
+    }
+    else
+    {
+        //  もう処理が終わってるらしいので消す
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+        
+        NSLog(@"removeFile:%@", path);
+    }
+}
+
+//
+- (NSTimeInterval)recordedTime
+{
+    CMTime time = _movieWriter.duration;
+    
+    return CMTimeGetSeconds(time);
+}
+
+- (NSTimeInterval)remainRecordTime
+{
+    return _videoDuration - self.recordedTime;
+}
+
 #pragma mark - kvo
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
@@ -868,30 +1219,25 @@
         for(UIView *focusView in _focusViews)
         {
             GPUImageView *previewView = (GPUImageView*)focusView.superview;
-            //if([previewView isKindOfClass:[GPUImageView class]])
+            if([_stillCamera.inputCamera isFocusPointOfInterestSupported])
             {
-                if([_stillCamera.inputCamera isFocusPointOfInterestSupported])
-                {
-                    CGPoint focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
-                    
-                    if(isnan(focusPos.x) || isnan(focusPos.y) || !CGRectContainsPoint(previewView.frame, focusPos))
-                    {
-                        //  なんかデータがおかしい時は中心にfocus表示しとく
-                        focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
-                    }
-                    
-                    focusView.center = focusPos;
-                }
-                else
-                    focusView.center = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+                CGPoint focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
                 
-                //
-                [UIView animateWithDuration:state?0.0:0.5 delay:0.0 options:0 animations:^{
-                    focusView.alpha = state?1.0:0.0;
-                } completion:nil];
+                if(isnan(focusPos.x) || isnan(focusPos.y) || !CGRectContainsPoint(previewView.frame, focusPos))
+                {
+                    //  なんかデータがおかしい時は中心にfocus表示しとく
+                    focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+                }
+                
+                focusView.center = focusPos;
             }
-//            else
-//                NSLog(@"Error:focusViewがGPUImageViewのsubviewになっていません。");
+            else
+                focusView.center = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+            
+            //
+            [UIView animateWithDuration:state?0.0:0.5 delay:0.0 options:0 animations:^{
+                focusView.alpha = state?1.0:0.0;
+            } completion:nil];
         }
         
         //  delegate
@@ -938,9 +1284,10 @@
             filter = [[GPUImageFilter alloc] init];
         } break;
             
-        case 1:{
-            filter = [[GPUImageContrastFilter alloc] init];
-            [(GPUImageContrastFilter *)filter setContrast:1.75];
+        case 1:{    //sepiaに変更してみた
+//            filter = [[GPUImageContrastFilter alloc] init];
+//            [(GPUImageContrastFilter *)filter setContrast:1.75];
+            filter = [[GPUImageSepiaFilter alloc] init];
         } break;
             
         case 2: {
@@ -970,10 +1317,6 @@
         case 8: {
             filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"06"];
         } break;
-            
-            //        case 9: {
-            //            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"purple-green"];
-            //        } break;
             
         default:
             filter = [[GPUImageFilter alloc] init];
@@ -1247,5 +1590,60 @@
     if(_isChooseFilterMode)
         [self handleFinishChooseFilterWithFilterName:_currentFilterName];
 }
+
+#pragma mark - shutter button image change
+
+- (void)changeShutterButtonImageTo:(NSString*)imageName
+{
+    if(![_delegate respondsToSelector:@selector(cameraManager:shouldChangeShutterButtonImageTo:)] || [_delegate cameraManager:self shouldChangeShutterButtonImageTo:imageName])
+    {
+        UIImage *image = [UIImage imageNamed:imageName];
+        for(UIButton *shutter in _shutterButtons)
+        {
+            [shutter setImage:image forState:UIControlStateNormal];
+        }
+    }
+}
+
+#pragma mark - cameraMode
+
+//  カメラモードを切り替える
+- (void)toggleCameraMode
+{
+    if(_cameraMode == CMCameraModeStill)
+        self.cameraMode = CMCameraModeVideo;
+    else
+        self.cameraMode = CMCameraModeStill;
+}
+
+- (void)setCameraMode:(CMCameraMode)cameraMode
+{
+    if(_cameraMode == cameraMode)
+        return;
+    
+    //
+    _cameraMode = cameraMode;
+    
+    //  ボタン変更
+    [self changeShutterButtonImageTo:cameraMode==CMCameraModeStill?_stillShutterButtonImageName:_videoShutterButtonImageName];
+    
+    //  sessionpreset変更
+    if(_cameraMode == CMCameraModeStill)
+    {
+        if([_stillCamera.inputCamera supportsAVCaptureSessionPreset:_sessionPresetForStill])
+            _stillCamera.captureSessionPreset = _sessionPresetForStill;
+        else
+            _stillCamera.captureSessionPreset = AVCaptureSessionPresetPhoto;
+    }
+    else
+    {
+        if([_stillCamera.inputCamera supportsAVCaptureSessionPreset:_sessionPresetForVideo])
+            _stillCamera.captureSessionPreset = _sessionPresetForVideo;
+        else
+            _stillCamera.captureSessionPreset = AVCaptureSessionPresetHigh;
+    }
+    
+}
+
 
 @end

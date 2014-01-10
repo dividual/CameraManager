@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		8989D7C9A72D4CC7985717D7 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 971C7FEA367F4C929489A80B /* libPods.a */; };
+		D5055320187EDE2A007355BE /* recStopButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D505531E187EDE2A007355BE /* recStopButton.png */; };
+		D5055321187EDE2A007355BE /* recStopButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D505531F187EDE2A007355BE /* recStopButton@2x.png */; };
+		D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = D5055323187EEB29007355BE /* NSDate+stringUtility.m */; };
 		D52A8AC71817F2EA00F4ADFD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D52A8AC61817F2EA00F4ADFD /* Foundation.framework */; };
 		D52A8AC91817F2EA00F4ADFD /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D52A8AC81817F2EA00F4ADFD /* CoreGraphics.framework */; };
 		D52A8ACB1817F2EA00F4ADFD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D52A8ACA1817F2EA00F4ADFD /* UIKit.framework */; };
@@ -41,6 +44,8 @@
 		D52A8B301817F71100F4ADFD /* focusFrame@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B241817F71100F4ADFD /* focusFrame@2x.png */; };
 		D52A8B311817F71100F4ADFD /* shutterButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B251817F71100F4ADFD /* shutterButton.png */; };
 		D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B261817F71100F4ADFD /* shutterButton@2x.png */; };
+		D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABAE187E425B00392583 /* recButton@2x.png */; };
+		D5CAABB1187E427100392583 /* recButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABB0187E427100392583 /* recButton.png */; };
 		D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */; };
 		D5D035681827741800233B58 /* 02.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035611827741800233B58 /* 02.acv */; };
 		D5D035691827741800233B58 /* 06.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035621827741800233B58 /* 06.acv */; };
@@ -68,6 +73,10 @@
 /* Begin PBXFileReference section */
 		508A94FF15A04474875392D0 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
 		971C7FEA367F4C929489A80B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		D505531E187EDE2A007355BE /* recStopButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = recStopButton.png; sourceTree = "<group>"; };
+		D505531F187EDE2A007355BE /* recStopButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "recStopButton@2x.png"; sourceTree = "<group>"; };
+		D5055322187EEB29007355BE /* NSDate+stringUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+stringUtility.h"; sourceTree = "<group>"; };
+		D5055323187EEB29007355BE /* NSDate+stringUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+stringUtility.m"; sourceTree = "<group>"; };
 		D52A8AC31817F2EA00F4ADFD /* CameraViewTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraViewTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D52A8AC61817F2EA00F4ADFD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		D52A8AC81817F2EA00F4ADFD /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -108,6 +117,8 @@
 		D52A8B241817F71100F4ADFD /* focusFrame@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "focusFrame@2x.png"; sourceTree = "<group>"; };
 		D52A8B251817F71100F4ADFD /* shutterButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = shutterButton.png; sourceTree = "<group>"; };
 		D52A8B261817F71100F4ADFD /* shutterButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shutterButton@2x.png"; sourceTree = "<group>"; };
+		D5CAABAE187E425B00392583 /* recButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "recButton@2x.png"; sourceTree = "<group>"; };
+		D5CAABB0187E427100392583 /* recButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = recButton.png; sourceTree = "<group>"; };
 		D5D0355B1827713700233B58 /* DLCGrayscaleContrastFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DLCGrayscaleContrastFilter.h; sourceTree = "<group>"; };
 		D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DLCGrayscaleContrastFilter.m; sourceTree = "<group>"; };
 		D5D035611827741800233B58 /* 02.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = 02.acv; sourceTree = "<group>"; };
@@ -255,6 +266,8 @@
 				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
 				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
 				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
+				D5055322187EEB29007355BE /* NSDate+stringUtility.h */,
+				D5055323187EEB29007355BE /* NSDate+stringUtility.m */,
 			);
 			name = CameraView;
 			path = CameraManager;
@@ -275,6 +288,10 @@
 				D52A8B241817F71100F4ADFD /* focusFrame@2x.png */,
 				D52A8B251817F71100F4ADFD /* shutterButton.png */,
 				D52A8B261817F71100F4ADFD /* shutterButton@2x.png */,
+				D5CAABB0187E427100392583 /* recButton.png */,
+				D5CAABAE187E425B00392583 /* recButton@2x.png */,
+				D505531E187EDE2A007355BE /* recStopButton.png */,
+				D505531F187EDE2A007355BE /* recStopButton@2x.png */,
 			);
 			path = Images;
 			sourceTree = "<group>";
@@ -386,17 +403,20 @@
 				D5D035681827741800233B58 /* 02.acv in Resources */,
 				D52A8B301817F71100F4ADFD /* focusFrame@2x.png in Resources */,
 				D52A8B2C1817F71100F4ADFD /* flashOFF@2x.png in Resources */,
+				D5055320187EDE2A007355BE /* recStopButton.png in Resources */,
 				D5D0356B1827741800233B58 /* aqua.acv in Resources */,
 				D52A8B2B1817F71100F4ADFD /* flashOFF.png in Resources */,
 				D52A8B2E1817F71100F4ADFD /* flashON@2x.png in Resources */,
 				D52A8ADF1817F2EA00F4ADFD /* Images.xcassets in Resources */,
 				D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */,
+				D5055321187EDE2A007355BE /* recStopButton@2x.png in Resources */,
 				D5D0356D1827741800233B58 /* purple-green.acv in Resources */,
 				D52A8B2F1817F71100F4ADFD /* focusFrame.png in Resources */,
 				D52A8B2D1817F71100F4ADFD /* flashON.png in Resources */,
 				D52A8B311817F71100F4ADFD /* shutterButton.png in Resources */,
 				D52A8B291817F71100F4ADFD /* flashAuto.png in Resources */,
 				D52A8B271817F71100F4ADFD /* cameraFrontBack.png in Resources */,
+				D5CAABB1187E427100392583 /* recButton.png in Resources */,
 				D5D0356C1827741800233B58 /* crossprocess.acv in Resources */,
 				D52A8AD11817F2EA00F4ADFD /* InfoPlist.strings in Resources */,
 				D5D035691827741800233B58 /* 06.acv in Resources */,
@@ -404,6 +424,7 @@
 				D5D0356E1827741800233B58 /* yellow-red.acv in Resources */,
 				D52A8B2A1817F71100F4ADFD /* flashAuto@2x.png in Resources */,
 				D52A8B281817F71100F4ADFD /* cameraFrontBack@2x.png in Resources */,
+				D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */,
 				D52A8ADA1817F2EA00F4ADFD /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -460,6 +481,7 @@
 				D52A8AD71817F2EA00F4ADFD /* AppDelegate.m in Sources */,
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
 				D52A8B181817F69100F4ADFD /* CameraManager.m in Sources */,
+				D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
 				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
@@ -518,7 +540,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -557,7 +579,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;

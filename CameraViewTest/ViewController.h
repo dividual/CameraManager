@@ -19,5 +19,8 @@
 @property (weak, nonatomic) IBOutlet UIButton *flashButton;
 @property (weak, nonatomic) IBOutlet UIImageView *focusView;
 @property (weak, nonatomic) IBOutlet UIButton *chooseFilterButton;
+@property (weak, nonatomic) IBOutlet UIButton *changeCameraModeButton;
+@property (weak, nonatomic) IBOutlet UILabel *movieRecordedTime;
+@property (weak, nonatomic) IBOutlet UILabel *movieRemainTime;
 
 @end

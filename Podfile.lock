@@ -1,10 +1,13 @@
 PODS:
-  - GPUImage (0.1.1)
+  - GPUImage (0.1.2)
+  - Overline (0.3.0)
 
 DEPENDENCIES:
   - GPUImage
+  - Overline
 
 SPEC CHECKSUMS:
-  GPUImage: b9840114a0ad0323801c2e0aa2752679057f808d
+  GPUImage: 007145faa0e27f1ddbcab93e07f026c9776e2fa2
+  Overline: 9c8bada0893600907f96cdafdc2c83b43ebcc1cf
 
-COCOAPODS: 0.28.0
+COCOAPODS: 0.27.1
