@@ -65,12 +65,12 @@
 {
     CGFloat baseAngle = self.orientationAngle;
     
-    if((_orientation!=UIDeviceOrientationFaceDown && _deviceAngleZ>0.95) || (_orientation==UIDeviceOrientationFaceDown && _deviceAngleZ>0.9))
+    if(_deviceAngleZ>0.98)
     {
         self.orientation = UIDeviceOrientationFaceDown;
         return;
     }
-    else if((_orientation!=UIDeviceOrientationFaceUp && _deviceAngleZ<-0.95) || (_orientation==UIDeviceOrientationFaceUp && _deviceAngleZ<-0.9))
+    else if(_deviceAngleZ<-0.98)
     {
         self.orientation = UIDeviceOrientationFaceUp;
         return;

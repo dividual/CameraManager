@@ -13,6 +13,7 @@
 #import "DeviceOrientation.h"
 #import "UIImage+Normalize.h"
 #import "NSDate+stringUtility.h"
+#import "GPUImageFilter+ProcessSizeUtility.h"
 
 @interface CameraManager ()
 {
@@ -25,6 +26,7 @@
 }
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput<GPUImageInput> *filter;
+@property (assign, nonatomic) CGSize cameraOutputOriginalSize;
 @property (assign, nonatomic) BOOL hasCamera;
 @property (assign, nonatomic) UIDeviceOrientation orientation;
 @property (strong, nonatomic) NSString *currentFilterName;
@@ -47,6 +49,8 @@
 @property (strong, nonatomic) NSTimer *recordingProgressTimer;
 @property (strong, nonatomic) NSMutableArray *tmpMovieSavePathArray;    //ここに残ってるというのは、まだ処理に使ってるかもしれないという意味
 
+@property (assign, nonatomic) BOOL adjustingFocus;  //  フォーカス中の判定を補正するための
+@property (assign, nonatomic) BOOL shutterReserved; //  フォーカス中にShutter押された時用のフラグ
 @end
 
 #pragma mark -
@@ -93,7 +97,7 @@
     _jpegQuality = 0.9;
     
     //  Filterを用意
-    _filterNameArray = @[ @"normal", @"sepia", @"CrossProcess", @"02", @"Grayscale", @"17", @"aqua", @"yellowRed", @"06" ];
+    _filterNameArray = @[ @"なし", @"セピア", @"プロセス", @"インスタント", @"グレイスケール", @"17", @"アクア", @"トランスファー", @"オールド" ];
     
     _currentFilterName = _filterNameArray[0];
     
@@ -179,6 +183,8 @@
             
             //  orientationの監視をする
             [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:nil];
+            
+            NSLog(@"focusMode:%d", _stillCamera.inputCamera.focusMode);
             
             //  フォーカスを合わせる処理を開始
             [self setFocusPoint:CGPointMake(0.5, 0.5)];
@@ -592,7 +598,6 @@
         return;
     
     //
-    AVCaptureDevice *device = _stillCamera.inputCamera;
     CGSize frameSize = view.frame.size;
     
     if ([_stillCamera cameraPosition] == AVCaptureDevicePositionFront)
@@ -604,36 +609,16 @@
     //  座標変換
     CGPoint pointOfInterest = [self convertToInterestPointFromTouchPos:pos inView:view];
     
-    //  タッチした位置へのフォーカスをサポートするかチェック
-    if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])
-    {
-        NSError *error;
-        if([device lockForConfiguration:&error])    //  devicelock
-        {
-            //  フォーカスを合わせる位置を指定
-            [device setFocusPointOfInterest:pointOfInterest];
-            [device setFocusMode:AVCaptureFocusModeAutoFocus];
-            
-            if([device isExposurePointOfInterestSupported] && [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure])
-            {
-                [device setExposurePointOfInterest:pointOfInterest];
-                [device setExposureMode:AVCaptureExposureModeContinuousAutoExposure];
-            }
-            
-            [device unlockForConfiguration];
-        }
-        else
-        {
-            NSLog(@"ERROR = %@", error);
-        }
-    }
+    
+    [self setFocusPoint:pointOfInterest];
 }
 
 - (void)setFocusPoint:(CGPoint)pos
 {
+    _adjustingFocus = YES;
+    
     //
     AVCaptureDevice *device = _stillCamera.inputCamera;
-    
     
     //  タッチした位置へのフォーカスをサポートするかチェック
     if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])
@@ -657,6 +642,25 @@
         {
             NSLog(@"ERROR = %@", error);
         }
+    }
+    
+    [self showHideFocusCursorWithPos:pos state:YES];
+    
+    [self performSelector:@selector(setFocusModeContinousAutoFocus) withObject:Nil afterDelay:1.0];
+}
+
+- (void)setFocusModeContinousAutoFocus
+{
+    AVCaptureDevice *device = _stillCamera.inputCamera;
+
+    if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus])
+    {
+        NSError *error;
+        if([device lockForConfiguration:&error])    //  devicelock
+        {
+            [device setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
+        }
+        [device unlockForConfiguration];
     }
 }
 
@@ -709,7 +713,16 @@
 		return;
 	}
 	
-	
+    //  フォーカスを合わせてる途中だったら
+    if(_adjustingFocus)
+    {
+        _shutterReserved = YES;
+        NSLog(@"_shutterReserved");
+    }
+    else
+        _shutterReserved = NO;
+    
+    //
     if(_cameraMode == CMCameraModeStill)
     {
         //  静止画撮影
@@ -722,6 +735,9 @@
         for(UIButton *button in _flashButons)
             button.alpha = 0.0;
         
+        if(_shutterReserved)
+            return;
+        
         if (_hasCamera)
         {
             [self prepareForCapture];
@@ -729,6 +745,9 @@
     }
     else
     {
+        if(_shutterReserved)
+            return;
+        
         //  動画撮影
         [self startVideoRec];
     }
@@ -801,8 +820,6 @@
             }
         }
     }
-    
-    NSLog(@"current session preset : %@", _stillCamera.captureSessionPreset);
 }
 
 #pragma mark - capture
@@ -857,6 +874,7 @@
             }
         });
         
+        //
         originalImage = processedImage;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             
@@ -1025,14 +1043,7 @@
     }
     
     //  GPUImageViewに表示してる元画像のサイズ
-    NSValue *inputSizeValue = [_previewViews[0] valueForKey:@"inputImageSize"]; //TODO: ここはちょっと強引なので注意
-    if(inputSizeValue)
-    {
-        CGSize inputSize = [inputSizeValue CGSizeValue];
-        return inputSize;
-    }
-    
-    return CGSizeMake(720.0, 1280.0);
+    return ((GPUImageFilter*)_filter).outputFrameSize;
 }
 
 - (void)showHideVideoRecording:(BOOL)state
@@ -1281,6 +1292,33 @@
 
 #pragma mark - kvo
 
+- (void)showHideFocusCursorWithPos:(CGPoint)pos state:(BOOL)state
+{
+    for(UIView *focusView in _focusViews)
+    {
+        GPUImageView *previewView = (GPUImageView*)focusView.superview;
+        if([_stillCamera.inputCamera isFocusPointOfInterestSupported])
+        {
+            CGPoint focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
+            
+            if(isnan(focusPos.x) || isnan(focusPos.y) || !CGRectContainsPoint(previewView.frame, focusPos))
+            {
+                //  なんかデータがおかしい時は中心にfocus表示しとく
+                focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+            }
+            
+            focusView.center = focusPos;
+        }
+        else
+            focusView.center = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+        
+        //
+        [UIView animateWithDuration:state?0.0:0.5 delay:0.0 options:0 animations:^{
+            focusView.alpha = state?1.0:0.0;
+        } completion:nil];
+    }
+}
+
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
     if([keyPath isEqualToString:@"adjustingFocus"])
@@ -1288,29 +1326,7 @@
         BOOL state = _stillCamera.inputCamera.isAdjustingFocus;
         CGPoint pos = _stillCamera.inputCamera.focusPointOfInterest;
         
-        for(UIView *focusView in _focusViews)
-        {
-            GPUImageView *previewView = (GPUImageView*)focusView.superview;
-            if([_stillCamera.inputCamera isFocusPointOfInterestSupported])
-            {
-                CGPoint focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
-                
-                if(isnan(focusPos.x) || isnan(focusPos.y) || !CGRectContainsPoint(previewView.frame, focusPos))
-                {
-                    //  なんかデータがおかしい時は中心にfocus表示しとく
-                    focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
-                }
-                
-                focusView.center = focusPos;
-            }
-            else
-                focusView.center = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
-            
-            //
-            [UIView animateWithDuration:state?0.0:0.5 delay:0.0 options:0 animations:^{
-                focusView.alpha = state?1.0:0.0;
-            } completion:nil];
-        }
+        [self showHideFocusCursorWithPos:pos state:state];
         
         //  delegate
         if([_delegate respondsToSelector:@selector(cameraManager:didChangeAdjustingFocus:devide:)])
@@ -1318,6 +1334,17 @@
             [_delegate cameraManager:self didChangeAdjustingFocus:state devide:_stillCamera.inputCamera];
         }
         
+        //
+        if(_shutterReserved && state == NO)
+        {
+            _adjustingFocus = NO;
+            [self takePhoto:nil];
+            _shutterReserved = NO;
+        }
+        else
+        {
+            _adjustingFocus = state;
+        }
     }
     else if([keyPath isEqualToString:@"orientation"])
     {
@@ -1421,7 +1448,7 @@
     [self prepareFilter];
 }
 
-- (void)setFilterWithFilter:(GPUImageFilter*)filter name:(NSString*)name
+- (void)setFilterWithFilter:(GPUImageFilter*)filter name:(NSString*)name size:(CGSize)originalSize
 {
     for(GPUImageView *view in _previewViews)
         [_filter removeTarget:view];
@@ -1430,6 +1457,8 @@
     
     _currentFilterName = name;
     _filter = filter;
+    
+    [_filter forceProcessingAtSize:originalSize];
     
     for(GPUImageView *view in _previewViews)
     {
@@ -1443,6 +1472,20 @@
     UIImage *img = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUp];
     
     return [img normalizedImage];
+}
+
+//  エフェクト一覧の時にフィルター名を表示するときの文字の属性を指定したattributedstringを返す
+- (NSAttributedString*)filterNameAttStringWithString:(NSString*)string
+{
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.alignment = NSTextAlignmentCenter;
+    
+    //
+    NSAttributedString *repString = [[NSAttributedString alloc] initWithString:string attributes:@{ NSFontAttributeName:[UIFont boldSystemFontOfSize:12.0],
+                                                                                                    NSForegroundColorAttributeName:[UIColor whiteColor],
+                                                                                                    NSParagraphStyleAttributeName:paragraphStyle}];
+    
+    return repString;
 }
 
 //  エフェクト一覧画面を表示するための画面を作る（指定するGPUImageViewはprevieViewsとして追加済みでないとダメ）
@@ -1495,23 +1538,45 @@
     NSMutableArray *filters = [NSMutableArray array];
     NSMutableArray *views = [NSMutableArray array];
     
+    //
+    CGSize originalSize = ((GPUImageFilter*)_filter).outputFrameSize;
+    
+    //
     for(int i=0;i<filterNum;i++)
     {
         int x = i%3;
         int y = i/3;
         
+        //  フレーム指定
         CGRect frame = CGRectMake(x*oneWidth, y*oneHeight, oneWidth, oneHeight);
+        
+        //  ライブフィルタープレビューのviewを作る
         GPUImageView *view = [[GPUImageView alloc] initWithFrame:frame];
+        
+        //  フィルモード指定
         view.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
         
+        //  フィルター指定
         GPUImageFilter *filter = [self filterWithName:_filterNameArray[i]];
         
+        //  フィルターの解像度下げる
+        [filter forceProcessingAtSizeFixAspect:CGSizeMake(oneWidth, oneHeight) originalSize:originalSize scale:[UIScreen mainScreen].scale];
+        
+        //  フィルター追加
         [_stillCamera addTarget:filter];
         [filter addTarget:view];
         
         [filters addObject:filter];
         [views addObject:view];
         
+        //  フィルター名を追加
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0.0, CGRectGetHeight(frame)-20.0, CGRectGetWidth(frame), 20.0)];
+        label.backgroundColor = [UIColor colorWithWhite:0.0 alpha:0.3];
+        label.attributedText = [self filterNameAttStringWithString:_filterNameArray[i]];
+        [view addSubview:label];
+        label.alpha = 0.0;
+        
+        //  ベースに追加
         [baseView addSubview:view];
         
         //
@@ -1537,15 +1602,27 @@
     GPUImageView *curView = views[curFilterIndex];
     CGRect toFrame = curView.frame;
     curView.frame = baseView.bounds;
+    
     [baseView bringSubviewToFront:curView];
     
     //
-    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+    [UIView animateWithDuration:0.3 delay:0.1 options:0 animations:^{
         //
         curView.frame = toFrame;
         
     } completion:^(BOOL finished) {
         //
+        //  label表示
+        [UIView animateWithDuration:0.2 animations:^{
+            for(UIView *view in _chooseFilterBaseView.subviews)
+            {
+                for(UILabel *label in view.subviews)
+                {
+                    if([label isKindOfClass:[UILabel class]])
+                        label.alpha = 1.0;
+                }
+            }
+        }];
     }];
     
     //  フラグたてる
@@ -1592,14 +1669,28 @@
     //  選択されたviewを最前面に
     [_chooseFilterBaseView bringSubviewToFront:tapView];
     
+    //  label消す
+    [UIView animateWithDuration:0.1 animations:^{
+        for(UIView *view in _chooseFilterBaseView.subviews)
+        {
+            for(UILabel *label in view.subviews)
+            {
+                if([label isKindOfClass:[UILabel class]])
+                {
+                    label.alpha = 0.0;
+                    [label removeFromSuperview];
+                }
+            }
+        }
+    }];
+    
     //  アニメーションさせる
-    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+    [UIView animateWithDuration:0.3 delay:0.1 options:0 animations:^{
         //  選ばれたviewを最大化
         tapView.frame = _chooseFilterBaseView.frame;
         
     } completion:^(BOOL finished) {
         
-        //
         //  choose系を消す
         [_chooseFilterBaseView removeGestureRecognizer:_chooseFilterTapGesture];
         
@@ -1609,7 +1700,7 @@
         _isChooseFilterMode = NO;
         
         //  選択されたfilterを有効化
-        [self setFilterWithFilter:tapFilter name:filterName];
+        [self setFilterWithFilter:tapFilter name:filterName size:CGSizeZero];
         
         //  タップしてないfilterの接続を解除
         for(GPUImageFilter *filter in _chooseFilterFilters)
@@ -1621,7 +1712,6 @@
             }
         }
         _chooseFilterFilters = nil;
-        
         
         //  Shutterなどを表示する
         [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
@@ -1690,9 +1780,6 @@
 
 - (void)setCameraMode:(CMCameraMode)cameraMode
 {
-    if(_cameraMode == cameraMode)
-        return;
-    
     //
     _cameraMode = cameraMode;
     
@@ -1733,8 +1820,6 @@
         else
             _stillCamera.captureSessionPreset = AVCaptureSessionPresetHigh;
     }
-    
-    NSLog(@"sessionPreset:%@", _stillCamera.captureSessionPreset);
 }
 
 @dynamic hasFlash;
