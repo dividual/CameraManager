@@ -54,7 +54,7 @@
 		D5D0356C1827741800233B58 /* crossprocess.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035651827741800233B58 /* crossprocess.acv */; };
 		D5D0356D1827741800233B58 /* purple-green.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035661827741800233B58 /* purple-green.acv */; };
 		D5D0356E1827741800233B58 /* yellow-red.acv in Resources */ = {isa = PBXBuildFile; fileRef = D5D035671827741800233B58 /* yellow-red.acv */; };
-		D5D035721827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D035711827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m */; };
+		D5D035721827BD3D00233B58 /* GPUImageStillCamera+Utility.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */; };
 		D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357A1827C14B00233B58 /* DeviceOrientation.m */; };
 		D5D0357D1827C22A00233B58 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D5D0357C1827C22A00233B58 /* CoreMotion.framework */; };
 		D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357F1827D03600233B58 /* UIImage+Normalize.m */; };
@@ -128,8 +128,8 @@
 		D5D035651827741800233B58 /* crossprocess.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = crossprocess.acv; sourceTree = "<group>"; };
 		D5D035661827741800233B58 /* purple-green.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = "purple-green.acv"; sourceTree = "<group>"; };
 		D5D035671827741800233B58 /* yellow-red.acv */ = {isa = PBXFileReference; lastKnownFileType = file; path = "yellow-red.acv"; sourceTree = "<group>"; };
-		D5D035701827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageStillCamera+CaptureOrientation.h"; sourceTree = "<group>"; };
-		D5D035711827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageStillCamera+CaptureOrientation.m"; sourceTree = "<group>"; };
+		D5D035701827BD3D00233B58 /* GPUImageStillCamera+Utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageStillCamera+Utility.h"; sourceTree = "<group>"; };
+		D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageStillCamera+Utility.m"; sourceTree = "<group>"; };
 		D5D035791827C14B00233B58 /* DeviceOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceOrientation.h; sourceTree = "<group>"; };
 		D5D0357A1827C14B00233B58 /* DeviceOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceOrientation.m; sourceTree = "<group>"; };
 		D5D0357C1827C22A00233B58 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
@@ -260,8 +260,8 @@
 				D52A8B151817F69100F4ADFD /* CameraManager.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
 				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
-				D5D035701827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.h */,
-				D5D035711827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m */,
+				D5D035701827BD3D00233B58 /* GPUImageStillCamera+Utility.h */,
+				D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */,
 				D5D035791827C14B00233B58 /* DeviceOrientation.h */,
 				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
 				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
@@ -485,7 +485,7 @@
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
 				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
-				D5D035721827BD3D00233B58 /* GPUImageStillCamera+CaptureOrientation.m in Sources */,
+				D5D035721827BD3D00233B58 /* GPUImageStillCamera+Utility.m in Sources */,
 				D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

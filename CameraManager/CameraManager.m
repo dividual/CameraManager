@@ -9,7 +9,7 @@
 #import "CameraManager.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "DLCGrayscaleContrastFilter.h"
-#import "GPUImageStillCamera+CaptureOrientation.h"
+#import "GPUImageStillCamera+Utility.h"
 #import "DeviceOrientation.h"
 #import "UIImage+Normalize.h"
 #import "NSDate+stringUtility.h"
@@ -155,10 +155,16 @@
             BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
             
 			if( !_sessionPresetForStill )
-				_sessionPresetForStill = AVCaptureSessionPreset1920x1080;
+				_sessionPresetForStill = AVCaptureSessionPresetPhoto;
 
             if( !_sessionPresetForVideo)
                 _sessionPresetForVideo = AVCaptureSessionPreset1280x720;
+            
+            if( !_sessionPresetForFrontStill )
+				_sessionPresetForFrontStill = AVCaptureSessionPresetPhoto;
+            
+            if( !_sessionPresetForFrontVideo)
+                _sessionPresetForFrontVideo = AVCaptureSessionPresetHigh;
             
             _stillCamera = [[GPUImageStillCamera alloc] initWithSessionPreset:self.sessionPresetForStill cameraPosition:isRearCameraAvailable?AVCaptureDevicePositionBack:AVCaptureDevicePositionFront];
             
@@ -173,6 +179,9 @@
             
             //  orientationの監視をする
             [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:nil];
+            
+            //  フォーカスを合わせる処理を開始
+            [self setFocusPoint:CGPointMake(0.5, 0.5)];
             
             //
             runOnMainQueueWithoutDeadlocking(^{
@@ -620,6 +629,37 @@
     }
 }
 
+- (void)setFocusPoint:(CGPoint)pos
+{
+    //
+    AVCaptureDevice *device = _stillCamera.inputCamera;
+    
+    
+    //  タッチした位置へのフォーカスをサポートするかチェック
+    if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])
+    {
+        NSError *error;
+        if([device lockForConfiguration:&error])    //  devicelock
+        {
+            //  フォーカスを合わせる位置を指定
+            [device setFocusPointOfInterest:pos];
+            [device setFocusMode:AVCaptureFocusModeAutoFocus];
+            
+            if([device isExposurePointOfInterestSupported] && [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure])
+            {
+                [device setExposurePointOfInterest:pos];
+                [device setExposureMode:AVCaptureExposureModeContinuousAutoExposure];
+            }
+            
+            [device unlockForConfiguration];
+        }
+        else
+        {
+            NSLog(@"ERROR = %@", error);
+        }
+    }
+}
+
 - (void)setFlashMode:(CMFlashMode)flashMode
 {
     _flashMode = flashMode;
@@ -694,16 +734,44 @@
     }
 }
 
+//
 - (void)rotateCameraPosition:(id)sender
 {
+    //  ボタンを非アクティブに（連打防止）
     for(UIButton *button in _cameraRotateButtons)
         button.enabled = NO;
     
-    [_stillCamera rotateCamera];
+    //  現在のカメラポジションを見て、解像度の切り替え考える
+    if (_stillCamera.inputCamera.position == AVCaptureDevicePositionBack)
+    {
+        //  前のカメラに変えるってことなので、解像度設定をPhotoに
+        if(_cameraMode == CMCameraModeStill)
+        {
+            [_stillCamera rotateCameraWithCaptureSessionPreset:_sessionPresetForFrontStill];
+        }
+        else
+        {
+            [_stillCamera rotateCameraWithCaptureSessionPreset:_sessionPresetForFrontVideo];
+        }
+    }
+    else
+    {
+        //  後ろのカメラに設定するときは、解像度を動画か静止画かで切り替える
+        if(_cameraMode == CMCameraModeStill)
+        {
+            [_stillCamera rotateCameraWithCaptureSessionPreset:_sessionPresetForStill];
+        }
+        else
+        {
+            [_stillCamera rotateCameraWithCaptureSessionPreset:_sessionPresetForVideo];
+        }
+    }
     
+    //  ボタンをアクティブに
     for(UIButton *button in _cameraRotateButtons)
         button.enabled = YES;
     
+    //  フラッシュの有り無しに応じてGUIの表示/非表示、フロントモードの時は左右入れ替えてプレビュー
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera] && _stillCamera)
     {
         if ([_stillCamera.inputCamera hasFlash] && [_stillCamera.inputCamera hasTorch])
@@ -732,8 +800,9 @@
                 [view setInputRotation:kGPUImageNoRotation atIndex:0];
             }
         }
-
     }
+    
+    NSLog(@"current session preset : %@", _stillCamera.captureSessionPreset);
 }
 
 #pragma mark - capture
@@ -1631,8 +1700,27 @@
     [self changeShutterButtonImageTo:cameraMode==CMCameraModeStill?_stillShutterButtonImageName:_videoShutterButtonImageName];
     
     //  sessionpreset変更
-    if(_cameraMode == CMCameraModeStill)
+    if(_stillCamera.inputCamera.position == AVCaptureDevicePositionFront)
     {
+        //  フロントカメラの時
+        if(_cameraMode == CMCameraModeStill)
+        {
+            if([_stillCamera.inputCamera supportsAVCaptureSessionPreset:_sessionPresetForFrontStill])
+                _stillCamera.captureSessionPreset = _sessionPresetForFrontStill;
+            else
+                _stillCamera.captureSessionPreset = AVCaptureSessionPresetPhoto;
+        }
+        else
+        {
+            if([_stillCamera.inputCamera supportsAVCaptureSessionPreset:_sessionPresetForFrontVideo])
+                _stillCamera.captureSessionPreset = _sessionPresetForFrontVideo;
+            else
+                _stillCamera.captureSessionPreset = AVCaptureSessionPresetHigh;
+        }
+    }
+    else if(_cameraMode == CMCameraModeStill)
+    {
+        //  リアカメラの時
         if([_stillCamera.inputCamera supportsAVCaptureSessionPreset:_sessionPresetForStill])
             _stillCamera.captureSessionPreset = _sessionPresetForStill;
         else
@@ -1646,6 +1734,7 @@
             _stillCamera.captureSessionPreset = AVCaptureSessionPresetHigh;
     }
     
+    NSLog(@"sessionPreset:%@", _stillCamera.captureSessionPreset);
 }
 
 @dynamic hasFlash;

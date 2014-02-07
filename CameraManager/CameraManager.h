@@ -89,6 +89,10 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (strong, nonatomic) NSString *sessionPresetForStill;
 @property (strong, nonatomic) NSString *sessionPresetForVideo;
 
+@property (strong, nonatomic) NSString *sessionPresetForFrontStill;
+@property (strong, nonatomic) NSString *sessionPresetForFrontVideo;
+
+
 @property (assign, nonatomic) CMCameraMode cameraMode;
 @property (assign, nonatomic) NSTimeInterval videoDuration;
 @property (readonly, nonatomic) NSTimeInterval recordedTime;      //  録画済みの時間

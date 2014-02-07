@@ -6,13 +6,13 @@
 //  Copyright (c) 2013 Shinya Matsuyama. All rights reserved.
 //
 
-#import "GPUImageStillCamera+CaptureOrientation.h"
+#import "GPUImageStillCamera+Utility.h"
 
 @interface GPUImageStillCamera (private)
 - (void)capturePhotoProcessedUpToFilter:(GPUImageOutput<GPUImageInput> *)finalFilterInChain withImageOnGPUHandler:(void (^)(NSError *error))block;
 @end
 
-@implementation GPUImageStillCamera (CaptureOrientation)
+@implementation GPUImageStillCamera (Utility)
 
 - (void)captureFixFlipPhotoAsImageProcessedUpToFilter:(GPUImageOutput<GPUImageInput> *)finalFilterInChain orientation:(UIDeviceOrientation)orientation withCompletionHandler:(void (^)(UIImage *processedImage, NSError *error))block
 {
@@ -97,6 +97,66 @@
         
         block(dataForJPEGFile, error);
     }];
+}
+
+
+///
+
+- (void)rotateCameraWithCaptureSessionPreset:(NSString *)sessionPreset
+{
+	if (self.frontFacingCameraPresent == NO)
+		return;
+	
+    NSError *error;
+    AVCaptureDeviceInput *newVideoInput;
+    AVCaptureDevicePosition currentCameraPosition = [[videoInput device] position];
+    
+    if (currentCameraPosition == AVCaptureDevicePositionBack)
+    {
+        currentCameraPosition = AVCaptureDevicePositionFront;
+    }
+    else
+    {
+        currentCameraPosition = AVCaptureDevicePositionBack;
+    }
+    
+    AVCaptureDevice *backFacingCamera = nil;
+    NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+	for (AVCaptureDevice *device in devices)
+	{
+		if ([device position] == currentCameraPosition)
+		{
+			backFacingCamera = device;
+		}
+	}
+    newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:backFacingCamera error:&error];
+    
+    if (newVideoInput != nil)
+    {
+        [_captureSession beginConfiguration];
+        [_captureSession removeInput:videoInput];
+        
+        //  session切り替え
+        if(![self.captureSessionPreset isEqualToString:sessionPreset])
+        {
+            self.captureSessionPreset = sessionPreset;
+        }
+        
+        //
+        if ([_captureSession canAddInput:newVideoInput])
+        {
+            [_captureSession addInput:newVideoInput];
+            videoInput = newVideoInput;
+        }
+        else
+        {
+            [_captureSession addInput:videoInput];
+        }
+        [_captureSession commitConfiguration];
+    }
+    
+    _inputCamera = backFacingCamera;
+    [self setOutputImageOrientation:self.outputImageOrientation];
 }
 
 @end
