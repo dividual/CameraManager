@@ -12,7 +12,6 @@
 #import "GPUImageStillCamera+CaptureOrientation.h"
 #import "DeviceOrientation.h"
 #import "UIImage+Normalize.h"
-#import <Overline/NSString+OVHash.h>
 #import "NSDate+stringUtility.h"
 
 @interface CameraManager ()
@@ -661,10 +660,16 @@
     self.flashMode = (_flashMode+1)%3;
 }
 
+
+///  シャッターボタンを押された
 - (void)takePhoto:(id)sender
 {
-    //  シャッターボタンを押された
-    
+    if( [UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera] == NO ){
+		// カメラが無ければ処理中断
+		return;
+	}
+	
+	
     if(_cameraMode == CMCameraModeStill)
     {
         //  静止画撮影
@@ -1025,10 +1030,8 @@
 
 - (NSString*)makeTempMovieFileName
 {
-    NSString *dateString = [[NSDate date] stringTimeStampFormat];
-    NSString *hash = [dateString md5];
-    
-    return [NSString stringWithFormat:@"%@.m4v", hash];
+    NSString *uuidString = [[NSUUID UUID] UUIDString];
+    return [NSString stringWithFormat:@"%@.m4v", uuidString];
 }
 
 - (void)startVideoRec
@@ -1645,5 +1648,10 @@
     
 }
 
+@dynamic hasFlash;
+- (BOOL)hasFlash
+{
+    return [_stillCamera.inputCamera hasTorch];
+}
 
 @end

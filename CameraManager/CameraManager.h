@@ -26,6 +26,11 @@
 
 //  エフェクト選択画面を実装してみる
 
+//  2014/01/10
+//  変更の内容
+//      動画撮影機能の追加
+//      それに伴ういくつかのdelegate追加など
+
 #import <GPUImage/GPUImage.h>
 
 typedef NS_ENUM(NSInteger, CMFlashMode)
@@ -54,6 +59,7 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 - (void)cameraManager:(CameraManager*)sender didChangeAdjustingFocus:(BOOL)isAdjustingFocus devide:(AVCaptureDevice*)device;
 - (void)cameraManager:(CameraManager*)sender didChangeDeviceOrientation:(UIDeviceOrientation)orientation;
 - (void)cameraManager:(CameraManager*)sender didChangeFilter:(NSString*)filterName;
+
 - (void)cameraManagerWillStartRecordVideo:(CameraManager*)sender;
 - (void)cameraManager:(CameraManager*)sender didRecordMovie:(NSURL*)tmpFileURL;
 - (void)cameraManager:(CameraManager*)sender recordingTime:(NSTimeInterval)recordedTime remainTime:(NSTimeInterval)remainTime;
@@ -87,6 +93,9 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (assign, nonatomic) NSTimeInterval videoDuration;
 @property (readonly, nonatomic) NSTimeInterval recordedTime;      //  録画済みの時間
 @property (readonly, nonatomic) NSTimeInterval remainRecordTime;  //  録画残り時間
+
+@property (readonly, nonatomic) GPUImageStillCamera *stillCamera;
+@property (readonly, nonatomic) BOOL hasFlash;
 
 //  GPUImageViewをつなぎこんで使う前提
 @property (readonly, nonatomic) NSArray *previewViews;
