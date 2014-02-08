@@ -25,7 +25,8 @@
     NSMutableArray *_cameraRotateButtons;
 }
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
-@property (strong, nonatomic) GPUImageOutput<GPUImageInput> *filter;
+@property (strong, nonatomic) GPUImageFilter *filter;
+@property (strong, nonatomic) GPUImageFilter *brightContrastFilter;
 @property (assign, nonatomic) CGSize cameraOutputOriginalSize;
 @property (assign, nonatomic) BOOL hasCamera;
 @property (assign, nonatomic) UIDeviceOrientation orientation;
@@ -49,8 +50,11 @@
 @property (strong, nonatomic) NSTimer *recordingProgressTimer;
 @property (strong, nonatomic) NSMutableArray *tmpMovieSavePathArray;    //ここに残ってるというのは、まだ処理に使ってるかもしれないという意味
 
+@property (assign, nonatomic) BOOL focusViewShowHide;
 @property (assign, nonatomic) BOOL adjustingFocus;  //  フォーカス中の判定を補正するための
 @property (assign, nonatomic) BOOL shutterReserved; //  フォーカス中にShutter押された時用のフラグ
+
+@property (assign, nonatomic) CGSize originalFocusCursorSize;
 @end
 
 #pragma mark -
@@ -184,11 +188,6 @@
             //  orientationの監視をする
             [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:nil];
             
-            NSLog(@"focusMode:%d", _stillCamera.inputCamera.focusMode);
-            
-            //  フォーカスを合わせる処理を開始
-            [self setFocusPoint:CGPointMake(0.5, 0.5)];
-            
             //
             runOnMainQueueWithoutDeadlocking(^{
                 
@@ -198,7 +197,13 @@
                 [self prepareFilter];
                 
                 [self updateButtons];
+                
+                //  フォーカスを合わせる処理を開始
+                [self setFocusPoint:CGPointMake(0.5, 0.5)];
             });
+            
+            //  notificationの登録
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleDeviceSubjectAreaDidChangeNotification:) name:AVCaptureDeviceSubjectAreaDidChangeNotification object:nil];
         }
         else
         {
@@ -351,6 +356,10 @@
 
 - (void)addFocusView:(UIView*)view
 {
+    if(CGSizeEqualToSize(_originalFocusCursorSize, CGSizeZero))
+    {
+        _originalFocusCursorSize = view.bounds.size;
+    }
     //  FocusViewsに追加
     [_focusViews addObject:view];
     
@@ -609,7 +618,7 @@
     //  座標変換
     CGPoint pointOfInterest = [self convertToInterestPointFromTouchPos:pos inView:view];
     
-    
+    //
     [self setFocusPoint:pointOfInterest];
 }
 
@@ -626,9 +635,19 @@
         NSError *error;
         if([device lockForConfiguration:&error])    //  devicelock
         {
+            //  画面の変化をチェックする
+            [device setSubjectAreaChangeMonitoringEnabled:YES];
+
             //  フォーカスを合わせる位置を指定
             [device setFocusPointOfInterest:pos];
             [device setFocusMode:AVCaptureFocusModeAutoFocus];
+            
+            //  アニメーションスタート
+            [self showFocusCursorWithPos:pos];
+            
+            //
+            if(device.smoothAutoFocusSupported)
+                device.smoothAutoFocusEnabled = NO;
             
             if([device isExposurePointOfInterestSupported] && [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure])
             {
@@ -643,10 +662,6 @@
             NSLog(@"ERROR = %@", error);
         }
     }
-    
-    //[self showHideFocusCursorWithPos:pos state:YES];
-    
-    [self performSelector:@selector(setFocusModeContinousAutoFocus) withObject:Nil afterDelay:0.1];
 }
 
 - (void)setFocusModeContinousAutoFocus
@@ -658,7 +673,11 @@
         NSError *error;
         if([device lockForConfiguration:&error])    //  devicelock
         {
+            [device setFocusPointOfInterest:CGPointMake(0.5, 0.5)];
             [device setFocusMode:AVCaptureFocusModeContinuousAutoFocus];
+            
+            //  画面の変化を追うのをやめる
+            [device setSubjectAreaChangeMonitoringEnabled:NO];
         }
         [device unlockForConfiguration];
     }
@@ -1292,30 +1311,74 @@
 
 #pragma mark - kvo
 
-- (void)showHideFocusCursorWithPos:(CGPoint)pos state:(BOOL)state
+- (void)showFocusCursorWithPos:(CGPoint)pos
 {
+    _focusViewShowHide = YES;
+    
     for(UIView *focusView in _focusViews)
     {
+        CGPoint focusPos;
         GPUImageView *previewView = (GPUImageView*)focusView.superview;
         if([_stillCamera.inputCamera isFocusPointOfInterestSupported])
         {
-            CGPoint focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
+            focusPos = [self convertToTouchPosFromInterestPoint:pos inView:previewView];
             
             if(isnan(focusPos.x) || isnan(focusPos.y) || !CGRectContainsPoint(previewView.frame, focusPos))
             {
                 //  なんかデータがおかしい時は中心にfocus表示しとく
                 focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
             }
-            
-            focusView.center = focusPos;
         }
         else
-            focusView.center = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+            focusPos = CGPointMake(CGRectGetWidth(previewView.bounds)/2.0, CGRectGetHeight(previewView.bounds)/2.0);
+        
+        //  フォーカスが出てくるアニメーション
+        focusView.bounds = CGRectMake(0.0, 0.0, _originalFocusCursorSize.width*4.0, _originalFocusCursorSize.height*4.0);
+        focusView.center = focusPos;
         
         //
-        [UIView animateWithDuration:state?0.0:0.5 delay:0.0 options:0 animations:^{
-            focusView.alpha = state?1.0:0.0;
-        } completion:nil];
+        [focusView.layer removeAllAnimations];
+        focusView.alpha = 0.0;
+        
+        [UIView animateWithDuration:0.1 delay:0.0 options:7<<16 animations:^{
+            //
+            focusView.bounds = CGRectMake(0.0, 0.0, _originalFocusCursorSize.width, _originalFocusCursorSize.height);
+            focusView.center = focusPos;
+
+            //
+            focusView.alpha = 1.0;
+            
+        } completion:^(BOOL finished) {
+            //
+            if(finished)
+            {
+                focusView.alpha = 1.0;
+                [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionRepeat|UIViewAnimationOptionAutoreverse animations:^{
+                    //
+                    focusView.alpha = 0.3;
+                    
+                } completion:^(BOOL finished) {
+                    //
+                }];
+            }
+        }];
+    }
+}
+
+- (void)hideFocusCursor
+{
+    for(UIView *focusView in _focusViews)
+    {
+        [focusView.layer removeAllAnimations];
+        
+        [UIView animateWithDuration:0.5 delay:0.0 options:0 animations:^{
+            //
+            focusView.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            
+            if(finished)
+                _focusViewShowHide = NO;
+        }];
     }
 }
 
@@ -1324,9 +1387,23 @@
     if([keyPath isEqualToString:@"adjustingFocus"])
     {
         BOOL state = _stillCamera.inputCamera.isAdjustingFocus;
-        CGPoint pos = _stillCamera.inputCamera.focusPointOfInterest;
         
-        [self showHideFocusCursorWithPos:pos state:state];
+        //  カーソルを消すとか表示するとか
+        if(state == NO)
+            [self hideFocusCursor];
+        else if(_focusViewShowHide == NO)
+        {
+            //  フォーカス開始で、かつfocusViewが表示されてない場合
+            CGPoint focusPos;
+            if(_stillCamera.inputCamera.focusPointOfInterestSupported)
+                focusPos = _stillCamera.inputCamera.focusPointOfInterest;
+            else
+                focusPos = CGPointMake(0.5, 0.5);
+            
+            [self showFocusCursorWithPos:focusPos];
+        }
+        
+        NSLog(@"state=%d , _focusViewShowHide=%d", state, _focusViewShowHide);
         
         //  delegate
         if([_delegate respondsToSelector:@selector(cameraManager:didChangeAdjustingFocus:devide:)])
@@ -1826,6 +1903,14 @@
 - (BOOL)hasFlash
 {
     return [_stillCamera.inputCamera hasTorch];
+}
+
+#pragma mark - notification
+
+- (void)handleDeviceSubjectAreaDidChangeNotification:(NSNotification*)notification
+{
+    NSLog(@"***handleDeviceSubjectAreaDidChangeNotification");
+    [self setFocusModeContinousAutoFocus];
 }
 
 @end

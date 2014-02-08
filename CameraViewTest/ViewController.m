@@ -25,6 +25,8 @@
     //  PreviewViewの設定
     _previewViewA.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
     
+    _focusView.image = [[UIImage imageNamed:@"focusFrame"] stretchableImageWithLeftCapWidth:4.0 topCapHeight:4.0];
+    
     [[CameraManager sharedManager] addPreviewView:_previewViewA];
     [[CameraManager sharedManager] addFocusView:_focusView];
     
