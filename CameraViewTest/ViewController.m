@@ -40,7 +40,7 @@
     
     [CameraManager sharedManager].videoDuration = 10.0; //   動画撮影時間
 
-    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPreset1920x1080;
+    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
     [CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPreset1280x720;
 
     //  カメラを開く
