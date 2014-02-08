@@ -644,9 +644,9 @@
         }
     }
     
-    [self showHideFocusCursorWithPos:pos state:YES];
+    //[self showHideFocusCursorWithPos:pos state:YES];
     
-    [self performSelector:@selector(setFocusModeContinousAutoFocus) withObject:Nil afterDelay:1.0];
+    [self performSelector:@selector(setFocusModeContinousAutoFocus) withObject:Nil afterDelay:0.1];
 }
 
 - (void)setFocusModeContinousAutoFocus

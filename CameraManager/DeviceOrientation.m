@@ -76,25 +76,29 @@
         return;
     }
     
-    if((baseAngle > -M_PI_4) && (baseAngle <= M_PI_4))
+    //  別の確度に変化するときは、基準確度よりも外に多めにずれてから。対角に変化するときは、基準値に入ればそのまま。
+    CGFloat dd = M_PI_4*0.2;
+    
+    if(((-M_PI_4+dd) < baseAngle) && (baseAngle <= (M_PI_4-dd)))
     {
         self.orientation = UIDeviceOrientationPortrait;
         return;
     }
-    else if((baseAngle <= -M_PI_4) && (baseAngle > -3 * M_PI_4))
+    else if(((-3 * M_PI_4+dd) < baseAngle) && (baseAngle <= (-M_PI_4-dd)))
     {
         self.orientation = UIDeviceOrientationLandscapeLeft;
         return;
     }
-    else if((baseAngle > M_PI_4) && (baseAngle <= 3 * M_PI_4))
+    else if(((M_PI_4+dd) < baseAngle) && (baseAngle <= (3*M_PI_4-dd)))
     {
         self.orientation = UIDeviceOrientationLandscapeRight;
         return;
     }
-    
-    self.orientation = UIDeviceOrientationPortraitUpsideDown;
-    
-    return;
+    else if(((M_PI_4*3+dd)<baseAngle) || ((-M_PI_4*3-dd)>baseAngle))
+    {
+        self.orientation = UIDeviceOrientationPortraitUpsideDown;
+        return;
+    }
 }
 
 - (void)setOrientation:(UIDeviceOrientation)orientation
