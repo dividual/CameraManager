@@ -26,10 +26,7 @@
 }
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput <GPUImageInput> *filter;
-@property (strong, nonatomic) GPUImageExposureFilter *exposureFilter;   //  露出変える
-@property (strong, nonatomic) GPUImageLuminosity *luminosity;           //  明るさ取得
-@property (strong, nonatomic) GPUImageUnsharpMaskFilter *smoothFilter;   //  ノイズ除去
-@property (weak, nonatomic) GPUImageOutput <GPUImageInput> *outFilter;
+@property (assign, nonatomic) CGFloat maxLevel;
 
 @property (assign, nonatomic) CGSize cameraOutputOriginalSize;
 @property (assign, nonatomic) BOOL hasCamera;
@@ -88,43 +85,6 @@
     
     //  エフェクト用のFilterを設定
     _filter = [[GPUImageFilter alloc] init];
-    
-    //  露出調整用のフィルター
-    _exposureFilter = [[GPUImageExposureFilter alloc] init];
-    _exposureFilter.exposure = 0.0;
-    
-    //  ノイズ除去
-//    _smoothFilter = [[GPUImageUnsharpMaskFilter alloc] init];
-//    _smoothFilter.blurRadiusInPixels = 2.0;
-    
-    //  明るさ取得
-    float targetLevel = 0.27;
-    float exposureMax = 2.1;
-    __weak CameraManager *wself = self;
-    _luminosity = [[GPUImageLuminosity alloc] init];
-    _luminosity.luminosityProcessingFinishedBlock = ^(CGFloat luminosity, CMTime frameTime){
-        //
-        if(luminosity<targetLevel)
-        {
-            float value = 1.0 - luminosity/targetLevel;
-            float exposure = wself.exposureFilter.exposure + value*0.2;
-            if(exposure > exposureMax)
-                exposure = exposureMax;
-            
-            wself.exposureFilter.exposure = exposure;
-        }
-        else if(wself.exposureFilter.exposure>0.0)
-        {
-            float value = (luminosity-targetLevel)/(1.0-targetLevel);
-            wself.exposureFilter.exposure -= value*0.2;
-            if(wself.exposureFilter.exposure<0.0)
-                wself.exposureFilter.exposure = 0.0;
-        }
-        
-        //wself.smoothFilter.intensity = 1.0 - wself.exposureFilter.exposure/exposureMax;
-        
-        //NSLog(@"luminosity:%f exposure:%f", luminosity, wself.exposureFilter.exposure);
-    };
     
     //  デフォルトのフラッシュモード指定しておく
     _flashMode = CMFlashModeOff;
@@ -239,6 +199,9 @@
                 
                 [self updateButtons];
                 
+                //  ゲイン増幅機能ON
+                [self setBoostMode];
+                
                 //  フォーカスを合わせる処理を開始
                 [self setFocusPoint:CGPointMake(0.5, 0.5)];
             });
@@ -311,25 +274,8 @@
 
 - (void)prepareLiveFilter
 {
-    if(![_stillCamera.targets containsObject:_exposureFilter])
-    {
-        [_stillCamera addTarget:_exposureFilter];
-    }
-    
-    if(![_exposureFilter.targets containsObject:_luminosity])
-    {
-        [_exposureFilter addTarget:_luminosity];
-    }
-    
-//    if(![_exposureFilter.targets containsObject:_smoothFilter])
-//    {
-//        [_exposureFilter addTarget:_smoothFilter];
-//    }
-    
-    _outFilter = _exposureFilter;
-    
     //  リアルタイム処理のフィルター準備
-    [_outFilter addTarget:_filter];
+    [_stillCamera addTarget:_filter];
     
     //  previewViewsにそれぞれつなぐ
     for(GPUImageView *previewView in _previewViews)
@@ -341,7 +287,7 @@
 
 - (void)removeAllTargets
 {
-    [_outFilter removeAllTargets];
+    [_stillCamera removeAllTargets];
     
     //regular filter
     [_filter removeAllTargets];
@@ -680,16 +626,31 @@
     [self setFocusPoint:pointOfInterest];
 }
 
+- (void)setBoostMode
+{
+    AVCaptureDevice *device = _stillCamera.inputCamera;
+    
+    //  ブーストモードに対応してたら設定しておく
+    if(device.isLowLightBoostSupported)
+    {
+        NSError *error;
+        if([device lockForConfiguration:&error])    //  devicelock
+        {
+            device.automaticallyEnablesLowLightBoostWhenAvailable = YES;
+            [device unlockForConfiguration];
+        }
+    }
+}
 - (void)setFocusPoint:(CGPoint)pos
 {
-    _adjustingFocus = YES;
-    
     //
     AVCaptureDevice *device = _stillCamera.inputCamera;
     
     //  タッチした位置へのフォーカスをサポートするかチェック
     if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])
     {
+        _adjustingFocus = YES;
+
         NSError *error;
         if([device lockForConfiguration:&error])    //  devicelock
         {
@@ -795,6 +756,10 @@
 		return;
 	}
 	
+    //  フォーカスに対応してないとき用の処理
+    if(!_stillCamera.inputCamera.isFocusPointOfInterestSupported)
+        _adjustingFocus = NO;
+    
     //  フォーカスを合わせてる途中だったら
     if(_adjustingFocus)
     {
@@ -1519,12 +1484,10 @@
     
     switch (index) {
         case 0:{
-            filter = [[GPUImageFilter alloc] init];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"default"];
         } break;
             
-        case 1:{    //sepiaに変更してみた
-//            filter = [[GPUImageContrastFilter alloc] init];
-//            [(GPUImageContrastFilter *)filter setContrast:1.75];
+        case 1:{
             filter = [[GPUImageSepiaFilter alloc] init];
         } break;
             
@@ -1592,7 +1555,7 @@
     for(GPUImageView *view in _previewViews)
         [_filter removeTarget:view];
     
-    [_outFilter removeTarget:_filter];
+    [_stillCamera removeTarget:_filter];
     
     _currentFilterName = name;
     _filter = filter;
@@ -1702,7 +1665,7 @@
         [filter forceProcessingAtSizeFixAspect:CGSizeMake(oneWidth, oneHeight) originalSize:originalSize scale:[UIScreen mainScreen].scale];
         
         //  フィルター追加
-        [_outFilter addTarget:filter];
+        [_stillCamera addTarget:filter];
         [filter addTarget:view];
         
         [filters addObject:filter];
@@ -1846,7 +1809,7 @@
         {
             if(_filter != filter)
             {
-                [_outFilter removeTarget:filter];
+                [_stillCamera removeTarget:filter];
                 [filter removeAllTargets];
             }
         }
