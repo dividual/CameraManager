@@ -26,7 +26,13 @@
 }
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput <GPUImageInput> *filter;
+
+@property (strong, nonatomic) GPUImageLevelsFilter *levelsFilter;   //  露出変える
+@property (strong, nonatomic) GPUImageLuminosity *luminosity;       //  明るさ取得
+@property (strong, nonatomic) GPUImageMedianFilter *medianFilter;   //  ノイズ軽減
 @property (assign, nonatomic) CGFloat maxLevel;
+@property (weak, nonatomic) GPUImageOutput <GPUImageInput> *outFilter;
+@property (assign, nonatomic) BOOL originalBoostEnable;
 
 @property (assign, nonatomic) CGSize cameraOutputOriginalSize;
 @property (assign, nonatomic) BOOL hasCamera;
@@ -85,6 +91,44 @@
     
     //  エフェクト用のFilterを設定
     _filter = [[GPUImageFilter alloc] init];
+    
+    //  露出調整用のフィルター
+    _levelsFilter = [[GPUImageLevelsFilter alloc] init];
+    
+    //  ノイズ軽減用フィルタ
+    _medianFilter = [[GPUImageMedianFilter alloc] init];
+    
+    //  明るさ取得
+    self.maxLevel = 1.0;
+    float targetLevel = 0.3;
+    float minLevel = 0.25;
+    __weak CameraManager *wself = self;
+    _luminosity = [[GPUImageLuminosity alloc] init];
+    _luminosity.luminosityProcessingFinishedBlock = ^(CGFloat luminosity, CMTime frameTime){
+        //
+        if(luminosity<targetLevel)
+        {
+            float value = 1.0 - luminosity/targetLevel;
+            float maxLevel = wself.maxLevel - value*0.2;
+            if(maxLevel < minLevel)
+                maxLevel = minLevel;
+            
+            wself.maxLevel = maxLevel;
+        }
+        else
+        {
+            float value = (luminosity-targetLevel)/(1.0-targetLevel);
+            wself.maxLevel += value*0.2;
+            if(wself.maxLevel > 1.0)
+                wself.maxLevel = 1.0;
+        }
+        
+        [wself.levelsFilter setMin:0.0 gamma:1.0 max:wself.maxLevel minOut:0.0 maxOut:1.0];
+        
+        wself.originalBoostEnable = wself.maxLevel < 0.9;
+        
+        NSLog(@"maxLevel = %f, luminosity = %f", wself.maxLevel, luminosity);
+    };
     
     //  デフォルトのフラッシュモード指定しておく
     _flashMode = CMFlashModeOff;
@@ -275,11 +319,27 @@
 - (void)prepareLiveFilter
 {
     //  リアルタイム処理のフィルター準備
-    [_stillCamera addTarget:_filter];
+    if(![_stillCamera.targets containsObject:_levelsFilter])
+    {
+        [_stillCamera addTarget:_levelsFilter];
+    }
+    
+    if(![_levelsFilter.targets containsObject:_luminosity])
+    {
+        [_levelsFilter addTarget:_luminosity];
+    }
+    
+    if(![_levelsFilter.targets containsObject:_medianFilter])
+    {
+        [_levelsFilter addTarget:_medianFilter];
+    }
+    
+    _outFilter = _medianFilter;
+    
     
     //  previewViewsにそれぞれつなぐ
     for(GPUImageView *previewView in _previewViews)
-        [_filter addTarget:previewView];
+        [_outFilter addTarget:previewView];
     
     //
     [_filter prepareForImageCapture];
@@ -290,7 +350,7 @@
     [_stillCamera removeAllTargets];
     
     //regular filter
-    [_filter removeAllTargets];
+    [_outFilter removeAllTargets];
     
     //
     _isCameraRunning = NO;
@@ -1555,7 +1615,7 @@
     for(GPUImageView *view in _previewViews)
         [_filter removeTarget:view];
     
-    [_stillCamera removeTarget:_filter];
+    [_outFilter removeTarget:_filter];
     
     _currentFilterName = name;
     _filter = filter;
@@ -1665,7 +1725,7 @@
         [filter forceProcessingAtSizeFixAspect:CGSizeMake(oneWidth, oneHeight) originalSize:originalSize scale:[UIScreen mainScreen].scale];
         
         //  フィルター追加
-        [_stillCamera addTarget:filter];
+        [_outFilter addTarget:filter];
         [filter addTarget:view];
         
         [filters addObject:filter];
@@ -1809,7 +1869,7 @@
         {
             if(_filter != filter)
             {
-                [_stillCamera removeTarget:filter];
+                [_outFilter removeTarget:filter];
                 [filter removeAllTargets];
             }
         }
