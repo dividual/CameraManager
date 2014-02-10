@@ -26,13 +26,7 @@
 }
 @property (strong, nonatomic) GPUImageStillCamera *stillCamera;
 @property (strong, nonatomic) GPUImageOutput <GPUImageInput> *filter;
-
-@property (strong, nonatomic) GPUImageLevelsFilter *levelsFilter;   //  露出変える
-@property (strong, nonatomic) GPUImageLuminosity *luminosity;       //  明るさ取得
-@property (strong, nonatomic) GPUImageMedianFilter *medianFilter;   //  ノイズ軽減
 @property (assign, nonatomic) CGFloat maxLevel;
-@property (weak, nonatomic) GPUImageOutput <GPUImageInput> *outFilter;
-@property (assign, nonatomic) BOOL originalBoostEnable;
 
 @property (assign, nonatomic) CGSize cameraOutputOriginalSize;
 @property (assign, nonatomic) BOOL hasCamera;
@@ -91,44 +85,6 @@
     
     //  エフェクト用のFilterを設定
     _filter = [[GPUImageFilter alloc] init];
-    
-    //  露出調整用のフィルター
-    _levelsFilter = [[GPUImageLevelsFilter alloc] init];
-    
-    //  ノイズ軽減用フィルタ
-    _medianFilter = [[GPUImageMedianFilter alloc] init];
-    
-    //  明るさ取得
-    self.maxLevel = 1.0;
-    float targetLevel = 0.3;
-    float minLevel = 0.25;
-    __weak CameraManager *wself = self;
-    _luminosity = [[GPUImageLuminosity alloc] init];
-    _luminosity.luminosityProcessingFinishedBlock = ^(CGFloat luminosity, CMTime frameTime){
-        //
-        if(luminosity<targetLevel)
-        {
-            float value = 1.0 - luminosity/targetLevel;
-            float maxLevel = wself.maxLevel - value*0.2;
-            if(maxLevel < minLevel)
-                maxLevel = minLevel;
-            
-            wself.maxLevel = maxLevel;
-        }
-        else
-        {
-            float value = (luminosity-targetLevel)/(1.0-targetLevel);
-            wself.maxLevel += value*0.2;
-            if(wself.maxLevel > 1.0)
-                wself.maxLevel = 1.0;
-        }
-        
-        [wself.levelsFilter setMin:0.0 gamma:1.0 max:wself.maxLevel minOut:0.0 maxOut:1.0];
-        
-        wself.originalBoostEnable = wself.maxLevel < 0.9;
-        
-        NSLog(@"maxLevel = %f, luminosity = %f", wself.maxLevel, luminosity);
-    };
     
     //  デフォルトのフラッシュモード指定しておく
     _flashMode = CMFlashModeOff;
@@ -209,7 +165,7 @@
             
 			if( !_sessionPresetForStill )
 				_sessionPresetForStill = AVCaptureSessionPresetPhoto;
-
+            
             if( !_sessionPresetForVideo)
                 _sessionPresetForVideo = AVCaptureSessionPreset1280x720;
             
@@ -319,27 +275,11 @@
 - (void)prepareLiveFilter
 {
     //  リアルタイム処理のフィルター準備
-    if(![_stillCamera.targets containsObject:_levelsFilter])
-    {
-        [_stillCamera addTarget:_levelsFilter];
-    }
-    
-    if(![_levelsFilter.targets containsObject:_luminosity])
-    {
-        [_levelsFilter addTarget:_luminosity];
-    }
-    
-    if(![_levelsFilter.targets containsObject:_medianFilter])
-    {
-        [_levelsFilter addTarget:_medianFilter];
-    }
-    
-    _outFilter = _medianFilter;
-    
+    [_stillCamera addTarget:_filter];
     
     //  previewViewsにそれぞれつなぐ
     for(GPUImageView *previewView in _previewViews)
-        [_outFilter addTarget:previewView];
+        [_filter addTarget:previewView];
     
     //
     [_filter prepareForImageCapture];
@@ -350,7 +290,7 @@
     [_stillCamera removeAllTargets];
     
     //regular filter
-    [_outFilter removeAllTargets];
+    [_filter removeAllTargets];
     
     //
     _isCameraRunning = NO;
@@ -375,7 +315,7 @@
     //  previewViewsに追加
     [_previewViews addObject:view];
     
-    //  
+    //
     if(_stillCamera.cameraPosition == AVCaptureDevicePositionFront)
         [view setInputRotation:kGPUImageFlipHorizonal atIndex:0];
     else
@@ -690,6 +630,7 @@
 {
     AVCaptureDevice *device = _stillCamera.inputCamera;
     
+    
     //  ブーストモードに対応してたら設定しておく
     if(device.isLowLightBoostSupported)
     {
@@ -710,13 +651,13 @@
     if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])
     {
         _adjustingFocus = YES;
-
+        
         NSError *error;
         if([device lockForConfiguration:&error])    //  devicelock
         {
             //  画面の変化をチェックする
             [device setSubjectAreaChangeMonitoringEnabled:YES];
-
+            
             //  フォーカスを合わせる位置を指定
             [device setFocusPointOfInterest:pos];
             [device setFocusMode:AVCaptureFocusModeAutoFocus];
@@ -751,7 +692,7 @@
 - (void)setFocusModeContinousAutoFocus
 {
     AVCaptureDevice *device = _stillCamera.inputCamera;
-
+    
     if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus])
     {
         NSError *error;
@@ -909,7 +850,7 @@
             for(UIButton *button in _flashButons)
                 button.hidden = YES;
         }
-
+        
         //
         if(_stillCamera.cameraPosition == AVCaptureDevicePositionFront)
         {
@@ -1228,7 +1169,7 @@
         [self stopVideoRec];
         return;
     }
-       
+    
     //  撮影中に操作できないようにボタン類を消す
     [self showHideVideoRecording:NO];
     
@@ -1431,7 +1372,7 @@
             //
             focusView.bounds = CGRectMake(0.0, 0.0, _originalFocusCursorSize.width, _originalFocusCursorSize.height);
             focusView.center = focusPos;
-
+            
             //
             focusView.alpha = 1.0;
             
@@ -1615,7 +1556,7 @@
     for(GPUImageView *view in _previewViews)
         [_filter removeTarget:view];
     
-    [_outFilter removeTarget:_filter];
+    [_stillCamera removeTarget:_filter];
     
     _currentFilterName = name;
     _filter = filter;
@@ -1725,7 +1666,7 @@
         [filter forceProcessingAtSizeFixAspect:CGSizeMake(oneWidth, oneHeight) originalSize:originalSize scale:[UIScreen mainScreen].scale];
         
         //  フィルター追加
-        [_outFilter addTarget:filter];
+        [_stillCamera addTarget:filter];
         [filter addTarget:view];
         
         [filters addObject:filter];
@@ -1869,7 +1810,7 @@
         {
             if(_filter != filter)
             {
-                [_outFilter removeTarget:filter];
+                [_stillCamera removeTarget:filter];
                 [filter removeAllTargets];
             }
         }
