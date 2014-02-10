@@ -200,7 +200,7 @@
                 [self updateButtons];
                 
                 //  ゲイン増幅機能ON
-                [self setBoostMode];
+                [self setBoostMode:YES];
                 
                 //  フォーカスを合わせる処理を開始
                 [self setFocusPoint:CGPointMake(0.5, 0.5)];
@@ -626,7 +626,7 @@
     [self setFocusPoint:pointOfInterest];
 }
 
-- (void)setBoostMode
+- (void)setBoostMode:(BOOL)enabled
 {
     AVCaptureDevice *device = _stillCamera.inputCamera;
     
@@ -636,7 +636,7 @@
         NSError *error;
         if([device lockForConfiguration:&error])    //  devicelock
         {
-            device.automaticallyEnablesLowLightBoostWhenAvailable = YES;
+            device.automaticallyEnablesLowLightBoostWhenAvailable = enabled;
             [device unlockForConfiguration];
         }
     }
