@@ -1,0 +1,13 @@
+PODS:
+  - GPUImage (0.1.2)
+  - Overline (0.3.0)
+
+DEPENDENCIES:
+  - GPUImage
+  - Overline
+
+SPEC CHECKSUMS:
+  GPUImage: 007145faa0e27f1ddbcab93e07f026c9776e2fa2
+  Overline: 9c8bada0893600907f96cdafdc2c83b43ebcc1cf
+
+COCOAPODS: 0.27.1
