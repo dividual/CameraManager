@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "CameraManager"
-  s.version      = "0.2.0"
+  s.version      = "0.8.0"
   s.summary      = "Camera Manager for blink"
   s.homepage     = "https://github.com/dividual/CameraManager"
   s.author       = { "dividual" => "contact@dividual.jp" }
@@ -9,7 +9,6 @@ Pod::Spec.new do |s|
 
   s.platform = :ios
   s.requires_arc = true
-  s.framework  = 'AddressBook'
   s.dependency 'GPUImage'
   s.source_files = 'CameraManager'
 end
