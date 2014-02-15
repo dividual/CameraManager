@@ -192,5 +192,7 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 //  tmpFileはもういらないよの通知
 - (void)removeTempMovieFile:(NSURL*)tmpURL;
 
+/// 現在選択中のフィルターIDを取得
+-(int)currentFilterId;
 
 @end

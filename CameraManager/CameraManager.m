@@ -14,6 +14,7 @@
 #import "UIImage+Normalize.h"
 #import "NSDate+stringUtility.h"
 #import "GPUImageFilter+ProcessSizeUtility.h"
+#import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
 
 @interface CameraManager ()
 {
@@ -60,7 +61,9 @@
 
 #pragma mark -
 
-@implementation CameraManager
+@implementation CameraManager{
+	int _currentFilterId;
+}
 
 #pragma mark singleton
 
@@ -79,9 +82,15 @@
 
 #pragma mark -
 
+/// 現在選択中のフィルターIDを取得
+-(int)currentFilterId{
+	return _currentFilterId;
+}
+
 - (void)setup
 {
     //  初期化処理
+	_currentFilterId = 0;
     
     //  エフェクト用のFilterを設定
     _filter = [[GPUImageFilter alloc] init];
@@ -164,7 +173,8 @@
             BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
             
 			if( !_sessionPresetForStill )
-				_sessionPresetForStill = AVCaptureSessionPresetPhoto;
+//				_sessionPresetForStill = AVCaptureSessionPresetPhoto;
+				_sessionPresetForStill = AVCaptureSessionPreset1280x720;// ブーストより16:9撮影を優先するため、1280にする
             
             if( !_sessionPresetForVideo)
                 _sessionPresetForVideo = AVCaptureSessionPreset1280x720;
@@ -1764,7 +1774,9 @@
 
 - (void)handleFinishChooseFilterWithFilterName:(NSString*)filterName
 {
+	[self dispatchEvent:@"filterSelected" userInfo:@{@"filterName":filterName}];
     NSInteger index = [_filterNameArray indexOfObject:filterName];
+	_currentFilterId = index;
     
     GPUImageView *tapView = _chooseFilterViews[index];
     GPUImageFilter *tapFilter = _chooseFilterFilters[index];

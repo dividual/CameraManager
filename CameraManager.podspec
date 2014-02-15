@@ -9,6 +9,6 @@ Pod::Spec.new do |s|
 
   s.platform = :ios
   s.requires_arc = true
-  s.dependency 'GPUImage'
+  s.dependency 'GPUImage', "NSObject+EventDispatcher"
   s.source_files = 'CameraManager/**/*'
 end
