@@ -11,4 +11,5 @@ Pod::Spec.new do |s|
   s.requires_arc = true
   s.dependency 'GPUImage'
   s.source_files = 'CameraManager/**/*'
+  s.resource = "Resources/CameraManager.bundle"
 end

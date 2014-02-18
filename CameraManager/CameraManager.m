@@ -1495,7 +1495,7 @@
     
     switch (index) {
         case 0:{
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"default"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/default"];
         } break;
             
         case 1:{
@@ -1503,11 +1503,11 @@
         } break;
             
         case 2: {
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"crossprocess"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/crossprocess"];
         } break;
             
         case 3: {
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"02"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/02"];
         } break;
             
         case 4: {
@@ -1515,19 +1515,19 @@
         } break;
             
         case 5: {
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"17"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/17"];
         } break;
             
         case 6: {
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"aqua"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/aqua"];
         } break;
             
         case 7: {
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"yellow-red"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/yellow-red"];
         } break;
             
         case 8: {
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"06"];
+            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/06"];
         } break;
             
         default:
