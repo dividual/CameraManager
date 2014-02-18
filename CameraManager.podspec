@@ -10,6 +10,6 @@ Pod::Spec.new do |s|
   s.platform = :ios
   s.requires_arc = true
   s.dependency 'GPUImage'
-  s.source_files = 'CameraManager/**/*'
+  s.source_files = 'CameraManager/**/*.{h,m}'
   s.resource = "CameraManager.bundle"
 end
