@@ -198,7 +198,10 @@
             
             //  orientationの監視をする
             [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:nil];
-            
+			
+			// カメラ起動状態を監視する
+            [_stillCamera.captureSession addObserver:self forKeyPath:@"running" options:NSKeyValueObservingOptionNew context:nil];
+			
             //
             runOnMainQueueWithoutDeadlocking(^{
                 
@@ -1420,10 +1423,8 @@
     }
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    if([keyPath isEqualToString:@"adjustingFocus"])
-    {
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context{
+    if([keyPath isEqualToString:@"adjustingFocus"]){
         BOOL state = _stillCamera.inputCamera.isAdjustingFocus;
         
         //  カーソルを消すとか表示するとか
@@ -1460,6 +1461,14 @@
         {
             _adjustingFocus = state;
         }
+		
+		// イベント発行
+		[self dispatchEvent:@"adjustingFocus" userInfo:@{@"value":@(state)}];
+		if( state == YES ){
+			[self dispatchEvent:@"adjustFocusStart" userInfo:nil];
+		} else {
+			[self dispatchEvent:@"adjustFocusComplete" userInfo:nil];
+		}
     }
     else if([keyPath isEqualToString:@"orientation"])
     {
@@ -1476,7 +1485,14 @@
                 [_delegate cameraManager:self didChangeDeviceOrientation:_orientation];
             }
         }
-    }
+    } else if( [keyPath isEqualToString:@"running"] ){
+		// イベント発行
+		if( _stillCamera.captureSession.running ){
+			[self dispatchEvent:@"open" userInfo:nil];
+		} else {
+			[self dispatchEvent:@"close" userInfo:nil];
+		}
+	}
 }
 
 #pragma mark - Filter

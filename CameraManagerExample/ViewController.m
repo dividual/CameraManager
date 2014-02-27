@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "UIImage+Normalize.h"
 #import "CameraManager.h"
+#import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
 
 @interface ViewController () <CameraManagerDelegate>
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
@@ -65,6 +66,11 @@
     //
     _movieRecordedTime.hidden = YES;
     _movieRemainTime.hidden = YES;
+	
+	// イベント監視
+	[[CameraManager sharedManager] addEventListener:@"open" usingBlock:^(NSNotification *notification) {
+		NSLog( @"カメラが起動しました" );
+	}];
 }
 
 - (void)didReceiveMemoryWarning

@@ -131,13 +131,13 @@
 		D52A8ABA1817F2EA00F4ADFD = {
 			isa = PBXGroup;
 			children = (
-				D52A8B1A1817F71100F4ADFD /* Images */,
 				D52A8B131817F69100F4ADFD /* CameraManager */,
 				D52A8ACC1817F2EA00F4ADFD /* CameraManagerExample */,
 				D52A8AEB1817F2EB00F4ADFD /* CameraManagerExampleTests */,
 				D52A8AC51817F2EA00F4ADFD /* Frameworks */,
-				D52A8AC41817F2EA00F4ADFD /* Products */,
+				D52A8B1A1817F71100F4ADFD /* Images */,
 				508A94FF15A04474875392D0 /* Pods.xcconfig */,
+				D52A8AC41817F2EA00F4ADFD /* Products */,
 			);
 			sourceTree = "<group>";
 		};
@@ -206,21 +206,21 @@
 			isa = PBXGroup;
 			children = (
 				4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */,
-				D5D0355A1827713700233B58 /* FilterClass */,
 				D52A8B141817F69100F4ADFD /* CameraManager.h */,
 				D52A8B151817F69100F4ADFD /* CameraManager.m */,
-				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
-				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
-				D5D035701827BD3D00233B58 /* GPUImageStillCamera+Utility.h */,
-				D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */,
-				D50B050F18A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.h */,
-				D50B051018A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m */,
 				D5D035791827C14B00233B58 /* DeviceOrientation.h */,
 				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
-				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
-				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
+				D5D0355A1827713700233B58 /* FilterClass */,
+				D50B050F18A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.h */,
+				D50B051018A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m */,
+				D5D035701827BD3D00233B58 /* GPUImageStillCamera+Utility.h */,
+				D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */,
 				D5055322187EEB29007355BE /* NSDate+stringUtility.h */,
 				D5055323187EEB29007355BE /* NSDate+stringUtility.m */,
+				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
+				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
+				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
+				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
 			);
 			path = CameraManager;
 			sourceTree = "<group>";
