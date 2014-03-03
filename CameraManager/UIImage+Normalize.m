@@ -16,7 +16,7 @@
     [self drawInRect:(CGRect){0, 0, self.size}];
     UIImage *normalizedImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    
+        
     return normalizedImage;
 }
 @end

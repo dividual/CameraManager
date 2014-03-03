@@ -530,16 +530,6 @@
     //
     if(_cameraMode == CMCameraModeStill)
     {
-//        //  静止画撮影
-//        for(UIButton *button in _shutterButtons)
-//            button.enabled = NO;
-//        
-//        for(UIButton *button in _cameraRotateButtons)
-//            button.alpha = 0.0;
-//        
-//        for(UIButton *button in _flashButons)
-//            button.alpha = 0.0;
-        
         if(_shutterReserved)
             return;
         
@@ -630,20 +620,24 @@
 
 - (void)prepareForCapture
 {
-    //  ロック
-    [_stillCamera.inputCamera lockForConfiguration:nil];
-    
     //  フラッシュの準備（上記のロックをかけてからでないと処理できないっぽい）
     if(_flashMode == CMFlashModeAuto && [_stillCamera.inputCamera hasTorch])
     {
         //  自動
+        [_stillCamera.inputCamera lockForConfiguration:nil];
         [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeAuto];
+        [_stillCamera.inputCamera unlockForConfiguration];
+        
         [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
+        
     }
     else if(_flashMode == CMFlashModeOn && [_stillCamera.inputCamera hasTorch])
     {
         //  ON
+        [_stillCamera.inputCamera lockForConfiguration:nil];
         [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOn];
+        [_stillCamera.inputCamera unlockForConfiguration];
+
         [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
     }
     else
@@ -656,8 +650,6 @@
 - (void)captureImage
 {
     //  キャプチャー処理
-    [_filter prepareForImageCapture];
-    
     __block UIImage *originalImage = nil;
     
     //  撮影後の処理をブロックで
@@ -665,10 +657,21 @@
         
         //  キャプチャー完了処理
         if([_stillCamera.inputCamera hasTorch])
+        {
+            [_stillCamera.inputCamera lockForConfiguration:nil];
             [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOff];
+            [_stillCamera.inputCamera unlockForConfiguration];
+        }
         
-        //  アンロック
-        [_stillCamera.inputCamera unlockForConfiguration];
+        //  フィルターを新しいのに切り替える（メモリ解放されるまでプレビューされない問題を回避するために）
+        {
+            [_filter removeAllTargets];
+            [_stillCamera removeTarget:_filter];
+            
+            //  filterを作り替える
+            _filter = [self filterWithName:_currentFilterName];
+            [self prepareFilter];
+        }
         
         //  イベント発行（メインスレッドで実行）
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -680,8 +683,8 @@
         originalImage = processedImage;
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             
-            //  回転がおかしくなる時があるので、UIImageを作りなおす
-            UIImage *fixImage = [originalImage normalizedImage];
+            //  一旦出てきたデータを直扱いに
+            UIImage *fixImage = originalImage;//[originalImage normalizedImage];//  回転がおかしくなる時があるので、UIImageを作りなおす
             originalImage = nil;
             
             //  mainThread
@@ -725,7 +728,12 @@
     }
     else
     {
-        UIImage *imgForAnimation = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUp];
+        UIImage *imgForAnimation = nil;
+        if(_stillCamera.inputCamera.position == AVCaptureDevicePositionFront)
+            imgForAnimation = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUpMirrored];
+        else
+            imgForAnimation = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUp];
+        
         UIImage *fixImage = [imgForAnimation normalizedImage];
         
         [_filter prepareForImageCapture];
@@ -1294,25 +1302,6 @@
     //
     _chooseFilterPreviewView = previewView;
     
-//    //  Shutterなどを消す
-//    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
-//        //
-//        for(UIView *view in _previewViews)
-//        {
-//            if(view != previewView)
-//                view.alpha = 0.0;
-//        }
-//        for(UIView *view in _shutterButtons)
-//            view.alpha = 0.0;
-//        
-//        for(UIView *view in _cameraRotateButtons)
-//            view.alpha = 0.0;
-//        
-//        for(UIView *view in _flashButons)
-//            view.alpha = 0.0;
-//        
-//    } completion:nil];
-    
     //  表示するUIViewを作る
     UIView *baseView = [[UIView alloc] initWithFrame:previewView.frame];
     
@@ -1528,20 +1517,6 @@
     return [_filterNameArray indexOfObject:_currentFilterName];
 }
 
-#pragma mark - shutter button image change
-
-- (void)changeShutterButtonImageTo:(NSString*)imageName
-{
-//    if(![_delegate respondsToSelector:@selector(cameraManager:shouldChangeShutterButtonImageTo:)] || [_delegate cameraManager:self shouldChangeShutterButtonImageTo:imageName])
-//    {
-//        UIImage *image = [UIImage imageNamed:imageName];
-//        for(UIButton *shutter in _shutterButtons)
-//        {
-//            [shutter setImage:image forState:UIControlStateNormal];
-//        }
-//    }
-}
-
 #pragma mark - cameraMode
 
 //  カメラモードを切り替える
@@ -1613,6 +1588,46 @@
 {
     //NSLog(@"***handleDeviceSubjectAreaDidChangeNotification");
     [self setFocusModeContinousAutoFocus];
+}
+
+#pragma mark - zoom
+
+//  ズーム値設定
+- (void)setZoomScale:(CGFloat)zoomScale
+{
+    if(_stillCamera && [_stillCamera.inputCamera respondsToSelector:@selector(activeFormat)])
+    {
+        NSError *error = nil;
+        if([_stillCamera.inputCamera lockForConfiguration:&error])    //  devicelock
+        {
+            CGFloat max = self.maxZoomScale;
+            zoomScale = zoomScale>max?max:zoomScale<1.0?1.0:zoomScale;
+            _stillCamera.inputCamera.videoZoomFactor = zoomScale;
+            
+            [_stillCamera.inputCamera unlockForConfiguration];
+        }
+    }
+}
+
+- (CGFloat)zoomScale
+{
+    if(_stillCamera && [_stillCamera.inputCamera respondsToSelector:@selector(activeFormat)])
+    {
+        return _stillCamera.inputCamera.videoZoomFactor;
+    }
+    
+    return 1.0;
+}
+
+//  ズームの最大スケール
+- (CGFloat)maxZoomScale
+{
+    if(_stillCamera && [_stillCamera.inputCamera respondsToSelector:@selector(activeFormat)])
+    {
+        return _stillCamera.inputCamera.activeFormat.videoMaxZoomFactor;
+    }
+    
+    return 1.0;
 }
 
 @end

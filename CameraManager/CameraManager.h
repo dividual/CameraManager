@@ -67,6 +67,10 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (readonly, nonatomic) NSInteger currentFilterIndex;       //  現在のフィルターIndex
 @property (readonly, nonatomic) NSString *currentFilterName;        //  現在のフィルター名前
 
+//  ズーム対応
+@property (assign, nonatomic) CGFloat zoomScale;                    //  ズームのスケールを入れる 1.0 ~
+@property (readonly, nonatomic) CGFloat maxZoomScale;               //  ズームの最大スケール
+
 //  プレビュー画面
 - (void)addPreviewView:(GPUImageView*)previewView;                  //  プレビュー画面の追加
 - (void)removePreviewView:(GPUImageView*)previewView;               //  プレビュー画面を消す

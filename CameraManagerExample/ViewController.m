@@ -13,7 +13,7 @@
 
 @interface ViewController ()
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
-@property (strong, nonatomic) UITapGestureRecognizer *doubleTapGesture;
+@property (strong, nonatomic) UIPinchGestureRecognizer *pinchGesture;
 @property (assign, nonatomic) NSInteger curFilterIndex;
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
 
@@ -33,8 +33,10 @@
     //  カメラを開く前に設定をしておく
     [[CameraManager sharedManager] addPreviewView:_previewViewA];
     [CameraManager sharedManager].videoDuration = 10.0; //   動画撮影時間
-    //    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
-    //    [CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPreset1280x720;
+    [CameraManager sharedManager].autoSaveToCameraroll = YES;
+    
+    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
+//    [CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPreset1280x720;
     
     //  フォーカスのビューを消しておく
     _focusView.alpha = 0.0;
@@ -47,6 +49,11 @@
     _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
     [_previewViewA addGestureRecognizer:_tapGesture];
     _tapGesture.enabled = YES;
+    
+    //  ズームのジェスチャ
+    _pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handlePinch:)];
+    [_previewViewA addGestureRecognizer:_pinchGesture];
+    _pinchGesture.enabled = YES;
     
     //  カメラロールへの保存するかどうか
     [CameraManager sharedManager].autoSaveToCameraroll = YES;
@@ -254,22 +261,25 @@
     
     NSLog(@"cameraManager:didPlayShutterSound(image = %@)", NSStringFromCGSize(image.size));
     
-    //  アニメーションの処理はここに書くとすぐに実行される
-    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-    
-    CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
-    imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
-    
-    //
-    [self.view addSubview:imageView];
-    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+    if(image)
+    {
+        //  アニメーションの処理はここに書くとすぐに実行される
+        UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+        
+        CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
+        imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
+        
         //
-        imageView.transform = CGAffineTransformMakeScale(0.0, 0.0);
-        
-    } completion:^(BOOL finished) {
-        
-        [imageView removeFromSuperview];
-    }];
+        [self.view addSubview:imageView];
+        [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+            //
+            imageView.transform = CGAffineTransformMakeScale(0.0, 0.0);
+            
+        } completion:^(BOOL finished) {
+            
+            [imageView removeFromSuperview];
+        }];
+    }
 }
 
 - (void)cameraManagerDidCapturedImage:(NSNotification*)notification
@@ -288,6 +298,12 @@
     _chooseFilterButton.enabled = YES;
     _silentSwitch.enabled = YES;
     
+//    //
+//    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+//    imageView.alpha = 0.2;
+//    [self.view addSubview:imageView];
+//    
+//    [imageView performSelector:@selector(removeFromSuperview) withObject:Nil afterDelay:2.0];
 }
 
 - (void)cameraManagerWillStartVideoRecording:(NSNotification*)notification
@@ -297,6 +313,11 @@
     //  操作してほしくないGUIを消す
     _changeCameraModeButton.hidden = YES;
     _chooseFilterButton.hidden = YES;
+    
+    //  Shutter以外消す
+    _flashButton.hidden = YES;
+    _cameraRotateButton.hidden = YES;
+    _silentSwitch.hidden = YES;
     
     //  秒数出すLabel表示
     _movieRecordedTime.text = @"";
@@ -327,7 +348,11 @@
     //  GUIを元に戻す
     _changeCameraModeButton.hidden = NO;
     _chooseFilterButton.hidden = NO;
+    _flashButton.hidden = NO;
+    _cameraRotateButton.hidden = NO;
+    _silentSwitch.hidden = NO;
     
+    //
     _shutterButton.enabled = YES;
     _cameraRotateButton.enabled = YES;
     _flashButton.enabled = YES;
@@ -709,6 +734,39 @@
         //
         [[CameraManager sharedManager] rotateCameraPosition];
     }];
+}
+
+#pragma mark - zoom
+
+- (void)handlePinch:(UIPinchGestureRecognizer*)gesture
+{
+    if(gesture == _pinchGesture)
+    {
+        switch(_pinchGesture.state)
+        {
+            case UIGestureRecognizerStatePossible:
+                break;
+                
+            case UIGestureRecognizerStateBegan:
+            {
+                CGFloat currentScale = [CameraManager sharedManager].zoomScale;
+                _pinchGesture.scale = currentScale;
+            }
+                
+            case UIGestureRecognizerStateChanged:
+                [CameraManager sharedManager].zoomScale = _pinchGesture.scale;
+                break;
+                
+            case UIGestureRecognizerStateEnded:
+                break;
+                
+            case UIGestureRecognizerStateCancelled:
+                break;
+                
+            case UIGestureRecognizerStateFailed:
+                break;
+        }
+    }
 }
 
 @end
