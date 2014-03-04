@@ -16,6 +16,7 @@
 #import "GPUImageFilter+ProcessSizeUtility.h"
 #import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
 #import "GPUImageStillCamera+directShutter.h"
+#import "PreviewView.h"
 
 @interface CameraManager ()
 {

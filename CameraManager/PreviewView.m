@@ -7,6 +7,7 @@
 //
 
 #import "PreviewView.h"
+#import <GPUImage/GPUImage.h>
 
 @interface PreviewView ()
 @property (strong, nonatomic) AVCaptureVideoPreviewLayer *previewLayer;

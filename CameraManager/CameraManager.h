@@ -12,8 +12,10 @@
 //      delegateで管理するイベント、blockで管理するイベントがある
 //      GPUImageの組み込みには、CococaPodを使うことに。
 
-#import <GPUImage/GPUImage.h>
-#import "PreviewView.h"
+@class GPUImage;
+@class GPUImageStillCamera;
+@class GPUImageView;
+@class PreviewView;
 
 typedef NS_ENUM(NSInteger, CMFlashMode)
 {

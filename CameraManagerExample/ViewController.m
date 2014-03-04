@@ -10,6 +10,9 @@
 #import "UIImage+Normalize.h"
 #import "CameraManager.h"
 #import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
+#import "PreviewView.h"
+#import "CameraManager.h"
+#import <GPUImage/GPUImage.h>
 
 @interface ViewController ()
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;

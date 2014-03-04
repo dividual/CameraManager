@@ -7,8 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <GPUImage/GPUImage.h>
-#import "PreviewView.h"
+@class GPUImage;
+@class PreviewView;
 
 @interface ViewController : UIViewController
 

@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Shinya Matsuyama. All rights reserved.
 //
 
-#import <GPUImage/GPUImage.h>
+@class GPUImage;
 
 @interface GPUImageStillCamera (Utility)
 

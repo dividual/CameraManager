@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
-#import <GPUImage/GPUImage.h>
+#import <GPUImageView.h>
 
 //  GPUImageViewとAVCaptureVideoPreviewLayerをハイブリッドに使えるViewを作る
 
