@@ -129,6 +129,9 @@
     [[CameraManager sharedManager] addEventListener:@"hideFocusCursor" observer:self
                                            selector:@selector(cameraManagerHideFocusCursor:)];
     
+    [[CameraManager sharedManager] addEventListener:@"didChangeFlashMode" observer:self
+                                           selector:@selector(cameraManagerDidChangeFlashMode:)];
+    
 	// イベント監視
 	[[CameraManager sharedManager] addEventListener:@"open" usingBlock:^(NSNotification *notification) {
 		NSLog( @"カメラが起動しました" );
