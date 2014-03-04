@@ -54,7 +54,7 @@
 @property (assign, nonatomic) NSInteger shutterReserveCount;            //  フォーカス中にShutter押された時用のフラグ
 
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
-
+@property (assign, nonatomic) BOOL lastOpenState;
 
 @end
 
@@ -117,7 +117,36 @@
     
     //
     _isReadyForTakePhoto = NO;
+    
+    //  iPhoneがスリープするときやバックグラウンドにいくときにカメラをoffに
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillResignActive:) name:UIApplicationWillResignActiveNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
 }
+
+- (void)applicationWillResignActive:(NSNotification*)notification
+{
+    NSLog(@"applicationWillResignActive");
+    
+    //
+    if(_isCameraOpened)
+    {
+        _lastOpenState = YES;
+        [self closeCamera];
+    }
+    else
+        _lastOpenState = NO;
+}
+
+- (void)applicationDidBecomeActive:(NSNotification*)notification
+{
+    NSLog(@"applicationDidBecomeActive");
+    
+    if(_lastOpenState)
+    {
+        [self openCamera];
+    }
+}
+
 
 #pragma mark -
 

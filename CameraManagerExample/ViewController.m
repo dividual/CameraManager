@@ -42,6 +42,17 @@
     _focusView.alpha = 0.0;
     _originalFocusCursorSize = _focusView.bounds.size;
     
+    //  カメラ準備できるまでは全部OFFで
+    _shutterButton.enabled = NO;
+    _cameraRotateButton.enabled = NO;
+    _flashButton.enabled = NO;
+    _changeCameraModeButton.enabled = NO;
+    _chooseFilterButton.enabled = NO;
+    _silentSwitch.enabled = NO;
+    
+    //  プレビュー画面をalphaゼロから
+    _previewViewA.alpha = 0.0;
+    
     //  カメラを開く
     [[CameraManager sharedManager] openCamera];
     
@@ -204,11 +215,51 @@
     
     //
     [self cameraGUIUpdate];
+    
+    //
+    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //
+        _previewViewA.alpha = 1.0;
+        
+    } completion:^(BOOL finished) {
+        //
+        _shutterButton.enabled = YES;
+        _cameraRotateButton.enabled = YES;
+        _flashButton.enabled = YES;
+        _changeCameraModeButton.enabled = YES;
+        _chooseFilterButton.enabled = YES;
+        _silentSwitch.enabled = YES;
+    }];
 }
 
 - (void)cameraManagerClosed:(NSNotification*)notification
 {
-    NSLog(@"cameraManager:close");
+    if(notification == nil)
+    {
+        //
+        _shutterButton.enabled = NO;
+        _cameraRotateButton.enabled = NO;
+        _flashButton.enabled = NO;
+        _changeCameraModeButton.enabled = NO;
+        _chooseFilterButton.enabled = NO;
+        _silentSwitch.enabled = NO;
+        
+        _previewViewA.alpha = 0.0;
+    }
+    else
+    {
+        NSLog(@"cameraManager:close");
+        
+        //
+        _shutterButton.enabled = NO;
+        _cameraRotateButton.enabled = NO;
+        _flashButton.enabled = NO;
+        _changeCameraModeButton.enabled = NO;
+        _chooseFilterButton.enabled = NO;
+        _silentSwitch.enabled = NO;
+        
+        _previewViewA.alpha = 0.0;
+    }
 }
 
 - (void)cameraManagerAdjustingFocus:(NSNotification*)notification
