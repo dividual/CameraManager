@@ -261,25 +261,36 @@
     
     NSLog(@"cameraManager:didPlayShutterSound(image = %@)", NSStringFromCGSize(image.size));
     
-    if(image)
-    {
-        //  アニメーションの処理はここに書くとすぐに実行される
-        UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-        
-        CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
-        imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
-        
+//    if(image)
+//    {
+//        //  アニメーションの処理はここに書くとすぐに実行される
+//        UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+//        
+//        CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
+//        imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
+//        
+//        //
+//        [self.view addSubview:imageView];
+//        [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+//            //
+//            imageView.transform = CGAffineTransformMakeScale(0.0, 0.0);
+//            
+//        } completion:^(BOOL finished) {
+//            
+//            [imageView removeFromSuperview];
+//        }];
+//    }
+    
+    _previewViewA.alpha = 0.0;
+    
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
         //
-        [self.view addSubview:imageView];
-        [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
-            //
-            imageView.transform = CGAffineTransformMakeScale(0.0, 0.0);
-            
-        } completion:^(BOOL finished) {
-            
-            [imageView removeFromSuperview];
-        }];
-    }
+        _previewViewA.alpha = 1.0;
+        
+    } completion:^(BOOL finished) {
+        //
+        
+    }];
 }
 
 - (void)cameraManagerDidCapturedImage:(NSNotification*)notification
@@ -692,8 +703,8 @@
 - (IBAction)pushedShutterButton:(id)sender
 {
     //  スチールの時はShutter非アクティブに
-    if([CameraManager sharedManager].cameraMode == CMCameraModeStill)
-        _shutterButton.enabled = NO;
+//    if([CameraManager sharedManager].cameraMode == CMCameraModeStill)
+//        _shutterButton.enabled = NO;
     
     //  その他のGUIも操作できないように消す
     _cameraRotateButton.enabled = NO;

@@ -49,10 +49,13 @@
 @property (strong, nonatomic) NSMutableArray *tmpMovieSavePathArray;    //ここに残ってるというのは、まだ処理に使ってるかもしれないという意味
 
 @property (assign, nonatomic) BOOL focusViewShowHide;
-@property (assign, nonatomic) BOOL adjustingFocus;  //  フォーカス中の判定を補正するための
-@property (assign, nonatomic) BOOL shutterReserved; //  フォーカス中にShutter押された時用のフラグ
+@property (assign, nonatomic) BOOL adjustingFocus;                      //  フォーカス中の判定を補正するための
+@property (assign, nonatomic) BOOL isReadyForTakePhoto;                 //  フォーカスを切れる常態かどうか
+@property (assign, nonatomic) NSInteger shutterReserveCount;            //  フォーカス中にShutter押された時用のフラグ
 
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
+
+
 @end
 
 #pragma mark -
@@ -111,6 +114,9 @@
     
     //
     _tmpMovieSavePathArray = [NSMutableArray array];
+    
+    //
+    _isReadyForTakePhoto = NO;
 }
 
 #pragma mark -
@@ -181,7 +187,11 @@
                 [self setBoostMode:YES];
                 
                 //  フォーカスを合わせる処理を開始
-                [self setFocusPoint:CGPointMake(0.5, 0.5)];
+                //[self setFocusPoint:CGPointMake(0.5, 0.5)];
+                [self setFocusModeContinousAutoFocus];
+                
+                //
+                _isReadyForTakePhoto = YES;
             });
             
             //  notificationの登録
@@ -507,10 +517,39 @@
     self.flashMode = (_flashMode+1)%3;
 }
 
+//  撮影処理を内部的に呼ぶ場合はここ
+- (void)doTakePhoto
+{
+    if(_stillCamera.inputCamera.adjustingFocus || !_isReadyForTakePhoto)
+        return;
+    
+    //  カウントデクリメント
+    if(_shutterReserveCount)
+        _shutterReserveCount--;
+    
+    //  撮影中に
+    _isReadyForTakePhoto = NO;
+    
+    //
+    if(_cameraMode == CMCameraModeStill)
+    {
+        if (_hasCamera)
+        {
+            [self prepareForCapture];
+        }
+    }
+    else
+    {
+        //  動画撮影
+        [self startVideoRec];
+    }
+}
+
 //  シャッターボタンを押された
 - (void)takePhoto
 {
-    if( [UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera] == NO ){
+    if( [UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera] == NO )
+    {
 		// カメラが無ければ処理中断
 		return;
 	}
@@ -520,32 +559,14 @@
         _adjustingFocus = NO;
     
     //  フォーカスを合わせてる途中だったら予約処理にする
-    if(_adjustingFocus)
+    if(_stillCamera.inputCamera.adjustingFocus || !_isReadyForTakePhoto)
     {
-        _shutterReserved = YES;
+        if(_shutterReserveCount<2)
+            _shutterReserveCount++;
     }
-    else
-        _shutterReserved = NO;
     
-    //
-    if(_cameraMode == CMCameraModeStill)
-    {
-        if(_shutterReserved)
-            return;
-        
-        if (_hasCamera)
-        {
-            [self prepareForCapture];
-        }
-    }
-    else
-    {
-        if(_shutterReserved)
-            return;
-        
-        //  動画撮影
-        [self startVideoRec];
-    }
+    if(_shutterReserveCount == 0)
+        [self doTakePhoto];
 }
 
 //
@@ -650,7 +671,6 @@
 - (void)captureImage
 {
     //  キャプチャー処理
-    __block UIImage *originalImage = nil;
     
     //  撮影後の処理をブロックで
     void (^completion)(UIImage *processedImage, UIImage *imageForAnimation, NSError *error) = ^(UIImage *processedImage, UIImage *imageForAnimation, NSError *error){
@@ -663,56 +683,65 @@
             [_stillCamera.inputCamera unlockForConfiguration];
         }
         
-        //  フィルターを新しいのに切り替える（メモリ解放されるまでプレビューされない問題を回避するために）
-        {
-            [_filter removeAllTargets];
-            [_stillCamera removeTarget:_filter];
-            
-            //  filterを作り替える
-            _filter = [self filterWithName:_currentFilterName];
-            [self prepareFilter];
-        }
-        
         //  イベント発行（メインスレッドで実行）
         dispatch_async(dispatch_get_main_queue(), ^{
             //
+            //
             [self dispatchEvent:@"didPlayShutterSound" userInfo:@{ @"image":imageForAnimation }];
-        });
-        
-        //
-        originalImage = processedImage;
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             
-            //  一旦出てきたデータを直扱いに
-            UIImage *fixImage = originalImage;//[originalImage normalizedImage];//  回転がおかしくなる時があるので、UIImageを作りなおす
-            originalImage = nil;
+            //  フィルターを新しいのに切り替える（メモリ解放されるまでプレビューされない問題を回避するために）
+            {
+                [_filter removeAllTargets];
+                [_stillCamera removeTarget:_filter];
+                
+                //  filterを作り替える
+                _filter = [self filterWithName:_currentFilterName];
+                [self prepareFilter];
+            }
             
-            //  mainThread
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                //  イベント発行
-                [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":fixImage} ];
-                
-                //
-                if(_autoSaveToCameraroll)
-                {
-                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                        
-                        ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                        
-                        [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(fixImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
+            //  イベント発行
+            [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":processedImage} ];
+            
+            //
+            if(_autoSaveToCameraroll)
+            {
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    
+                    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+                    
+                    [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(processedImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
+                     {
+                         if(error)
                          {
-                             if(error)
-                             {
-                                 NSLog(@"ERROR: the image failed to be written");
-                             }
-                             else
-                             {
-                                 NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
-                             }
-                         }];
-                    });
+                             NSLog(@"ERROR: the image failed to be written");
+                         }
+                         else
+                         {
+                             NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
+                         }
+                     }];
+                });
+            }
+
+            //
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                //
+                GPUImageFilter *filter = (GPUImageFilter*)_filter;
+                while(filter.renderTarget == nil)
+                {
+                    [NSThread sleepForTimeInterval:0.01];
                 }
+                
+                //  撮影中フラグをおろす
+                _isReadyForTakePhoto = YES;
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    //  まだ撮影必要だったら撮影走らせる
+                    if(_shutterReserveCount)
+                    {
+                        [self doTakePhoto];
+                    }
+                });
             });
         });
     };
@@ -734,7 +763,7 @@
         else
             imgForAnimation = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUp];
         
-        UIImage *fixImage = [imgForAnimation normalizedImage];
+        UIImage *fixImage = imgForAnimation;
         
         [_filter prepareForImageCapture];
         
@@ -1105,11 +1134,10 @@
         }
         
         //
-        if(_shutterReserved && state == NO)
+        if(_shutterReserveCount && state == NO)
         {
             _adjustingFocus = NO;
-            [self takePhoto];
-            _shutterReserved = NO;
+            [self doTakePhoto];
         }
         else
         {
@@ -1170,7 +1198,7 @@
     
     switch (index) {
         case 0:{
-            filter = [[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/default"];
+            filter = [[GPUImageFilter alloc] init];//[[GPUImageToneCurveFilter alloc] initWithACV:@"CameraManager.bundle/Filters/default"];
         } break;
             
         case 1:{
