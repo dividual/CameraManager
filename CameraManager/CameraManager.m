@@ -54,7 +54,7 @@
 @property (assign, nonatomic) NSInteger shutterReserveCount;            //  フォーカス中にShutter押された時用のフラグ
 
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
-
+@property (assign, nonatomic) BOOL lastOpenState;
 
 @end
 
@@ -117,7 +117,36 @@
     
     //
     _isReadyForTakePhoto = NO;
+    
+    //  iPhoneがスリープするときやバックグラウンドにいくときにカメラをoffに
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillResignActive:) name:UIApplicationWillResignActiveNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
 }
+
+- (void)applicationWillResignActive:(NSNotification*)notification
+{
+    NSLog(@"applicationWillResignActive");
+    
+    //
+    if(_isCameraOpened)
+    {
+        _lastOpenState = YES;
+        [self closeCamera];
+    }
+    else
+        _lastOpenState = NO;
+}
+
+- (void)applicationDidBecomeActive:(NSNotification*)notification
+{
+    NSLog(@"applicationDidBecomeActive");
+    
+    if(_lastOpenState)
+    {
+        [self openCamera];
+    }
+}
+
 
 #pragma mark -
 
@@ -515,6 +544,30 @@
 {
     //  flashモードのボタンを押された（順に切り替える）
     self.flashMode = (_flashMode+1)%3;
+    
+    //
+    if(_stillCamera.inputCamera.flashAvailable)
+    {
+        if([_stillCamera.inputCamera lockForConfiguration:nil])
+        {
+            switch(self.flashMode)
+            {
+                case CMFlashModeAuto:
+                    _stillCamera.inputCamera.flashMode = AVCaptureFlashModeAuto;
+                    break;
+                    
+                case CMFlashModeOn:
+                    _stillCamera.inputCamera.flashMode = AVCaptureFlashModeOn;
+                    break;
+                    
+                case CMFlashModeOff:
+                    _stillCamera.inputCamera.flashMode = AVCaptureFlashModeOff;
+                    break;
+            }
+            
+            [_stillCamera.inputCamera unlockForConfiguration];
+        }
+    }
 }
 
 //  撮影処理を内部的に呼ぶ場合はここ
@@ -527,21 +580,24 @@
     if(_shutterReserveCount)
         _shutterReserveCount--;
     
-    //  撮影中に
-    _isReadyForTakePhoto = NO;
-    
     //
     if(_cameraMode == CMCameraModeStill)
     {
         if (_hasCamera)
         {
+            //  撮影中に
+            _isReadyForTakePhoto = NO;
+            
+            //
             [self prepareForCapture];
         }
     }
     else
     {
-        //  動画撮影
-        [self startVideoRec];
+        if(!_recordingProgressTimer)
+             [self startVideoRec];//  動画撮影
+        else
+            [self stopVideoRec];//  録画中に押された場合は停止処理する
     }
 }
 
@@ -558,11 +614,19 @@
     if(!_stillCamera.inputCamera.isFocusPointOfInterestSupported)
         _adjustingFocus = NO;
     
-    //  フォーカスを合わせてる途中だったら予約処理にする
-    if(_stillCamera.inputCamera.adjustingFocus || !_isReadyForTakePhoto)
+    //  ビデオモードの時は予約処理いらない
+    if(_cameraMode == CMCameraModeVideo)
     {
-        if(_shutterReserveCount<2)
-            _shutterReserveCount++;
+        _shutterReserveCount = 0;
+    }
+    else
+    {
+        //  フォーカスを合わせてる途中だったら予約処理にする
+        if(_stillCamera.inputCamera.adjustingFocus || !_isReadyForTakePhoto)
+        {
+            if(_shutterReserveCount<2)
+                _shutterReserveCount++;
+        }
     }
     
     if(_shutterReserveCount == 0)
@@ -641,31 +705,34 @@
 
 - (void)prepareForCapture
 {
-    //  フラッシュの準備（上記のロックをかけてからでないと処理できないっぽい）
-    if(_flashMode == CMFlashModeAuto && [_stillCamera.inputCamera hasTorch])
-    {
-        //  自動
-        [_stillCamera.inputCamera lockForConfiguration:nil];
-        [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeAuto];
-        [_stillCamera.inputCamera unlockForConfiguration];
-        
-        [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
-        
-    }
-    else if(_flashMode == CMFlashModeOn && [_stillCamera.inputCamera hasTorch])
-    {
-        //  ON
-        [_stillCamera.inputCamera lockForConfiguration:nil];
-        [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOn];
-        [_stillCamera.inputCamera unlockForConfiguration];
-
-        [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
-    }
-    else
-    {
-        //  もともと消えてる想定でOFFの指定はしない
-        [self captureImage];
-    }
+//    //  フラッシュの準備（上記のロックをかけてからでないと処理できないっぽい）
+//    if(_flashMode == CMFlashModeAuto && [_stillCamera.inputCamera hasFlash])
+//    {
+//        //  自動
+//        [_stillCamera.inputCamera lockForConfiguration:nil];
+//        _stillCamera.inputCamera.flashMode:AVCaptureFlashModeAuto];
+//        [_stillCamera.inputCamera unlockForConfiguration];
+//        
+//        [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
+//        //[self captureImage];
+//    }
+//    else if(_flashMode == CMFlashModeOn && [_stillCamera.inputCamera hasFlash])
+//    {
+//        //  ON
+//        [_stillCamera.inputCamera lockForConfiguration:nil];
+//        [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOn];
+//        [_stillCamera.inputCamera unlockForConfiguration];
+//
+//        [self performSelector:@selector(captureImage) withObject:nil afterDelay:_delayTimeForFlash];
+//        //[self captureImage];
+//    }
+//    else
+//    {
+//        //  もともと消えてる想定でOFFの指定はしない
+//        
+//    }
+    
+    [self captureImage];
 }
 
 - (void)captureImage
@@ -676,12 +743,6 @@
     void (^completion)(UIImage *processedImage, UIImage *imageForAnimation, NSError *error) = ^(UIImage *processedImage, UIImage *imageForAnimation, NSError *error){
         
         //  キャプチャー完了処理
-        if([_stillCamera.inputCamera hasTorch])
-        {
-            [_stillCamera.inputCamera lockForConfiguration:nil];
-            [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOff];
-            [_stillCamera.inputCamera unlockForConfiguration];
-        }
         
         //  イベント発行（メインスレッドで実行）
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -689,8 +750,10 @@
             //
             [self dispatchEvent:@"didPlayShutterSound" userInfo:@{ @"image":imageForAnimation }];
             
-            //  フィルターを新しいのに切り替える（メモリ解放されるまでプレビューされない問題を回避するために）
+            //  サイレントモード以外の時は
+            if(!_silentShutterMode)
             {
+                //  フィルターを新しいのに切り替える（メモリ解放されるまでプレビューされない問題を回避するために）
                 [_filter removeAllTargets];
                 [_stillCamera removeTarget:_filter];
                 
@@ -757,6 +820,7 @@
     }
     else
     {
+        //  アニメーション用の画像を作って用意しておく（フロントカメラのときは左右反転した画像にする）
         UIImage *imgForAnimation = nil;
         if(_stillCamera.inputCamera.position == AVCaptureDevicePositionFront)
             imgForAnimation = [_filter imageFromCurrentlyProcessedOutputWithOrientation:UIImageOrientationUpMirrored];
@@ -765,6 +829,7 @@
         
         UIImage *fixImage = imgForAnimation;
         
+        //  念のためこれを呼ぶ
         [_filter prepareForImageCapture];
         
         //  通常の撮影
@@ -869,7 +934,7 @@
 
 - (void)setupTorch
 {
-    if([_stillCamera.inputCamera hasTorch])
+    if([_stillCamera.inputCamera hasFlash])
     {
         //  フラッシュの設定
         NSError *error = nil;
@@ -882,16 +947,17 @@
         if(_flashMode == CMFlashModeAuto && [_stillCamera.inputCamera hasTorch])
         {
             //  自動
-            [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeAuto];
+            _stillCamera.inputCamera.torchMode = AVCaptureTorchModeAuto;
         }
         else if(_flashMode == CMFlashModeOn && [_stillCamera.inputCamera hasTorch])
         {
             //  ON
-            [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOn];
+            _stillCamera.inputCamera.torchMode = AVCaptureTorchModeOn;
         }
         else
         {
             //  もともと消えてる想定でOFFの指定はしない
+            _stillCamera.inputCamera.torchMode = AVCaptureTorchModeOn;
         }
         
         [_stillCamera.inputCamera unlockForConfiguration];
@@ -900,7 +966,7 @@
 
 - (void)offTorch
 {
-    if([_stillCamera.inputCamera hasTorch])
+    if([_stillCamera.inputCamera hasFlash])
     {
         [_stillCamera.inputCamera lockForConfiguration:nil];
         [_stillCamera.inputCamera setTorchMode:AVCaptureTorchModeOff];
@@ -916,13 +982,6 @@
 
 - (void)startVideoRec
 {
-    //  録画中に押された場合は停止処理する
-    if(_recordingProgressTimer)
-    {
-        [self stopVideoRec];
-        return;
-    }
-    
     //  event発行
     [self dispatchEvent:@"willStartVideoRecording" userInfo:nil];
     
@@ -1551,9 +1610,15 @@
 - (void)toggleCameraMode
 {
     if(_cameraMode == CMCameraModeStill)
+    {
         self.cameraMode = CMCameraModeVideo;
+        [self offTorch];
+    }
     else
+    {
         self.cameraMode = CMCameraModeStill;
+        self.flashMode = _flashMode;
+    }
 }
 
 - (void)setCameraMode:(CMCameraMode)cameraMode
@@ -1607,7 +1672,7 @@
 @dynamic hasFlash;
 - (BOOL)hasFlash
 {
-    return [_stillCamera.inputCamera hasTorch];
+    return [_stillCamera.inputCamera hasFlash];
 }
 
 #pragma mark - notification

@@ -88,11 +88,11 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qIM-lB-Ebw" userLabel="CameraRotate">
-                                <rect key="frame" x="264" y="517" width="36" height="27"/>
+                                <rect key="frame" x="252" y="500.5" width="60" height="60"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="36" id="Tcp-tL-bKu"/>
-                                    <constraint firstAttribute="height" constant="27" id="wGd-S3-eOq"/>
+                                    <constraint firstAttribute="width" constant="60" id="Tcp-tL-bKu"/>
+                                    <constraint firstAttribute="height" constant="60" id="wGd-S3-eOq"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" pointSize="15"/>
                                 <state key="normal" image="cameraFrontBack.png">
@@ -103,11 +103,11 @@
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TXc-Kc-e3M" userLabel="Flash">
-                                <rect key="frame" x="20" y="518" width="26" height="26"/>
+                                <rect key="frame" x="3" y="501" width="60" height="60"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="26" id="RzR-9n-zFU"/>
-                                    <constraint firstAttribute="height" constant="26" id="Udn-he-1Qc"/>
+                                    <constraint firstAttribute="width" constant="60" id="RzR-9n-zFU"/>
+                                    <constraint firstAttribute="height" constant="60" id="Udn-he-1Qc"/>
                                 </constraints>
                                 <fontDescription key="fontDescription" type="system" pointSize="15"/>
                                 <state key="normal" image="flashOFF.png">
@@ -158,13 +158,13 @@
                             <constraint firstItem="qCt-oi-usQ" firstAttribute="centerY" secondItem="TXc-Kc-e3M" secondAttribute="centerY" id="GFJ-rI-fH9"/>
                             <constraint firstItem="tcU-OO-YIn" firstAttribute="top" secondItem="Ol1-w6-Sf6" secondAttribute="bottom" id="Jgc-0N-uq9"/>
                             <constraint firstAttribute="centerX" secondItem="tcU-OO-YIn" secondAttribute="centerX" id="OXj-hS-Itv"/>
-                            <constraint firstItem="TXc-Kc-e3M" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" constant="20" id="V1S-Hy-a48"/>
+                            <constraint firstItem="TXc-Kc-e3M" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" constant="3" id="V1S-Hy-a48"/>
                             <constraint firstItem="Gv1-3V-JSD" firstAttribute="top" secondItem="Ol1-w6-Sf6" secondAttribute="bottom" id="Xsd-up-N3j"/>
                             <constraint firstItem="q82-qm-Vu9" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" id="ZoJ-To-n6R"/>
                             <constraint firstItem="qCt-oi-usQ" firstAttribute="centerY" secondItem="qIM-lB-Ebw" secondAttribute="centerY" id="cbI-Mm-IrJ"/>
                             <constraint firstItem="kJP-ui-7SI" firstAttribute="top" secondItem="qCt-oi-usQ" secondAttribute="bottom" constant="5" id="f8J-7e-1Im"/>
                             <constraint firstAttribute="trailing" secondItem="Gv1-3V-JSD" secondAttribute="trailing" constant="20" id="g1r-z2-UmI"/>
-                            <constraint firstAttribute="trailing" secondItem="qIM-lB-Ebw" secondAttribute="trailing" constant="20" id="oCT-S0-lRo"/>
+                            <constraint firstAttribute="trailing" secondItem="qIM-lB-Ebw" secondAttribute="trailing" constant="8" id="oCT-S0-lRo"/>
                             <constraint firstAttribute="centerX" secondItem="IaG-BQ-oKl" secondAttribute="centerX" id="rX8-gY-MNj"/>
                             <constraint firstItem="q82-qm-Vu9" firstAttribute="top" secondItem="kh9-bI-dsS" secondAttribute="top" id="twO-Wc-rUF"/>
                             <constraint firstAttribute="centerX" secondItem="qCt-oi-usQ" secondAttribute="centerX" id="u4y-nO-NEx"/>
