@@ -52,6 +52,7 @@
     
     //  プレビュー画面をalphaゼロから
     _previewViewA.alpha = 0.0;
+    _previewViewA.previewMode = PreviewViewMode_AVCapture;
     
     //  カメラを開く
     [[CameraManager sharedManager] openCamera];
@@ -230,36 +231,25 @@
         _chooseFilterButton.enabled = YES;
         _silentSwitch.enabled = YES;
     }];
+    
+    //  previewにつないでみる
+    [_previewViewA.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
+    [_previewViewA.previewLayer setSession:[CameraManager sharedManager].stillCamera.captureSession];
 }
 
 - (void)cameraManagerClosed:(NSNotification*)notification
 {
-    if(notification == nil)
-    {
-        //
-        _shutterButton.enabled = NO;
-        _cameraRotateButton.enabled = NO;
-        _flashButton.enabled = NO;
-        _changeCameraModeButton.enabled = NO;
-        _chooseFilterButton.enabled = NO;
-        _silentSwitch.enabled = NO;
-        
-        _previewViewA.alpha = 0.0;
-    }
-    else
-    {
-        NSLog(@"cameraManager:close");
-        
-        //
-        _shutterButton.enabled = NO;
-        _cameraRotateButton.enabled = NO;
-        _flashButton.enabled = NO;
-        _changeCameraModeButton.enabled = NO;
-        _chooseFilterButton.enabled = NO;
-        _silentSwitch.enabled = NO;
-        
-        _previewViewA.alpha = 0.0;
-    }
+    NSLog(@"cameraManager:close");
+    
+    //
+    _shutterButton.enabled = NO;
+    _cameraRotateButton.enabled = NO;
+    _flashButton.enabled = NO;
+    _changeCameraModeButton.enabled = NO;
+    _chooseFilterButton.enabled = NO;
+    _silentSwitch.enabled = NO;
+    
+    _previewViewA.alpha = 0.0;
 }
 
 - (void)cameraManagerAdjustingFocus:(NSNotification*)notification
@@ -602,6 +592,12 @@
     _changeCameraModeButton.enabled = YES;
     _chooseFilterButton.enabled = YES;
     _silentSwitch.enabled = YES;
+    
+    //  フィルターのが「なし」の時だけpreviewModeをAVCaptureに
+    if(index == 0)
+    {
+        _previewViewA.previewMode = PreviewViewMode_AVCapture;
+    }
 }
 
 - (void)cameraManagerShowFocusCursor:(NSNotification*)notification
@@ -689,7 +685,7 @@
             break;
 
         case CMFlashModeOff:
-            imgName = @"flashOff";
+            imgName = @"flashOFF";
             break;
 
         case CMFlashModeOn:

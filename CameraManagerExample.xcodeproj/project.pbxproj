@@ -42,6 +42,8 @@
 		D5D035721827BD3D00233B58 /* GPUImageStillCamera+Utility.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */; };
 		D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357A1827C14B00233B58 /* DeviceOrientation.m */; };
 		D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357F1827D03600233B58 /* UIImage+Normalize.m */; };
+		D5D9221E18C57B6B00612CA7 /* PreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D9221D18C57B6B00612CA7 /* PreviewView.m */; };
+		D5D9222118C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D9222018C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +108,10 @@
 		D5D0357A1827C14B00233B58 /* DeviceOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceOrientation.m; sourceTree = "<group>"; };
 		D5D0357E1827D03600233B58 /* UIImage+Normalize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Normalize.h"; sourceTree = "<group>"; };
 		D5D0357F1827D03600233B58 /* UIImage+Normalize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Normalize.m"; sourceTree = "<group>"; };
+		D5D9221C18C57B6B00612CA7 /* PreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewView.h; sourceTree = "<group>"; };
+		D5D9221D18C57B6B00612CA7 /* PreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreviewView.m; sourceTree = "<group>"; };
+		D5D9221F18C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageStillCamera+directShutter.h"; sourceTree = "<group>"; };
+		D5D9222018C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageStillCamera+directShutter.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -221,6 +227,10 @@
 				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
 				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
+				D5D9221C18C57B6B00612CA7 /* PreviewView.h */,
+				D5D9221D18C57B6B00612CA7 /* PreviewView.m */,
+				D5D9221F18C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.h */,
+				D5D9222018C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m */,
 			);
 			path = CameraManager;
 			sourceTree = "<group>";
@@ -410,6 +420,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D52A8ADD1817F2EA00F4ADFD /* ViewController.m in Sources */,
+				D5D9221E18C57B6B00612CA7 /* PreviewView.m in Sources */,
 				D52A8AD71817F2EA00F4ADFD /* AppDelegate.m in Sources */,
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
 				D52A8B181817F69100F4ADFD /* CameraManager.m in Sources */,
@@ -418,6 +429,7 @@
 				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
 				D50B051118A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
+				D5D9222118C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m in Sources */,
 				D5D035721827BD3D00233B58 /* GPUImageStillCamera+Utility.m in Sources */,
 				D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */,
 			);

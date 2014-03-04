@@ -155,19 +155,6 @@
                 _deviceAngle -= 2 * M_PI;
             
             [self updateOrientation];
-            
-//            if(self.orientation == UIDeviceOrientationFaceDown)
-//                NSLog(@"UIDeviceOrientationFaceDown");
-//            else if(self.orientation == UIDeviceOrientationFaceUp)
-//                NSLog(@"UIDeviceOrientationFaceUp");
-//            else if(self.orientation == UIDeviceOrientationPortrait)
-//                NSLog(@"UIDeviceOrientationPortrait");
-//            else if(self.orientation == UIDeviceOrientationPortraitUpsideDown)
-//                NSLog(@"UIDeviceOrientationPortraitUpsideDown");
-//            else if(self.orientation == UIDeviceOrientationLandscapeLeft)
-//                NSLog(@"UIDeviceOrientationLandscapeLeft");
-//            else if(self.orientation == UIDeviceOrientationLandscapeRight)
-//                NSLog(@"UIDeviceOrientationLandscapeRight");
         };
         
         // センサーの利用開始

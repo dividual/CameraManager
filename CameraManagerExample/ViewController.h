@@ -8,12 +8,13 @@
 
 #import <UIKit/UIKit.h>
 #import <GPUImage/GPUImage.h>
+#import "PreviewView.h"
 
 @interface ViewController : UIViewController
 
 @property (weak, nonatomic) IBOutlet UILabel *filterNameLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *silentSwitch;
-@property (weak, nonatomic) IBOutlet GPUImageView *previewViewA;
+@property (weak, nonatomic) IBOutlet PreviewView *previewViewA;
 @property (weak, nonatomic) IBOutlet UIButton *shutterButton;
 @property (weak, nonatomic) IBOutlet UIButton *cameraRotateButton;
 @property (weak, nonatomic) IBOutlet UIButton *flashButton;

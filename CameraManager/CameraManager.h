@@ -13,6 +13,7 @@
 //      GPUImageの組み込みには、CococaPodを使うことに。
 
 #import <GPUImage/GPUImage.h>
+#import "PreviewView.h"
 
 typedef NS_ENUM(NSInteger, CMFlashMode)
 {
@@ -72,8 +73,8 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (readonly, nonatomic) CGFloat maxZoomScale;               //  ズームの最大スケール
 
 //  プレビュー画面
-- (void)addPreviewView:(GPUImageView*)previewView;                  //  プレビュー画面の追加
-- (void)removePreviewView:(GPUImageView*)previewView;               //  プレビュー画面を消す
+- (void)addPreviewView:(PreviewView*)previewView;                  //  プレビュー画面の追加
+- (void)removePreviewView:(PreviewView*)previewView;               //  プレビュー画面を消す
 
 //  操作系
 - (void)changeFlashMode;                                            //  フラッシュのモードを変える
@@ -92,7 +93,7 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 - (void)setFocusPoint:(CGPoint)pos inView:(GPUImageView*)view;      //  フォーカスを合わせるとき（view内の座標で指定）
 - (void)setFilterWithName:(NSString*)name;                          //  フィルターを選択
 - (UIImage*)captureCurrentPreviewImage;                             //  プレビューに使ってる画像を即座に返す
-- (void)showChooseEffectInPreviewView:(GPUImageView*)previewView;   //  エフェクト一覧画面を表示するための画面を作る
+- (void)showChooseEffectInPreviewView:(PreviewView*)previewView;   //  エフェクト一覧画面を表示するための画面を作る
 - (void)dissmissChooseEffect;                                       //  エフェクト選択モードを終了
 - (void)toggleCameraMode;                                           //  カメラモードを切り替える
 - (void)removeTempMovieFile:(NSURL*)tmpURL;                         //  tmpFileはもういらないよの通知
