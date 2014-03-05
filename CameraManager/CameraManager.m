@@ -22,7 +22,6 @@ static void * RecordingContext = &RecordingContext;
 static void * SessionRunningAndDeviceAuthorizedContext = &SessionRunningAndDeviceAuthorizedContext;
 static void * AdjustingFocusContext = &AdjustingFocusContext;
 static void * DeviceOrientationContext = &DeviceOrientationContext;
-static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 
 @interface CameraManager () <AVCaptureFileOutputRecordingDelegate, AVCaptureVideoDataOutputSampleBufferDelegate>
 
@@ -266,9 +265,6 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         //  フォーカス状態をKVOで追いかける
         [self addObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:AdjustingFocusContext];
         
-        //  撮影可能になったかどうかを追いかける
-        [self addObserver:self forKeyPath:@"readyForTakePhoto" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:ReadyForTakePhotoContext];
-        
         //  Deviceの状態を常に監視してみる（ロックの時も）
         [[DeviceOrientation sharedManager] startAccelerometer];
         [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:DeviceOrientationContext];
@@ -344,10 +340,9 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
             [self removeObserver:self forKeyPath:@"stillImageOutput.capturingStillImage" context:CapturingStillImageContext];
             [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
             [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
+            
             [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation" context:DeviceOrientationContext];
             [[DeviceOrientation sharedManager] stopAccelerometer];
-            
-            [self removeObserver:self forKeyPath:@"readyForTakePhoto" context:ReadyForTakePhotoContext];
         });
         
         //
@@ -380,6 +375,19 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         dispatch_async(dispatch_get_main_queue(), ^{
             [self dispatchEvent:@"didChangeIsCapturingStillImage" userInfo:@{@"state":@(isCapturingStillImage)}];
         });
+        
+        //
+        if(isCapturingStillImage == NO)
+        {
+            if(self.isReadyForTakePhoto)
+            {
+                //  Shutter予約がある場合は撮影する
+                if(_shutterReserveCount)
+                {
+                    [self doTakePhoto];
+                }
+            }
+        }
     }
     else if(context == RecordingContext)
     {
@@ -437,6 +445,19 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         
         //
         _adjustingFocus = isAdjustingFocus;
+        
+        //
+        if(_adjustingFocus == NO)
+        {
+            if(self.isReadyForTakePhoto)
+            {
+                //  Shutter予約がある場合は撮影する
+                if(_shutterReserveCount)
+                {
+                    [self doTakePhoto];
+                }
+            }
+        }
     }
     else if(context == DeviceOrientationContext)
     {
@@ -450,21 +471,6 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
             
             //
             [self dispatchEvent:@"didChangeDeviceOrientation" userInfo:@{ @"orientation":@(_orientation) }];//  UIDeviceOrientationを返してる
-        }
-    }
-    else if(context == ReadyForTakePhotoContext)
-    {
-        BOOL isReadyTakePhoto = [change[NSKeyValueChangeNewKey] boolValue];
-        
-        NSLog(@"isReadyTakePhoto:%d", isReadyTakePhoto);
-        
-        if(isReadyTakePhoto)
-        {
-            //  Shutter予約がある場合は撮影する
-            if(_shutterReserveCount)
-            {
-                [self doTakePhoto];
-            }
         }
     }
     else
@@ -644,11 +650,6 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         return !device.isAdjustingFocus && !_stillImageOutput.capturingStillImage;
     else
         return !device.isAdjustingFocus && !_movieFileOutput.recording;
-}
-
-+ (NSSet *)keyPathsForValuesAffectingReadyForTakePhoto
-{
-    return [NSSet setWithObjects:@"videoDeviceInput.device.adjustingFocus", @"stillImageOutput.capturingStillImage", nil];
 }
 
 #pragma mark - focus関連
@@ -881,8 +882,12 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 			[[NSNotificationCenter defaultCenter] removeObserver:self name:AVCaptureDeviceSubjectAreaDidChangeNotification object:currentVideoDevice];
 			[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(subjectAreaDidChange:) name:AVCaptureDeviceSubjectAreaDidChangeNotification object:videoDevice];
 			
+            [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
+            
 			[_session addInput:videoDeviceInput];
 			_videoDeviceInput = videoDeviceInput;
+            
+            [self addObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:AdjustingFocusContext];
 		}
 		else
 		{
