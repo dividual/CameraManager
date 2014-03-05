@@ -1476,6 +1476,12 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
     return [device hasFlash];
 }
 
+@dynamic position;
+- (AVCaptureDevicePosition)position
+{
+    return _videoDeviceInput.device.position;
+}
+
 #pragma mark - zoom
 
 //  ズーム値設定

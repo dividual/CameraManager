@@ -58,6 +58,7 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (readonly, nonatomic) BOOL hasFlash;                      //  内部で判定してるフラッシュもってるかどうか
 @property (readonly, nonatomic) BOOL isChooseFilterMode;            //  フィルター選択画面の状態かどうか
 @property (readonly, nonatomic) BOOL isCameraOpened;                //  カメラを開いてるかどうか
+@property (readonly, nonatomic) AVCaptureDevicePosition position;   //  カメラが前か後ろか
 
 //  ズーム対応
 @property (assign, nonatomic) CGFloat zoomScale;                    //  ズームのスケールを入れる 1.0 ~

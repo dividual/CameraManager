@@ -76,8 +76,9 @@
 	
     //  プレビュー設定
     [_previewView.previewLayer setSession:[CameraManager sharedManager].session];
-    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-
+    //_previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+    
     //  プレビュー画面をalphaゼロから
     _previewView.alpha = 0.0;
 
