@@ -339,14 +339,17 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         _runtimeErrorHandlingObserver = nil;
         
         //  登録したObserverを削除
-        [self removeObserver:self forKeyPath:@"sessionRunningAndDeviceAuthorized" context:SessionRunningAndDeviceAuthorizedContext];
-        [self removeObserver:self forKeyPath:@"stillImageOutput.capturingStillImage" context:CapturingStillImageContext];
-        [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
-        [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
-        [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation" context:DeviceOrientationContext];
-        [[DeviceOrientation sharedManager] stopAccelerometer];
-        
-        [self removeObserver:self forKeyPath:@"readyForTakePhoto" context:ReadyForTakePhotoContext];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            [self removeObserver:self forKeyPath:@"sessionRunningAndDeviceAuthorized" context:SessionRunningAndDeviceAuthorizedContext];
+            [self removeObserver:self forKeyPath:@"stillImageOutput.capturingStillImage" context:CapturingStillImageContext];
+            [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
+            [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
+            [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation" context:DeviceOrientationContext];
+            [[DeviceOrientation sharedManager] stopAccelerometer];
+            
+            [self removeObserver:self forKeyPath:@"readyForTakePhoto" context:ReadyForTakePhotoContext];
+        });
         
         //
         _isCameraOpened = NO;
