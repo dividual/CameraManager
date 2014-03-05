@@ -32,6 +32,8 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 @property (strong, nonatomic) AVCaptureDeviceInput *videoDeviceInput;
 @property (strong, nonatomic) AVCaptureMovieFileOutput *movieFileOutput;
 @property (strong, nonatomic) AVCaptureStillImageOutput *stillImageOutput;
+@property (strong, nonatomic) dispatch_queue_t captureCurrentFrameQueue;
+@property (strong, nonatomic) AVCaptureVideoDataOutput *videoDataOutput;
 
 //  Utilities
 @property (assign, nonatomic) UIBackgroundTaskIdentifier backgroundRecordingID;
@@ -48,7 +50,7 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 //
 @property (strong, nonatomic) NSTimer *recordingProgressTimer;
 @property (strong, nonatomic) NSString *tmpMovieSavePath;
-@property (strong, nonatomic) NSMutableArray *tmpMovieSavePathArray;    //ここに残ってるというのは、まだ処理に使ってるかもしれないという意味
+@property (strong, nonatomic) NSMutableArray *tmpMovieSavePathArray;    //  ここに残ってるというのは、まだ処理に使ってるかもしれないという意味
 
 @property (assign, nonatomic) BOOL focusViewShowHide;                   //  フォーカスの矩形の表示状態保持
 @property (assign, nonatomic) BOOL adjustingFocus;                      //  タッチした時にフォーカス合わせ始めたことにしたい
@@ -58,6 +60,10 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
 @property (assign, nonatomic) BOOL lastOpenState;
+
+//  captureの処理用
+@property (copy, nonatomic) void (^captureCompletion)(UIImage *capturedImage);
+@property (assign, nonatomic) UIImage *currentPreviewImage;
 
 @end
 
@@ -120,6 +126,9 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
     //  Session Queueの作成
 	_sessionQueue = dispatch_queue_create("jp.dividual.CameraManager.session", DISPATCH_QUEUE_SERIAL);
     
+    //
+    _captureCurrentFrameQueue = dispatch_queue_create("jp.dividual.CameraManager.captureCurrentFrame", DISPATCH_QUEUE_SERIAL);
+    
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
         //
@@ -175,7 +184,8 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 		AVCaptureMovieFileOutput *movieFileOutput = [[AVCaptureMovieFileOutput alloc] init];
 		if([_session canAddOutput:movieFileOutput])
 		{
-			[_session addOutput:movieFileOutput];
+            //  動画モードの時だけ追加して使う
+			//[_session addOutput:movieFileOutput];
             
 			AVCaptureConnection *connection = [movieFileOutput connectionWithMediaType:AVMediaTypeVideo];
             
@@ -198,15 +208,18 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
             _stillImageOutput = stillImageOutput;
 		}
         
-//        //  サイレントモード用のdataOutput作成
-//        AVCaptureVideoDataOutput*   dataOutput;
-//        NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey, nil];
-//
-//        
-//        dataOutput = [[AVCaptureVideoDataOutput alloc] init];
-//        [dataOutput autorelease];
-//        dataOutput.videoSettings = settings;
-//        [dataOutput setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
+        //  サイレントモード用のdataOutput作成
+        AVCaptureVideoDataOutput *dataOutput = [[AVCaptureVideoDataOutput alloc] init];
+        dataOutput.videoSettings = @{ (id)kCVPixelBufferPixelFormatTypeKey:@(kCVPixelFormatType_32BGRA) };
+        [dataOutput setSampleBufferDelegate:self queue:_captureCurrentFrameQueue];
+        dataOutput.alwaysDiscardsLateVideoFrames = YES;
+        if([_session canAddOutput:dataOutput])
+        {
+            [_session addOutput:dataOutput];
+            
+            //  保持
+            _videoDataOutput = dataOutput;
+        }
 	});
 }
 
@@ -220,17 +233,23 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
     }
     
     //  解像度設定の未設定チェック
-    if( !_sessionPresetForStill )
+    if(!_sessionPresetForStill )
         _sessionPresetForStill = AVCaptureSessionPresetPhoto;
     
-    if( !_sessionPresetForVideo)
+    if(!_sessionPresetForVideo)
         _sessionPresetForVideo = AVCaptureSessionPresetHigh;
     
-    if( !_sessionPresetForFrontStill )
+    if(!_sessionPresetForFrontStill )
         _sessionPresetForFrontStill = AVCaptureSessionPresetPhoto;
     
-    if( !_sessionPresetForFrontVideo)
+    if(!_sessionPresetForFrontVideo)
         _sessionPresetForFrontVideo = AVCaptureSessionPresetHigh;
+    
+    if(!_sessionPresetForSilentStill)
+        _sessionPresetForSilentStill = AVCaptureSessionPresetHigh;
+    
+    if(!_sessionPresetForSilentFrontStill)
+        _sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
     
     //  開始処理
     dispatch_async(_sessionQueue, ^{
@@ -285,6 +304,16 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         
         //  フラッシュモード指定しておく
         [self setDeviceFlashMode:_flashMode];
+        
+//        //  iPhone5sの手ブレをOFFにしてみる
+//        //  設定する
+//        dispatch_async([self sessionQueue], ^{
+//            //
+//            if(_stillImageOutput.stillImageStabilizationSupported)
+//            {
+//                _stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = NO;
+//            }
+//        });
     });
 }
 
@@ -541,6 +570,11 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
     if(_isCameraOpened)
     {
         _lastOpenState = YES;
+        
+        //  画面消すためにここで送っておく
+        [self dispatchEvent:@"close" userInfo:nil];
+        
+        //
         [self closeCamera];
     }
     else
@@ -813,14 +847,16 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         if(preferredPosition == AVCaptureDevicePositionBack)
         {
             if(_cameraMode == CMCameraModeStill)
-                _session.sessionPreset = _sessionPresetForStill;
+            {
+                _session.sessionPreset = !_silentShutterMode?_sessionPresetForStill:_sessionPresetForSilentStill;
+            }
             else
                 _session.sessionPreset = _sessionPresetForVideo;
         }
         else
         {
             if(_cameraMode == CMCameraModeStill)
-                _session.sessionPreset = _sessionPresetForFrontStill;
+                _session.sessionPreset = !_silentShutterMode?_sessionPresetForFrontStill:_sessionPresetForSilentFrontStill;
             else
                 _session.sessionPreset = _sessionPresetForFrontVideo;
         }
@@ -918,20 +954,29 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
     if(_silentShutterMode)
     {
         //  サイレントモードの時は別処理
-//        [self captureImageSilentWithCompletion:^(UIImage *processedImage, UIImage *imageForAnimation, NSError *error) {
-//            
-//            [self capturedImage:processedImage animationImage:imageForAnimation error:error];
-//        }];
+        [self captureCurrentPreviewImageWithCompletion:^(UIImage *image) {
+            //
+            [self capturedImage:image animationImage:image error:nil];
+        }];
     }
     else
     {
         //  アニメーション用の画像を作って用意しておく（フロントカメラのときは左右反転した画像にする）
-        UIImage *imageForAnimation = nil;
-        
+//        [self captureCurrentPreviewImageWithCompletion:^(UIImage *imageForAnimation) {
+//            //
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                
+//                [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
+//                    //
+//                    [self capturedImage:image animationImage:imageForAnimation error:error];
+//                }];
+//            });
+//        }];
         [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
             //
-            [self capturedImage:image animationImage:imageForAnimation error:error];
+            [self capturedImage:image animationImage:nil error:error];
         }];
+
     }
 }
 
@@ -1242,6 +1287,52 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
     }
 }
 
+#pragma mark - AVCaptureVideoDataOutputSampleBufferDelegate
+
+- (void)captureOutput:(AVCaptureOutput*)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection*)connection
+{
+    if(_captureCompletion)
+    {
+        // イメージバッファの取得
+        CVImageBufferRef    buffer;
+        buffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+        
+        // イメージバッファのロック
+        CVPixelBufferLockBaseAddress(buffer, 0);
+        
+        // イメージバッファ情報の取得
+        uint8_t *base = CVPixelBufferGetBaseAddress(buffer);
+        size_t width = CVPixelBufferGetWidth(buffer);
+        size_t height = CVPixelBufferGetHeight(buffer);
+        size_t bytesPerRow = CVPixelBufferGetBytesPerRow(buffer);
+        
+        // ビットマップコンテキストの作成
+        CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+        CGContextRef cgContext = CGBitmapContextCreate(base, width, height, 8, bytesPerRow, colorSpace,kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+        CGColorSpaceRelease(colorSpace);
+        
+        // 画像の作成
+        CGImageRef cgImage = CGBitmapContextCreateImage(cgContext);
+        UIImage *image = [UIImage imageWithCGImage:cgImage scale:1.0f orientation:[self currentImageOrientation]];
+        CGImageRelease(cgImage);
+        CGContextRelease(cgContext);
+        
+        // イメージバッファのアンロック
+        CVPixelBufferUnlockBaseAddress(buffer, 0);
+        
+        //  現在の画像をキャッシュする
+        _captureCompletion(image);
+        _captureCompletion = nil;
+    }
+}
+
+#pragma mark - capturePreviewImage
+
+- (void)captureCurrentPreviewImageWithCompletion:(void(^)(UIImage *image))completion
+{
+    self.captureCompletion = completion;
+}
+
 #pragma mark - cameraMode
 
 //  カメラモードを切り替える
@@ -1271,38 +1362,71 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         
         //  sessionpreset変更
         AVCaptureDevice *device = _videoDeviceInput.device;
-        if(device.position == AVCaptureDevicePositionFront)
+        
+        if(_cameraMode == CMCameraModeStill)
         {
-            //  フロントカメラの時
-            if(_cameraMode == CMCameraModeStill)
+            //  静止画モードに切り替えるとき
+            
+            //  outputの設定
+            if([_session.outputs containsObject:_movieFileOutput])  //  動画で使うoutputを抜く
+                [_session removeOutput:_movieFileOutput];
+            
+            if(![_session.outputs containsObject:_stillImageOutput] && [_session canAddOutput:_stillImageOutput])   //  静止画撮影用
+                [_session addOutput:_stillImageOutput];
+            
+            if(![_session.outputs containsObject:_videoDataOutput] && [_session canAddOutput:_videoDataOutput])     //  サイレント撮影用
+                [_session addOutput:_videoDataOutput];
+            
+            //  sessionPreset変更する
+            if(device.position == AVCaptureDevicePositionFront)
             {
+                //  フロントカメラの時
                 if([device supportsAVCaptureSessionPreset:_sessionPresetForFrontStill])
-                    _session.sessionPreset = _sessionPresetForFrontStill;
+                    _session.sessionPreset = !_silentShutterMode?_sessionPresetForFrontStill:_sessionPresetForSilentFrontStill;
                 else
                     _session.sessionPreset = AVCaptureSessionPresetPhoto;
             }
             else
             {
+                //  リアカメラの時
+                if([device supportsAVCaptureSessionPreset:_sessionPresetForStill])
+                    _session.sessionPreset = !_silentShutterMode?_sessionPresetForStill:_sessionPresetForSilentStill;
+                else
+                    _session.sessionPreset = AVCaptureSessionPresetPhoto;
+            }
+        }
+        else
+        {
+            //  動画モードに切り替えるとき
+            
+            //  outputの設定
+            if([_session.outputs containsObject:_stillImageOutput])   //  静止画撮影用をはずす
+                [_session removeOutput:_stillImageOutput];
+            
+            if([_session.outputs containsObject:_videoDataOutput])     //  サイレント撮影用をはずす
+                [_session removeOutput:_videoDataOutput];
+            
+            if(![_session.outputs containsObject:_movieFileOutput] && [_session canAddOutput:_movieFileOutput])  //  動画で使うoutputを追加
+                [_session addOutput:_movieFileOutput];
+
+            //  sessionPreset変更する
+            if(device.position == AVCaptureDevicePositionFront)
+            {
+                //  フロントカメラの時
                 if([device supportsAVCaptureSessionPreset:_sessionPresetForFrontVideo])
                     _session.sessionPreset = _sessionPresetForFrontVideo;
                 else
                     _session.sessionPreset = AVCaptureSessionPresetHigh;
             }
-        }
-        else if(_cameraMode == CMCameraModeStill)
-        {
-            //  リアカメラの時
-            if([device supportsAVCaptureSessionPreset:_sessionPresetForStill])
-                _session.sessionPreset = _sessionPresetForStill;
             else
-                _session.sessionPreset = AVCaptureSessionPresetPhoto;
-        }
-        else
-        {
-            if([device supportsAVCaptureSessionPreset:_sessionPresetForVideo])
-                _session.sessionPreset = _sessionPresetForVideo;
-            else
-                _session.sessionPreset = AVCaptureSessionPresetHigh;
+            {
+                //  リアカメラの時
+                if([device supportsAVCaptureSessionPreset:_sessionPresetForVideo])
+                    _session.sessionPreset = _sessionPresetForVideo;
+                else
+                    _session.sessionPreset = AVCaptureSessionPresetHigh;
+            }
+
         }
         
         //  イベント発行
@@ -1311,6 +1435,37 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         });
     });
     
+}
+
+#pragma mark - silentShutterMode
+
+- (void)setSilentShutterMode:(BOOL)silentShutterMode
+{
+    _silentShutterMode = silentShutterMode;
+    
+    if(_cameraMode == CMCameraModeStill)
+    {
+        [self dispatchEvent:@"willChangeSilentMode" userInfo:nil];
+        
+        //
+        dispatch_async(_sessionQueue, ^{
+            
+            AVCaptureDevice *device = _videoDeviceInput.device;
+            if(device.position == AVCaptureDevicePositionBack)
+            {
+                _session.sessionPreset = !_silentShutterMode?_sessionPresetForStill:_sessionPresetForSilentStill;
+            }
+            else
+            {
+                _session.sessionPreset = !_silentShutterMode?_sessionPresetForFrontStill:_sessionPresetForSilentFrontStill;
+            }
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                //
+                [self dispatchEvent:@"didChangeSilentMode" userInfo:nil];
+            });
+        });
+    }
 }
 
 @dynamic hasFlash;

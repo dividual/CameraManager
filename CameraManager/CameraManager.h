@@ -44,6 +44,9 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (strong, nonatomic) NSString *sessionPresetForFrontStill; //  写真撮影用（フロントカメラ
 @property (strong, nonatomic) NSString *sessionPresetForFrontVideo; //  写真撮影用（リアカメラ
 
+@property (strong, nonatomic) NSString *sessionPresetForSilentStill;//  無音カメラ（リアカメラ）
+@property (strong, nonatomic) NSString *sessionPresetForSilentFrontStill;//  無音カメラ（フロントカメラ）
+
 //  動画に関すること
 @property (readonly, nonatomic) AVCaptureSession *session;
 @property (assign, nonatomic) CMCameraMode cameraMode;              //  写真モードか動画モードか

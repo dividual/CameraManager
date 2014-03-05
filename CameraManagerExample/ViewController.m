@@ -35,6 +35,14 @@
     [CameraManager sharedManager].videoDuration = 3.0; //   動画撮影時間
     [CameraManager sharedManager].autoSaveToCameraroll = YES;
     
+    //  通常撮影の静止画の時
+    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
+    [CameraManager sharedManager].sessionPresetForFrontStill = AVCaptureSessionPresetPhoto;
+    
+    //  サイレントモードの時の設定
+    [CameraManager sharedManager].sessionPresetForSilentStill = AVCaptureSessionPresetHigh;
+    [CameraManager sharedManager].sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
+    
     //  フォーカスのビューを消しておく
     _focusView.alpha = 0.0;
     _originalFocusCursorSize = _focusView.bounds.size;
@@ -125,6 +133,12 @@
     
     [[CameraManager sharedManager] addEventListener:@"didChangeIsRecordingVideo" observer:self
                                            selector:@selector(cameraManagerDidChangeIsRecordingVideo:)];
+    
+    [[CameraManager sharedManager] addEventListener:@"willChangeSilentMode" observer:self
+                                           selector:@selector(cameraManagerWillChangeSilentMode:)];
+    
+    [[CameraManager sharedManager] addEventListener:@"didChangeSilentMode" observer:self
+                                           selector:@selector(cameraManagerDidChangeSilentMode:)];
 }
 
 - (void)didReceiveMemoryWarning
@@ -587,6 +601,30 @@
     
 }
 
+- (void)cameraManagerWillChangeSilentMode:(NSNotification*)notification
+{
+    NSLog(@"cameraManagerWillChangeSilentMode");
+    
+    //  画面を暗く
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        _previewView.alpha = 0.0;
+        
+    } completion:nil];
+}
+
+- (void)cameraManagerDidChangeSilentMode:(NSNotification*)notification
+{
+    NSLog(@"cameraManagerDidChangeSilentMode");
+    
+    //  画面を戻す
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        _previewView.alpha = 1.0;
+        
+    } completion:nil];
+}
+
 ////////////
 
 #pragma mark -
@@ -620,9 +658,20 @@
 
 - (IBAction)pushedShutterButton:(id)sender
 {
-    //  スチールの時はShutter非アクティブに
-//    if([CameraManager sharedManager].cameraMode == CMCameraModeStill)
-//        _shutterButton.enabled = NO;
+    if([CameraManager sharedManager].cameraMode == CMCameraModeStill && [CameraManager sharedManager].silentShutterMode)
+    {
+        //  アニメーションいれてみる
+        _previewView.alpha = 0.0;
+        
+        [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+            //
+            _previewView.alpha = 1.0;
+            
+        } completion:^(BOOL finished) {
+            //
+            
+        }];
+    }
     
     //  その他のGUIも操作できないように消す
     _cameraRotateButton.enabled = NO;
