@@ -27,12 +27,12 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 @interface CameraManager () <AVCaptureFileOutputRecordingDelegate, AVCaptureVideoDataOutputSampleBufferDelegate>
 
 //  Session
-@property (strong, nonatomic) dispatch_queue_t sessionQueue;
+@property (nonatomic) dispatch_queue_t sessionQueue;
 @property (strong, nonatomic) AVCaptureSession *session;
 @property (strong, nonatomic) AVCaptureDeviceInput *videoDeviceInput;
 @property (strong, nonatomic) AVCaptureMovieFileOutput *movieFileOutput;
 @property (strong, nonatomic) AVCaptureStillImageOutput *stillImageOutput;
-@property (strong, nonatomic) dispatch_queue_t captureCurrentFrameQueue;
+@property (nonatomic) dispatch_queue_t captureCurrentFrameQueue;
 @property (strong, nonatomic) AVCaptureVideoDataOutput *videoDataOutput;
 
 //  Utilities
@@ -331,14 +331,15 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         //  セッション停止
         [self.session stopRunning];
         
-        //  登録したNotificationObserverを削除
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:AVCaptureDeviceSubjectAreaDidChangeNotification object:[_videoDeviceInput device]];
-        [[NSNotificationCenter defaultCenter] removeObserver:_runtimeErrorHandlingObserver];
-        _runtimeErrorHandlingObserver = nil;
         
-        //  登録したObserverを削除
         dispatch_async(dispatch_get_main_queue(), ^{
             
+            //  登録したNotificationObserverを削除
+            [[NSNotificationCenter defaultCenter] removeObserver:self name:AVCaptureDeviceSubjectAreaDidChangeNotification object:[_videoDeviceInput device]];
+            [[NSNotificationCenter defaultCenter] removeObserver:_runtimeErrorHandlingObserver];
+            _runtimeErrorHandlingObserver = nil;
+
+            //  登録したObserverを削除
             [self removeObserver:self forKeyPath:@"sessionRunningAndDeviceAuthorized" context:SessionRunningAndDeviceAuthorizedContext];
             [self removeObserver:self forKeyPath:@"stillImageOutput.capturingStillImage" context:CapturingStillImageContext];
             [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
