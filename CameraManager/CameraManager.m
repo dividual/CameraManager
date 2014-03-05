@@ -141,13 +141,11 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         BOOL isRearCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceRear];
         
         //  探すデバイスを特定
-        AVCaptureDevicePosition findPosition;
+        AVCaptureDevicePosition findPosition = AVCaptureDevicePositionUnspecified;
         if(isRearCameraAvailable)
             findPosition = AVCaptureDevicePositionBack;
         else if(isFrontCameraAvailable)
             findPosition = AVCaptureDevicePositionFront;
-        
-        findPosition = AVCaptureDevicePositionUnspecified;
         
         //  カメラデバイス探す
 		AVCaptureDevice *videoDevice = [CameraManager deviceWithMediaType:AVMediaTypeVideo preferringPosition:findPosition];
