@@ -7,32 +7,15 @@
 //
 
 #import "PreviewView.h"
-#import <GPUImage/GPUImage.h>
-
-@interface PreviewView ()
-@property (strong, nonatomic) AVCaptureVideoPreviewLayer *previewLayer;
-@end
 
 @implementation PreviewView
 
 - (void)setup
 {
-    self.previewLayer = [[AVCaptureVideoPreviewLayer alloc] init];
-    _previewLayer.frame = self.bounds;
-    
-    [self.layer addSublayer:_previewLayer];
-    self.previewMode = PreviewViewMode_AVCapture;
+    self.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
 }
 
-- (void)layoutSublayersOfLayer:(CALayer *)layer
-{
-    NSLog(@"layer:%@", NSStringFromClass([layer class]));
-    
-    if(layer == _previewLayer)
-    {
-        _previewLayer.frame = self.bounds;
-    }
-}
+#pragma mark -
 
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
@@ -54,23 +37,30 @@
     return self;
 }
 
-- (void)setPreviewMode:(PreviewViewMode)previewMode
++ (Class)layerClass
 {
-    _previewMode = previewMode;
-    
-    //  画面に反映
-    switch(_previewMode)
-    {
-        case PreviewViewMode_GPUImage:
-            self.enabled = YES;
-            self.previewLayer.opacity = 0.0;
-            break;
-            
-        case PreviewViewMode_AVCapture:
-            self.enabled = NO;
-            self.previewLayer.opacity = 1.0;
-            break;
-    }
+    return [AVCaptureVideoPreviewLayer class];
+}
+
+#pragma mark -
+
+@dynamic previewLayer;
+
+- (AVCaptureVideoPreviewLayer*)previewLayer
+{
+    return (AVCaptureVideoPreviewLayer*)self.layer;
+}
+
+@dynamic session;
+
+- (AVCaptureSession *)session
+{
+	return [self.previewLayer session];
+}
+
+- (void)setSession:(AVCaptureSession *)session
+{
+	[self.previewLayer setSession:session];
 }
 
 @end

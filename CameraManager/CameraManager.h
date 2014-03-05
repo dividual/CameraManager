@@ -7,14 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <AVFoundation/AVFoundation.h>
 
-//  GPUImageを活用し、カメラの撮影機能を実装
-//      delegateで管理するイベント、blockで管理するイベントがある
-//      GPUImageの組み込みには、CococaPodを使うことに。
+//  GPUImageを使わずに、リアルタイムエフェクトなしバージョンに切り替え（2014/03/05）
 
-@class GPUImage;
-@class GPUImageStillCamera;
-@class GPUImageView;
 @class PreviewView;
 
 typedef NS_ENUM(NSInteger, CMFlashMode)
@@ -29,11 +25,6 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
     CMCameraModeStill = 0,
     CMCameraModeVideo = 1
 };
-
-
-#pragma mark - delegate protocol
-
-@class CameraManager;
 
 #pragma mark - interface
 
@@ -54,51 +45,47 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (strong, nonatomic) NSString *sessionPresetForFrontVideo; //  写真撮影用（リアカメラ
 
 //  動画に関すること
+@property (readonly, nonatomic) AVCaptureSession *session;
 @property (assign, nonatomic) CMCameraMode cameraMode;              //  写真モードか動画モードか
 @property (assign, nonatomic) NSTimeInterval videoDuration;         //  録画時間（一回の録画での最大長さ）
 @property (readonly, nonatomic) NSTimeInterval recordedTime;        //  録画済みの時間
 @property (readonly, nonatomic) NSTimeInterval remainRecordTime;    //  録画残り時間
 
 //  その他
-@property (readonly, nonatomic) GPUImageStillCamera *stillCamera;   //  内部で使ってるGPUImageStillCamera
 @property (readonly, nonatomic) BOOL hasFlash;                      //  内部で判定してるフラッシュもってるかどうか
 @property (readonly, nonatomic) BOOL isChooseFilterMode;            //  フィルター選択画面の状態かどうか
 @property (readonly, nonatomic) BOOL isCameraOpened;                //  カメラを開いてるかどうか
 
-//  Filter
-@property (readonly, nonatomic) NSArray *filterNameArray;           //  内部で設定してるフィルターの名前配列
-@property (readonly, nonatomic) NSInteger currentFilterIndex;       //  現在のフィルターIndex
-@property (readonly, nonatomic) NSString *currentFilterName;        //  現在のフィルター名前
+////  Filter
+//@property (readonly, nonatomic) NSArray *filterNameArray;           //  内部で設定してるフィルターの名前配列
+//@property (readonly, nonatomic) NSInteger currentFilterIndex;       //  現在のフィルターIndex
+//@property (readonly, nonatomic) NSString *currentFilterName;        //  現在のフィルター名前
 
 //  ズーム対応
 @property (assign, nonatomic) CGFloat zoomScale;                    //  ズームのスケールを入れる 1.0 ~
 @property (readonly, nonatomic) CGFloat maxZoomScale;               //  ズームの最大スケール
 
-//  プレビュー画面
-- (void)addPreviewView:(PreviewView*)previewView;                  //  プレビュー画面の追加
-- (void)removePreviewView:(PreviewView*)previewView;               //  プレビュー画面を消す
-
 //  操作系
-- (void)changeFlashMode;                                            //  フラッシュのモードを変える
+- (void)changeFlashMode;                                            //  フラッシュのモードを変える（順に切り替える）
 - (void)takePhoto;                                                  //  写真を撮る
-- (void)rotateCameraPosition;                                       //  カメラの前と後ろを入れ替える
+- (void)rotateCameraPosition;                                       //  カメラの前と後ろを入れ替える（toggle）
 
 //  インスタンス（シングルトン化した）
 + (CameraManager*)sharedManager;
 
 
 //  操作メソッド
-
 - (void)openCamera;                                                 //  sessionPresetForStill等の設定をひと通りしてから呼ぶこと
 - (void)closeCamera;                                                //  カメラを使うのをやめるとき
-
-- (void)setFocusPoint:(CGPoint)pos inView:(GPUImageView*)view;      //  フォーカスを合わせるとき（view内の座標で指定）
-- (void)setFilterWithName:(NSString*)name;                          //  フィルターを選択
+- (void)setFocusPoint:(CGPoint)pos inView:(PreviewView*)view;       //  フォーカスを合わせるとき（view内の座標で指定）
 - (UIImage*)captureCurrentPreviewImage;                             //  プレビューに使ってる画像を即座に返す
-- (void)showChooseEffectInPreviewView:(PreviewView*)previewView;   //  エフェクト一覧画面を表示するための画面を作る
-- (void)dissmissChooseEffect;                                       //  エフェクト選択モードを終了
 - (void)toggleCameraMode;                                           //  カメラモードを切り替える
-- (void)removeTempMovieFile:(NSURL*)tmpURL;                         //  tmpFileはもういらないよの通知
+- (void)removeTempMovieFile:(NSURL*)tmpURL;                         //  tmpFileはもういらないよの通知（動画についての処理）
+
+//- (void)setFilterWithName:(NSString*)name;                          //  フィルターを選択
+//- (void)showChooseEffectInPreviewView:(PreviewView*)previewView;    //  エフェクト一覧画面を表示するための画面を作る
+//- (void)dissmissChooseEffect;                                       //  エフェクト選択モードを終了
+
 
 
 @end
