@@ -8,6 +8,8 @@
 
 #import "CameraManager.h"
 
+#import <mach/mach.h>
+
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
 
@@ -33,6 +35,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 @property (strong, nonatomic) AVCaptureStillImageOutput *stillImageOutput;
 @property (nonatomic) dispatch_queue_t captureCurrentFrameQueue;
 @property (strong, nonatomic) AVCaptureVideoDataOutput *videoDataOutput;
+
+@property (nonatomic) dispatch_queue_t saveQueue;
 
 //  Utilities
 @property (assign, nonatomic) UIBackgroundTaskIdentifier backgroundRecordingID;
@@ -85,6 +89,32 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     return _sharedObject;
 }
 
+#pragma mark - memory utility
+
+//  空きメモリ量を取得（MB）
++ (float)getFreeMemory
+{
+    mach_port_t hostPort;
+    mach_msg_type_number_t hostSize;
+    vm_size_t pagesize;
+    
+    hostPort = mach_host_self();
+    hostSize = sizeof(vm_statistics_data_t) / sizeof(integer_t);
+    host_page_size(hostPort, &pagesize);
+    vm_statistics_data_t vmStat;
+    
+    if (host_statistics(hostPort, HOST_VM_INFO, (host_info_t)&vmStat, &hostSize) != KERN_SUCCESS)
+    {
+        NSLog(@"[SystemMonitor] Failed to fetch vm statistics");
+        return 0.0;
+    }
+    
+    natural_t freeMemory = vmStat.free_count * pagesize;
+    
+    return (float)freeMemory/1024.0/1024.0;
+}
+
+
 #pragma mark -
 
 - (void)setup
@@ -127,6 +157,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     
     //
     _captureCurrentFrameQueue = dispatch_queue_create("jp.dividual.CameraManager.captureCurrentFrame", DISPATCH_QUEUE_SERIAL);
+    
+    //  保存用キュー
+    _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);
     
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
@@ -646,10 +679,12 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 {
     AVCaptureDevice *device =_videoDeviceInput.device;
     
+    BOOL freeMemory = [CameraManager getFreeMemory]>10.0?YES:NO;
+    
     if(_cameraMode == CMCameraModeStill)
-        return !device.isAdjustingFocus && !_stillImageOutput.capturingStillImage;
+        return !device.isAdjustingFocus && !_stillImageOutput.capturingStillImage && freeMemory;
     else
-        return !device.isAdjustingFocus && !_movieFileOutput.recording;
+        return !device.isAdjustingFocus && !_movieFileOutput.recording && freeMemory;
 }
 
 #pragma mark - focus関連
@@ -766,6 +801,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     if(_cameraMode == CMCameraModeStill)
     {
         //  静止画撮影モード
+        NSLog(@"freeMemory:%f", [CameraManager getFreeMemory]);
         [self captureImage];
     }
     else
@@ -1019,7 +1055,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     //
     if(_autoSaveToCameraroll)
     {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(_saveQueue, ^{
             
             @autoreleasepool {
                 ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
@@ -1266,31 +1302,34 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  保存処理
         if(_autoSaveToCameraroll)
         {
-            [[[ALAssetsLibrary alloc] init] writeVideoAtPathToSavedPhotosAlbum:outputFileURL completionBlock:^(NSURL *assetURL, NSError *error) {
-                
-                if (error)
-                    NSLog(@"%@", error);
-                
-                NSLog(@"saveVideo to CameraRoll Finished:%@", outputFileURL);
-                
-                if([_tmpMovieSavePathArray containsObject:outputFileURL.path])
-                {
-                    //  まだ消してはいけない
-                    //  リストからは消しておく
-                    [_tmpMovieSavePathArray removeObject:outputFileURL.path];
-                }
-                else
-                {
-                    //  もう処理が終わってるらしいので消す
-                    [[NSFileManager defaultManager] removeItemAtURL:outputFileURL error:nil];
-                    
-                    NSLog(@"removeFile:%@", outputFileURL.path);
-                }
-                
+            dispatch_async(_saveQueue, ^{
                 //
-                if (backgroundRecordingID != UIBackgroundTaskInvalid)
-                    [[UIApplication sharedApplication] endBackgroundTask:backgroundRecordingID];
-            }];
+                [[[ALAssetsLibrary alloc] init] writeVideoAtPathToSavedPhotosAlbum:outputFileURL completionBlock:^(NSURL *assetURL, NSError *error) {
+                    
+                    if (error)
+                        NSLog(@"%@", error);
+                    
+                    NSLog(@"saveVideo to CameraRoll Finished:%@", outputFileURL);
+                    
+                    if([_tmpMovieSavePathArray containsObject:outputFileURL.path])
+                    {
+                        //  まだ消してはいけない
+                        //  リストからは消しておく
+                        [_tmpMovieSavePathArray removeObject:outputFileURL.path];
+                    }
+                    else
+                    {
+                        //  もう処理が終わってるらしいので消す
+                        [[NSFileManager defaultManager] removeItemAtURL:outputFileURL error:nil];
+                        
+                        NSLog(@"removeFile:%@", outputFileURL.path);
+                    }
+                    
+                    //
+                    if (backgroundRecordingID != UIBackgroundTaskInvalid)
+                        [[UIApplication sharedApplication] endBackgroundTask:backgroundRecordingID];
+                }];
+            });
         }
     }
 }
