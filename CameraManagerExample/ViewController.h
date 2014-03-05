@@ -7,19 +7,16 @@
 //
 
 #import <UIKit/UIKit.h>
-@class GPUImageView;
 @class PreviewView;
 
 @interface ViewController : UIViewController
 
-@property (weak, nonatomic) IBOutlet UILabel *filterNameLabel;
 @property (weak, nonatomic) IBOutlet UISwitch *silentSwitch;
-@property (weak, nonatomic) IBOutlet GPUImageView *previewViewA;
+@property (weak, nonatomic) IBOutlet PreviewView *previewView;
 @property (weak, nonatomic) IBOutlet UIButton *shutterButton;
 @property (weak, nonatomic) IBOutlet UIButton *cameraRotateButton;
 @property (weak, nonatomic) IBOutlet UIButton *flashButton;
 @property (weak, nonatomic) IBOutlet UIImageView *focusView;
-@property (weak, nonatomic) IBOutlet UIButton *chooseFilterButton;
 @property (weak, nonatomic) IBOutlet UIButton *changeCameraModeButton;
 @property (weak, nonatomic) IBOutlet UILabel *movieRecordedTime;
 @property (weak, nonatomic) IBOutlet UILabel *movieRemainTime;

@@ -77,8 +77,7 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 //  操作メソッド
 - (void)openCamera;                                                 //  sessionPresetForStill等の設定をひと通りしてから呼ぶこと
 - (void)closeCamera;                                                //  カメラを使うのをやめるとき
-- (void)setFocusPoint:(CGPoint)pos inView:(PreviewView*)view;       //  フォーカスを合わせるとき（view内の座標で指定）
-- (UIImage*)captureCurrentPreviewImage;                             //  プレビューに使ってる画像を即座に返す
+- (void)setFocusPoint:(CGPoint)pos;                                 //  フォーカスを合わせるとき（view内の座標で指定）
 - (void)toggleCameraMode;                                           //  カメラモードを切り替える
 - (void)removeTempMovieFile:(NSURL*)tmpURL;                         //  tmpFileはもういらないよの通知（動画についての処理）
 
