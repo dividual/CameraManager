@@ -198,15 +198,15 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
             _stillImageOutput = stillImageOutput;
 		}
         
-        //  サイレントモード用のdataOutput作成
-        AVCaptureVideoDataOutput*   dataOutput;
-        NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey, nil];
-
-        
-        dataOutput = [[AVCaptureVideoDataOutput alloc] init];
-        [dataOutput autorelease];
-        dataOutput.videoSettings = settings;
-        [dataOutput setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
+//        //  サイレントモード用のdataOutput作成
+//        AVCaptureVideoDataOutput*   dataOutput;
+//        NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithInt:kCVPixelFormatType_32BGRA], kCVPixelBufferPixelFormatTypeKey, nil];
+//
+//        
+//        dataOutput = [[AVCaptureVideoDataOutput alloc] init];
+//        [dataOutput autorelease];
+//        dataOutput.videoSettings = settings;
+//        [dataOutput setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
 	});
 }
 
