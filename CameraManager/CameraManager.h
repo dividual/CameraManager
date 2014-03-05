@@ -59,11 +59,6 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 @property (readonly, nonatomic) BOOL isChooseFilterMode;            //  フィルター選択画面の状態かどうか
 @property (readonly, nonatomic) BOOL isCameraOpened;                //  カメラを開いてるかどうか
 
-////  Filter
-//@property (readonly, nonatomic) NSArray *filterNameArray;           //  内部で設定してるフィルターの名前配列
-//@property (readonly, nonatomic) NSInteger currentFilterIndex;       //  現在のフィルターIndex
-//@property (readonly, nonatomic) NSString *currentFilterName;        //  現在のフィルター名前
-
 //  ズーム対応
 @property (assign, nonatomic) CGFloat zoomScale;                    //  ズームのスケールを入れる 1.0 ~
 @property (readonly, nonatomic) CGFloat maxZoomScale;               //  ズームの最大スケール
@@ -76,18 +71,11 @@ typedef NS_ENUM(NSInteger, CMCameraMode)
 //  インスタンス（シングルトン化した）
 + (CameraManager*)sharedManager;
 
-
 //  操作メソッド
 - (void)openCamera;                                                 //  sessionPresetForStill等の設定をひと通りしてから呼ぶこと
 - (void)closeCamera;                                                //  カメラを使うのをやめるとき
 - (void)setFocusPoint:(CGPoint)pos;                                 //  フォーカスを合わせるとき（view内の座標で指定）
 - (void)toggleCameraMode;                                           //  カメラモードを切り替える
 - (void)removeTempMovieFile:(NSURL*)tmpURL;                         //  tmpFileはもういらないよの通知（動画についての処理）
-
-//- (void)setFilterWithName:(NSString*)name;                          //  フィルターを選択
-//- (void)showChooseEffectInPreviewView:(PreviewView*)previewView;    //  エフェクト一覧画面を表示するための画面を作る
-//- (void)dissmissChooseEffect;                                       //  エフェクト選択モードを終了
-
-
 
 @end

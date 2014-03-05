@@ -538,28 +538,39 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 {
     NSString *mediaType = AVMediaTypeVideo;
     
-    [AVCaptureDevice requestAccessForMediaType:mediaType completionHandler:^(BOOL granted) {
+    if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1)
+    {
+        // iOS 6.1以前
+        self.deviceAuthorized = YES;
+    }
+    else
+    {
+        // iOS 7.0以降
+        [AVCaptureDevice requestAccessForMediaType:mediaType completionHandler:^(BOOL granted) {
+            
+            if(granted)
+            {
+                //  Granted access to mediaType
+                self.deviceAuthorized = YES;
+            }
+            else
+            {
+                //  Not granted access to mediaType
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    
+                    [[[UIAlertView alloc] initWithTitle:nil
+                                                message:@"CameraManager doesn't have permission to use Camera, please change privacy settings"
+                                               delegate:self
+                                      cancelButtonTitle:@"OK"
+                                      otherButtonTitles:nil] show];
+                    
+                    self.deviceAuthorized = NO;
+                });
+            }
+        }];
         
-        if(granted)
-        {
-            //  Granted access to mediaType
-            self.deviceAuthorized = YES;
-        }
-        else
-        {
-            //  Not granted access to mediaType
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                [[[UIAlertView alloc] initWithTitle:nil
-                                            message:@"CameraManager doesn't have permission to use Camera, please change privacy settings"
-                                           delegate:self
-                                  cancelButtonTitle:@"OK"
-                                  otherButtonTitles:nil] show];
-                
-                self.deviceAuthorized = NO;
-            });
-        }
-    }];
+    }
+   
 }
 
 - (void)applicationDidEnterBackground:(NSNotification*)notification
@@ -956,25 +967,15 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
         //  サイレントモードの時は別処理
         [self captureCurrentPreviewImageWithCompletion:^(UIImage *image) {
             //
-            [self capturedImage:image animationImage:image error:nil];
+            [self capturedImage:image error:nil];
         }];
     }
     else
     {
-        //  アニメーション用の画像を作って用意しておく（フロントカメラのときは左右反転した画像にする）
-//        [self captureCurrentPreviewImageWithCompletion:^(UIImage *imageForAnimation) {
-//            //
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                
-//                [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
-//                    //
-//                    [self capturedImage:image animationImage:imageForAnimation error:error];
-//                }];
-//            });
-//        }];
+        //  通常撮影
         [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
             //
-            [self capturedImage:image animationImage:nil error:error];
+            [self capturedImage:image error:error];
         }];
 
     }
@@ -1001,7 +1002,7 @@ static void * ReadyForTakePhotoContext = &ReadyForTakePhotoContext;
 	});
 }
 
-- (void)capturedImage:(UIImage*)originalImage animationImage:(UIImage*)animationImage error:(NSError*)error
+- (void)capturedImage:(UIImage*)originalImage error:(NSError*)error
 {
     //  イベント発行
     dispatch_async(dispatch_get_main_queue(), ^{
