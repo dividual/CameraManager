@@ -90,6 +90,9 @@
     [[CameraManager sharedManager] addEventListener:@"didChangeDeviceOrientation" observer:self
                                            selector:@selector(cameraManagerdidChangeDeviceOrientation:)];
     
+    [[CameraManager sharedManager] addEventListener:@"didCapturedImageForAnimation" observer:self
+                                           selector:@selector(cameraManagerDidCapturedImageForAnimation:)];
+    
     [[CameraManager sharedManager] addEventListener:@"didCapturedImage" observer:self
                                            selector:@selector(cameraManagerDidCapturedImage:)];
     
@@ -212,6 +215,9 @@
     //
     [self cameraGUIUpdate];
     
+    //  ここでもあらためて明示的に書いておく（最終的には、AVLayerVideoGravityResizeAspectFillになる）
+    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+    
     //
     [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
         //
@@ -284,13 +290,36 @@
     //
     _changeCameraModeButton.enabled = YES;
     _silentSwitch.enabled = YES;
+}
+
+- (void)cameraManagerDidCapturedImageForAnimation:(NSNotification*)notification
+{
+    UIImage *image = notification.userInfo[@"image"];
     
-//    //
-//    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-//    imageView.alpha = 0.2;
-//    [self.view addSubview:imageView];
-//    
-//    [imageView performSelector:@selector(removeFromSuperview) withObject:Nil afterDelay:2.0];
+    NSLog(@"cameraManager:didCapturedImageForAnimation(image = %@)", NSStringFromCGSize(image.size));
+    
+    //  アニメーション表示してみる
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+    
+    CGFloat scaleW = CGRectGetWidth(self.view.bounds)/image.size.width;
+    CGFloat scaleH = CGRectGetHeight(self.view.bounds)/image.size.height;
+    CGFloat scale = MIN(scaleW, scaleH);
+    
+    imageView.frame = CGRectMake(0.0, 0.0, scale*image.size.width, scale*image.size.height);
+    imageView.center = CGPointMake(CGRectGetWidth(self.view.bounds)/2.0, CGRectGetHeight(self.view.bounds)/2.0);
+    
+    [self.view addSubview:imageView];
+    
+    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //
+        imageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
+        //imageView.alpha = 0.0;
+        
+    } completion:^(BOOL finished) {
+        //
+        [imageView removeFromSuperview];
+        
+    }];
 }
 
 - (void)cameraManagerWillStartVideoRecording:(NSNotification*)notification

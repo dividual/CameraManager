@@ -332,18 +332,18 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  フラッシュモード指定しておく
         [self setDeviceFlashMode:_flashMode];
         
-        //  iPhone5sの手ブレをONにしてみる
-        //  設定する
-        if(floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1)
-        {
-            dispatch_async([self sessionQueue], ^{
-                //
-                if(_stillImageOutput.stillImageStabilizationSupported)
-                {
-                    _stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = YES;
-                }
-            });
-        }
+//        //  iPhone5sの手ブレをONにしてみる
+//        //  設定する
+//        if(floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1)
+//        {
+//            dispatch_async([self sessionQueue], ^{
+//                //
+//                if(_stillImageOutput.stillImageStabilizationSupported)
+//                {
+//                    _stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = YES;
+//                }
+//            });
+//        }
     });
 }
 
@@ -530,15 +530,15 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             //  フォーカスモードを設定
             if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:focusMode])
             {
-                [device setFocusMode:focusMode];
                 [device setFocusPointOfInterest:point];
+                [device setFocusMode:focusMode];
             }
             
             //  露出モードを設定
             if([device isExposurePointOfInterestSupported] && [device isExposureModeSupported:exposureMode])
             {
-                [device setExposureMode:exposureMode];
                 [device setExposurePointOfInterest:point];
+                [device setExposureMode:exposureMode];
             }
             
             //  画面変化を追従するかの設定
@@ -725,7 +725,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  フォーカス合わせ始めたことにする
         _adjustingFocus = YES;
         
-        [self focusWithMode:AVCaptureFocusModeAutoFocus exposeWithMode:AVCaptureExposureModeAutoExpose atDevicePoint:pos monitorSubjectAreaChange:YES];
+        [self focusWithMode:AVCaptureFocusModeAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:pos monitorSubjectAreaChange:YES];
         
         //  アニメーションスタート
         [self showFocusCursorWithPos:pos isContinuous:NO];
@@ -1013,16 +1013,30 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  サイレントモードの時は別処理
         [self captureCurrentPreviewImageWithCompletion:^(UIImage *image) {
             //
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":image }];
+            });
+            
+            //
             [self capturedImage:image error:nil];
         }];
     }
     else
     {
-        //  通常撮影
-        [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
+        //  アニメーション用にサイレント撮影する
+        [self captureCurrentPreviewImageWithCompletion:^(UIImage *imageForAnimation) {
             //
-            [self capturedImage:image error:error];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":imageForAnimation }];
+            });
+            
+            //  通常撮影
+            [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
+                //
+                [self capturedImage:image error:error];
+            }];
         }];
+        
 
     }
 }
