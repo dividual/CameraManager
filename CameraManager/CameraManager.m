@@ -838,6 +838,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         {
             if(_shutterReserveCount<1)
                 _shutterReserveCount++;
+            
+            BOOL freeMemory = [CameraManager getFreeMemory]>10.0?YES:NO;
+            if(freeMemory == NO)
+            {
+                _shutterReserveCount = 0;
+                return;
+            }
         }
     }
     
