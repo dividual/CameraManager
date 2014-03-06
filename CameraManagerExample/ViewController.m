@@ -19,6 +19,7 @@
 @property (strong, nonatomic) UIPinchGestureRecognizer *pinchGesture;
 @property (assign, nonatomic) NSInteger curFilterIndex;
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
+@property (weak, nonatomic) IBOutlet UISwitch *cameraEnableSwitch;
 
 @end
 
@@ -158,6 +159,9 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    
+    //
+    [self didChangeCameraEnableSwitch:_cameraEnableSwitch ];
 }
 
 #pragma mark -
@@ -657,10 +661,14 @@
 #pragma mark - 
 
 /// カメラのオンオフ
-- (IBAction)didChangeCameraEnableSwitch:(UISwitch*)sender{
-	if( sender.isOn ){
+- (IBAction)didChangeCameraEnableSwitch:(UISwitch*)sender
+{
+	if( sender.isOn )
+    {
 		[[CameraManager sharedManager] openCamera];
-	} else {
+	}
+    else
+    {
 		[[CameraManager sharedManager] closeCamera];
 	}
 }
