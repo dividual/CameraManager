@@ -71,9 +71,6 @@
     _movieRecordedTime.hidden = YES;
     _movieRemainTime.hidden = YES;
     
-    //  カメラを開く
-    [[CameraManager sharedManager] openCamera];
-	
     //  プレビュー設定
     [_previewView.previewLayer setSession:[CameraManager sharedManager].session];
     //_previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
@@ -628,7 +625,16 @@
 
 ////////////
 
-#pragma mark -
+#pragma mark - 
+
+/// カメラのオンオフ
+- (IBAction)didChangeCameraEnableSwitch:(UISwitch*)sender{
+	if( sender.isOn ){
+		[[CameraManager sharedManager] openCamera];
+	} else {
+		[[CameraManager sharedManager] closeCamera];
+	}
+}
 
 - (IBAction)didChangeSilentSwitch:(id)sender
 {
