@@ -66,7 +66,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 //  captureの処理用
 @property (copy, nonatomic) void (^captureCompletion)(UIImage *capturedImage);
-@property (assign, nonatomic) UIImage *currentPreviewImage;
+@property (assign, nonatomic) BOOL isImageForAnimation;
 
 @end
 
@@ -1011,10 +1011,15 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     if(_silentShutterMode)
     {
         //  サイレントモードの時は別処理
-        [self captureCurrentPreviewImageWithCompletion:^(UIImage *image) {
+        [self captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *image) {
+            //
+            AVCaptureDevice *device = _videoDeviceInput.device;
+            BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
+            UIImage *imageForAnimation = [UIImage imageWithCGImage:image.CGImage scale:1.0f orientation:isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight];
+            
             //
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":image }];
+                [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":imageForAnimation }];
             });
             
             //
@@ -1024,7 +1029,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     else
     {
         //  アニメーション用にサイレント撮影する
-        [self captureCurrentPreviewImageWithCompletion:^(UIImage *imageForAnimation) {
+        [self captureCurrentPreviewImageForAnimation:YES completion:^(UIImage *imageForAnimation) {
             //
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":imageForAnimation }];
@@ -1377,7 +1382,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
         // 画像の作成
         CGImageRef cgImage = CGBitmapContextCreateImage(cgContext);
-        UIImage *image = [UIImage imageWithCGImage:cgImage scale:1.0f orientation:[self currentImageOrientation]];
+        AVCaptureDevice *device = _videoDeviceInput.device;
+        BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
+        UIImage *image = [UIImage imageWithCGImage:cgImage scale:1.0f orientation:_isImageForAnimation?(isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight):[self currentImageOrientation]];
         CGImageRelease(cgImage);
         CGContextRelease(cgContext);
         
@@ -1392,8 +1399,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - capturePreviewImage
 
-- (void)captureCurrentPreviewImageWithCompletion:(void(^)(UIImage *image))completion
+- (void)captureCurrentPreviewImageForAnimation:(BOOL)forAnimation completion:(void(^)(UIImage *image))completion
 {
+    _isImageForAnimation = forAnimation;
     self.captureCompletion = completion;
 }
 

@@ -74,8 +74,7 @@
     
     //  プレビュー設定
     [_previewView.previewLayer setSession:[CameraManager sharedManager].session];
-    //_previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     
     //  プレビュー画面をalphaゼロから
     _previewView.alpha = 0.0;
@@ -161,7 +160,7 @@
     [super viewWillAppear:animated];
     
     //
-    [self didChangeCameraEnableSwitch:_cameraEnableSwitch ];
+    [self didChangeCameraEnableSwitch:_cameraEnableSwitch];
 }
 
 #pragma mark -
@@ -219,8 +218,8 @@
     //
     [self cameraGUIUpdate];
     
-    //  ここでもあらためて明示的に書いておく（最終的には、AVLayerVideoGravityResizeAspectFillになる）
-    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+    //  ここでもあらためて明示的に書いておく
+    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     
     //
     [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
@@ -307,7 +306,7 @@
     
     CGFloat scaleW = CGRectGetWidth(self.view.bounds)/image.size.width;
     CGFloat scaleH = CGRectGetHeight(self.view.bounds)/image.size.height;
-    CGFloat scale = MIN(scaleW, scaleH);
+    CGFloat scale = MAX(scaleW, scaleH);
     
     imageView.frame = CGRectMake(0.0, 0.0, scale*image.size.width, scale*image.size.height);
     imageView.center = CGPointMake(CGRectGetWidth(self.view.bounds)/2.0, CGRectGetHeight(self.view.bounds)/2.0);
