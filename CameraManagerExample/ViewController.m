@@ -34,7 +34,6 @@
     
     //  カメラを開く前に設定をしておく
     [CameraManager sharedManager].videoDuration = 3.0; //   動画撮影時間
-    [CameraManager sharedManager].autoSaveToCameraroll = YES;
     
     //  通常撮影の静止画の時
     [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
@@ -66,7 +65,7 @@
     _pinchGesture.enabled = YES;
     
     //  カメラロールへの保存するかどうか
-    [CameraManager sharedManager].autoSaveToCameraroll = YES;
+    [CameraManager sharedManager].autoSaveToCameraroll = NO;
         
     //
     _movieRecordedTime.hidden = YES;

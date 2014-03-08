@@ -128,7 +128,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     _delayTimeForFlash = 0.25;
     
     //  デフォルトはカメラロール保存自動
-    _autoSaveToCameraroll = YES;
+//    _autoSaveToCameraroll = YES;
     
     //  デフォルトはサイレントモードはOFF
     _silentShutterMode = NO;
