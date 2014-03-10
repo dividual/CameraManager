@@ -1077,10 +1077,30 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 				UIImage *image = [[UIImage alloc] initWithData:imageData];
                 
 				[self saveToCameraRoll:imageData];// カメラロールに保存
-                completion(image, nil);
+				
+				// 大きかったら扱いやすいサイズにリサイズ
+				if( _session.sessionPreset == AVCaptureSessionPresetPhoto ){
+					NSLog( @"リサイズ開始" );
+					CGRect rect = CGRectMake(0, 0, image.size.width/2, image.size.height/2);
+					UIImage* resized_img = [self resize:image rect:rect];
+					NSLog( @"リサイズ完了" );
+					completion(resized_img, nil);
+				} else {
+					completion(image, nil);
+				}
 			}
 		}];
 	});
+}
+
+-(UIImage *)resize:(UIImage *)image rect:(CGRect)rect{
+    UIGraphicsBeginImageContext(rect.size);
+    [image drawInRect:rect];
+    UIImage* resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+    UIGraphicsEndImageContext();
+    return resizedImage;
 }
 
 
