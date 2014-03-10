@@ -1,19 +1,14 @@
 PODS:
-  - GPUImage (0.1.2)
   - NSObject+EventDispatcher (0.1.0)
 
 DEPENDENCIES:
-  - GPUImage (from `https://github.com/dividual/GPUImage.git`)
   - NSObject+EventDispatcher (from `https://github.com/noughts/NSObject-EventDispatcher.git`)
 
 EXTERNAL SOURCES:
-  GPUImage:
-    :git: https://github.com/dividual/GPUImage.git
   NSObject+EventDispatcher:
     :git: https://github.com/noughts/NSObject-EventDispatcher.git
 
 SPEC CHECKSUMS:
-  GPUImage: 36a4e42f20e156ca4d25625dbaee4eef7dd9efcc
   NSObject+EventDispatcher: c7d763bb1ec42ee492e0ef3d45e3fac0aec3a3ab
 
 COCOAPODS: 0.29.0

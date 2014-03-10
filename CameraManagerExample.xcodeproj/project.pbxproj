@@ -12,7 +12,6 @@
 		D5055320187EDE2A007355BE /* recStopButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D505531E187EDE2A007355BE /* recStopButton.png */; };
 		D5055321187EDE2A007355BE /* recStopButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D505531F187EDE2A007355BE /* recStopButton@2x.png */; };
 		D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = D5055323187EEB29007355BE /* NSDate+stringUtility.m */; };
-		D50B051118A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = D50B051018A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m */; };
 		D52A8AD11817F2EA00F4ADFD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D52A8ACF1817F2EA00F4ADFD /* InfoPlist.strings */; };
 		D52A8AD31817F2EA00F4ADFD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D52A8AD21817F2EA00F4ADFD /* main.m */; };
 		D52A8AD71817F2EA00F4ADFD /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D52A8AD61817F2EA00F4ADFD /* AppDelegate.m */; };
@@ -38,12 +37,9 @@
 		D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B261817F71100F4ADFD /* shutterButton@2x.png */; };
 		D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABAE187E425B00392583 /* recButton@2x.png */; };
 		D5CAABB1187E427100392583 /* recButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABB0187E427100392583 /* recButton.png */; };
-		D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */; };
-		D5D035721827BD3D00233B58 /* GPUImageStillCamera+Utility.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */; };
 		D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357A1827C14B00233B58 /* DeviceOrientation.m */; };
 		D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357F1827D03600233B58 /* UIImage+Normalize.m */; };
 		D5D9221E18C57B6B00612CA7 /* PreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D9221D18C57B6B00612CA7 /* PreviewView.m */; };
-		D5D9222118C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D9222018C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,8 +60,6 @@
 		D505531F187EDE2A007355BE /* recStopButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "recStopButton@2x.png"; sourceTree = "<group>"; };
 		D5055322187EEB29007355BE /* NSDate+stringUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+stringUtility.h"; sourceTree = "<group>"; };
 		D5055323187EEB29007355BE /* NSDate+stringUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+stringUtility.m"; sourceTree = "<group>"; };
-		D50B050F18A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageFilter+ProcessSizeUtility.h"; sourceTree = "<group>"; };
-		D50B051018A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageFilter+ProcessSizeUtility.m"; sourceTree = "<group>"; };
 		D52A8AC31817F2EA00F4ADFD /* CameraManagerExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CameraManagerExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D52A8ACE1817F2EA00F4ADFD /* CameraManagerExample-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "CameraManagerExample-Info.plist"; sourceTree = "<group>"; };
 		D52A8AD01817F2EA00F4ADFD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -100,18 +94,12 @@
 		D52A8B261817F71100F4ADFD /* shutterButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shutterButton@2x.png"; sourceTree = "<group>"; };
 		D5CAABAE187E425B00392583 /* recButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "recButton@2x.png"; sourceTree = "<group>"; };
 		D5CAABB0187E427100392583 /* recButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = recButton.png; sourceTree = "<group>"; };
-		D5D0355B1827713700233B58 /* DLCGrayscaleContrastFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DLCGrayscaleContrastFilter.h; sourceTree = "<group>"; };
-		D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DLCGrayscaleContrastFilter.m; sourceTree = "<group>"; };
-		D5D035701827BD3D00233B58 /* GPUImageStillCamera+Utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageStillCamera+Utility.h"; sourceTree = "<group>"; };
-		D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageStillCamera+Utility.m"; sourceTree = "<group>"; };
 		D5D035791827C14B00233B58 /* DeviceOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceOrientation.h; sourceTree = "<group>"; };
 		D5D0357A1827C14B00233B58 /* DeviceOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceOrientation.m; sourceTree = "<group>"; };
 		D5D0357E1827D03600233B58 /* UIImage+Normalize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Normalize.h"; sourceTree = "<group>"; };
 		D5D0357F1827D03600233B58 /* UIImage+Normalize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Normalize.m"; sourceTree = "<group>"; };
 		D5D9221C18C57B6B00612CA7 /* PreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewView.h; sourceTree = "<group>"; };
 		D5D9221D18C57B6B00612CA7 /* PreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreviewView.m; sourceTree = "<group>"; };
-		D5D9221F18C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GPUImageStillCamera+directShutter.h"; sourceTree = "<group>"; };
-		D5D9222018C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GPUImageStillCamera+directShutter.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -214,23 +202,16 @@
 				4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */,
 				D52A8B141817F69100F4ADFD /* CameraManager.h */,
 				D52A8B151817F69100F4ADFD /* CameraManager.m */,
+				D5D9221C18C57B6B00612CA7 /* PreviewView.h */,
+				D5D9221D18C57B6B00612CA7 /* PreviewView.m */,
 				D5D035791827C14B00233B58 /* DeviceOrientation.h */,
 				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
-				D5D0355A1827713700233B58 /* FilterClass */,
-				D50B050F18A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.h */,
-				D50B051018A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m */,
-				D5D035701827BD3D00233B58 /* GPUImageStillCamera+Utility.h */,
-				D5D035711827BD3D00233B58 /* GPUImageStillCamera+Utility.m */,
 				D5055322187EEB29007355BE /* NSDate+stringUtility.h */,
 				D5055323187EEB29007355BE /* NSDate+stringUtility.m */,
 				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
 				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
 				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
-				D5D9221C18C57B6B00612CA7 /* PreviewView.h */,
-				D5D9221D18C57B6B00612CA7 /* PreviewView.m */,
-				D5D9221F18C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.h */,
-				D5D9222018C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m */,
 			);
 			path = CameraManager;
 			sourceTree = "<group>";
@@ -256,15 +237,6 @@
 				D505531F187EDE2A007355BE /* recStopButton@2x.png */,
 			);
 			path = Images;
-			sourceTree = "<group>";
-		};
-		D5D0355A1827713700233B58 /* FilterClass */ = {
-			isa = PBXGroup;
-			children = (
-				D5D0355B1827713700233B58 /* DLCGrayscaleContrastFilter.h */,
-				D5D0355C1827713700233B58 /* DLCGrayscaleContrastFilter.m */,
-			);
-			path = FilterClass;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -427,11 +399,7 @@
 				D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
 				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
-				D50B051118A5565900617ADE /* GPUImageFilter+ProcessSizeUtility.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
-				D5D9222118C5B0FA00612CA7 /* GPUImageStillCamera+directShutter.m in Sources */,
-				D5D035721827BD3D00233B58 /* GPUImageStillCamera+Utility.m in Sources */,
-				D5D0355D1827713700233B58 /* DLCGrayscaleContrastFilter.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

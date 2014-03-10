@@ -113,30 +113,6 @@
                                     <action selector="pushedFlashButton:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="B1H-gN-zvv"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tcU-OO-YIn">
-                                <rect key="frame" x="118" y="20" width="85" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="85" id="4Nt-Qe-xsR"/>
-                                    <constraint firstAttribute="height" constant="30" id="cVV-2l-b3C"/>
-                                </constraints>
-                                <state key="normal" title="changeFilter">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                </state>
-                                <connections>
-                                    <action selector="pushedChangeFilter:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="lzD-wM-ICg"/>
-                                </connections>
-                            </button>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="normal" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IaG-BQ-oKl">
-                                <rect key="frame" x="20" y="58" width="280" height="21"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="21" id="hhx-Tf-web"/>
-                                </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="13"/>
-                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
-                                <nil key="highlightedColor"/>
-                            </label>
                             <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="Gv1-3V-JSD">
                                 <rect key="frame" x="251" y="20" width="51" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
@@ -144,17 +120,19 @@
                                     <action selector="didChangeSilentSwitch:" destination="vXZ-lx-hvc" eventType="valueChanged" id="YcB-YV-G1D"/>
                                 </connections>
                             </switch>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FS1-JT-iDG" userLabel="カメラオン/オフ">
+                                <rect key="frame" x="134" y="20" width="51" height="31"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <connections>
+                                    <action selector="didChangeCameraEnableSwitch:" destination="vXZ-lx-hvc" eventType="valueChanged" id="V90-6M-8pV"/>
+                                </connections>
+                            </switch>
                         </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="IaG-BQ-oKl" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" constant="20" id="15i-DS-aGh"/>
-                            <constraint firstAttribute="trailing" secondItem="IaG-BQ-oKl" secondAttribute="trailing" constant="20" id="1Mf-MK-hpb"/>
-                            <constraint firstItem="IaG-BQ-oKl" firstAttribute="top" secondItem="Gv1-3V-JSD" secondAttribute="bottom" constant="7" id="6UH-Sl-TYk"/>
                             <constraint firstItem="kJP-ui-7SI" firstAttribute="top" secondItem="q82-qm-Vu9" secondAttribute="bottom" id="9bF-y3-0H9"/>
                             <constraint firstItem="qCt-oi-usQ" firstAttribute="centerY" secondItem="TXc-Kc-e3M" secondAttribute="centerY" id="GFJ-rI-fH9"/>
-                            <constraint firstItem="tcU-OO-YIn" firstAttribute="top" secondItem="Ol1-w6-Sf6" secondAttribute="bottom" id="Jgc-0N-uq9"/>
                             <constraint firstItem="kJP-ui-7SI" firstAttribute="top" secondItem="xWC-Jf-l8N" secondAttribute="bottom" constant="27" id="LQh-Wy-31p"/>
-                            <constraint firstAttribute="centerX" secondItem="tcU-OO-YIn" secondAttribute="centerX" id="OXj-hS-Itv"/>
                             <constraint firstItem="TXc-Kc-e3M" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" constant="3" id="V1S-Hy-a48"/>
                             <constraint firstItem="Gv1-3V-JSD" firstAttribute="top" secondItem="Ol1-w6-Sf6" secondAttribute="bottom" id="Xsd-up-N3j"/>
                             <constraint firstItem="q82-qm-Vu9" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" id="ZoJ-To-n6R"/>
@@ -163,7 +141,6 @@
                             <constraint firstAttribute="trailing" secondItem="Gv1-3V-JSD" secondAttribute="trailing" constant="20" id="g1r-z2-UmI"/>
                             <constraint firstAttribute="trailing" secondItem="qIM-lB-Ebw" secondAttribute="trailing" constant="8" id="oCT-S0-lRo"/>
                             <constraint firstItem="kJP-ui-7SI" firstAttribute="top" secondItem="bQa-h9-ooM" secondAttribute="bottom" constant="27" id="qQx-3e-8Vq"/>
-                            <constraint firstAttribute="centerX" secondItem="IaG-BQ-oKl" secondAttribute="centerX" id="rX8-gY-MNj"/>
                             <constraint firstItem="q82-qm-Vu9" firstAttribute="top" secondItem="kh9-bI-dsS" secondAttribute="top" id="twO-Wc-rUF"/>
                             <constraint firstAttribute="centerX" secondItem="qCt-oi-usQ" secondAttribute="centerX" id="u4y-nO-NEx"/>
                             <constraint firstAttribute="trailing" secondItem="q82-qm-Vu9" secondAttribute="trailing" id="wMg-AF-VsQ"/>
@@ -172,15 +149,14 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="cameraEnableSwitch" destination="FS1-JT-iDG" id="cvw-Hq-YLu"/>
                         <outlet property="cameraRotateButton" destination="qIM-lB-Ebw" id="SHo-Re-6Qu"/>
                         <outlet property="changeCameraModeButton" destination="Tk7-7U-HkF" id="iGk-vm-3lc"/>
-                        <outlet property="chooseFilterButton" destination="tcU-OO-YIn" id="aRU-rk-qDg"/>
-                        <outlet property="filterNameLabel" destination="IaG-BQ-oKl" id="YKB-eM-8x3"/>
                         <outlet property="flashButton" destination="TXc-Kc-e3M" id="nHz-O2-4UH"/>
                         <outlet property="focusView" destination="z6B-pE-bks" id="HdS-Q4-2aI"/>
                         <outlet property="movieRecordedTime" destination="bQa-h9-ooM" id="5Bp-XD-Q5y"/>
                         <outlet property="movieRemainTime" destination="xWC-Jf-l8N" id="0la-A2-wKe"/>
-                        <outlet property="previewViewA" destination="q82-qm-Vu9" id="vnK-SA-lSN"/>
+                        <outlet property="previewView" destination="q82-qm-Vu9" id="6ev-MW-RrK"/>
                         <outlet property="shutterButton" destination="qCt-oi-usQ" id="wAf-kK-2Re"/>
                         <outlet property="silentSwitch" destination="Gv1-3V-JSD" id="Hfw-Yb-2if"/>
                     </connections>

@@ -7,18 +7,19 @@
 //
 
 #import "ViewController.h"
+#import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
+
 #import "UIImage+Normalize.h"
 #import "CameraManager.h"
-#import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
 #import "PreviewView.h"
 #import "CameraManager.h"
-#import <GPUImage/GPUImage.h>
 
 @interface ViewController ()
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
 @property (strong, nonatomic) UIPinchGestureRecognizer *pinchGesture;
 @property (assign, nonatomic) NSInteger curFilterIndex;
 @property (assign, nonatomic) CGSize originalFocusCursorSize;
+@property (weak, nonatomic) IBOutlet UISwitch *cameraEnableSwitch;
 
 @end
 
@@ -29,17 +30,18 @@
     [super viewDidLoad];
     
     //  PreviewViewの設定
-    _previewViewA.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
-    
     _focusView.image = [[UIImage imageNamed:@"focusFrame"] stretchableImageWithLeftCapWidth:4.0 topCapHeight:4.0];
     
     //  カメラを開く前に設定をしておく
-    [[CameraManager sharedManager] addPreviewView:_previewViewA];
-    [CameraManager sharedManager].videoDuration = 10.0; //   動画撮影時間
-    [CameraManager sharedManager].autoSaveToCameraroll = YES;
+    [CameraManager sharedManager].videoDuration = 3.0; //   動画撮影時間
     
+    //  通常撮影の静止画の時
     [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
-//    [CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPreset1280x720;
+    [CameraManager sharedManager].sessionPresetForFrontStill = AVCaptureSessionPresetPhoto;
+    
+    //  サイレントモードの時の設定
+    [CameraManager sharedManager].sessionPresetForSilentStill = AVCaptureSessionPresetHigh;
+    [CameraManager sharedManager].sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
     
     //  フォーカスのビューを消しておく
     _focusView.alpha = 0.0;
@@ -50,33 +52,33 @@
     _cameraRotateButton.enabled = NO;
     _flashButton.enabled = NO;
     _changeCameraModeButton.enabled = NO;
-    _chooseFilterButton.enabled = NO;
     _silentSwitch.enabled = NO;
-    
-    //  プレビュー画面をalphaゼロから
-    _previewViewA.alpha = 0.0;
-    _previewViewA.previewMode = PreviewViewMode_AVCapture;
-    
-    //  カメラを開く
-    [[CameraManager sharedManager] openCamera];
     
     //  フォーカスの処理を呼ぶためのジェスチャ
     _tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
-    [_previewViewA addGestureRecognizer:_tapGesture];
+    [_previewView addGestureRecognizer:_tapGesture];
     _tapGesture.enabled = YES;
     
     //  ズームのジェスチャ
     _pinchGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handlePinch:)];
-    [_previewViewA addGestureRecognizer:_pinchGesture];
+    [_previewView addGestureRecognizer:_pinchGesture];
     _pinchGesture.enabled = YES;
     
     //  カメラロールへの保存するかどうか
-    [CameraManager sharedManager].autoSaveToCameraroll = YES;
+    [CameraManager sharedManager].autoSaveToCameraroll = NO;
         
     //
     _movieRecordedTime.hidden = YES;
     _movieRemainTime.hidden = YES;
-	
+    
+    //  プレビュー設定
+    [_previewView.previewLayer setSession:[CameraManager sharedManager].session];
+    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+    
+    //  プレビュー画面をalphaゼロから
+    _previewView.alpha = 0.0;
+
+
     //  イベント登録
     [[CameraManager sharedManager] addEventListener:@"open" observer:self
                                            selector:@selector(cameraManagerOpened:)];
@@ -84,20 +86,11 @@
     [[CameraManager sharedManager] addEventListener:@"close" observer:self
                                            selector:@selector(cameraManagerClosed:)];
     
-    [[CameraManager sharedManager] addEventListener:@"adjustingFocus" observer:self
-                                           selector:@selector(cameraManagerAdjustingFocus:)];
-    
-    [[CameraManager sharedManager] addEventListener:@"adjustFocusStart" observer:self
-                                           selector:@selector(cameraManagerAdjustFocusStart:)];
-    
-    [[CameraManager sharedManager] addEventListener:@"adjustFocusComplete" observer:self
-                                           selector:@selector(cameraManagerAdjustFocusComplete:)];
-    
     [[CameraManager sharedManager] addEventListener:@"didChangeDeviceOrientation" observer:self
                                            selector:@selector(cameraManagerdidChangeDeviceOrientation:)];
     
-    [[CameraManager sharedManager] addEventListener:@"didPlayShutterSound" observer:self
-                                           selector:@selector(cameraManagerDidPlayShutterSound:)];
+    [[CameraManager sharedManager] addEventListener:@"didCapturedImageForAnimation" observer:self
+                                           selector:@selector(cameraManagerDidCapturedImageForAnimation:)];
     
     [[CameraManager sharedManager] addEventListener:@"didCapturedImage" observer:self
                                            selector:@selector(cameraManagerDidCapturedImage:)];
@@ -126,18 +119,6 @@
     [[CameraManager sharedManager] addEventListener:@"didChangeCameraFrontBack" observer:self
                                            selector:@selector(cameraManagerDidChangeCameraFrontBack:)];
     
-    [[CameraManager sharedManager] addEventListener:@"willChangeFilter" observer:self
-                                           selector:@selector(cameraManagerWillChangeFilter:)];
-    
-    [[CameraManager sharedManager] addEventListener:@"didChangeFilter" observer:self
-                                           selector:@selector(cameraManagerDidChangeFilter:)];
-    
-    [[CameraManager sharedManager] addEventListener:@"showChangeFilterGUI" observer:self
-                                           selector:@selector(cameraManagerShowChangeFilterGUI:)];
-    
-    [[CameraManager sharedManager] addEventListener:@"dismissChangeFilterGUI" observer:self
-                                           selector:@selector(cameraManagerDismissChangeFilterGUI:)];
-    
     [[CameraManager sharedManager] addEventListener:@"showFocusCursor" observer:self
                                            selector:@selector(cameraManagerShowFocusCursor:)];
     
@@ -147,10 +128,17 @@
     [[CameraManager sharedManager] addEventListener:@"didChangeFlashMode" observer:self
                                            selector:@selector(cameraManagerDidChangeFlashMode:)];
     
-	// イベント監視
-	[[CameraManager sharedManager] addEventListener:@"open" usingBlock:^(NSNotification *notification) {
-		NSLog( @"カメラが起動しました" );
-	}];
+    [[CameraManager sharedManager] addEventListener:@"didChangeIsCapturingStillImage" observer:self
+                                           selector:@selector(cameraManagerDidChangeIsCapturingStillImage:)];
+    
+    [[CameraManager sharedManager] addEventListener:@"didChangeIsRecordingVideo" observer:self
+                                           selector:@selector(cameraManagerDidChangeIsRecordingVideo:)];
+    
+    [[CameraManager sharedManager] addEventListener:@"willChangeSilentMode" observer:self
+                                           selector:@selector(cameraManagerWillChangeSilentMode:)];
+    
+    [[CameraManager sharedManager] addEventListener:@"didChangeSilentMode" observer:self
+                                           selector:@selector(cameraManagerDidChangeSilentMode:)];
 }
 
 - (void)didReceiveMemoryWarning
@@ -164,6 +152,14 @@
     [super viewDidDisappear:animated];
     
     [[CameraManager sharedManager] closeCamera];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    //
+    [self didChangeCameraEnableSwitch:_cameraEnableSwitch];
 }
 
 #pragma mark -
@@ -185,9 +181,10 @@
 {
     if(tapGesture == _tapGesture)
     {
-        CGPoint pos = [_tapGesture locationInView:_previewViewA];
+        CGPoint pos = [_tapGesture locationInView:_previewView];
         
-        [[CameraManager sharedManager] setFocusPoint:pos inView:_previewViewA];
+        CGPoint fixPos = [_previewView.previewLayer captureDevicePointOfInterestForPoint:pos];
+        [[CameraManager sharedManager] setFocusPoint:fixPos];
     }
 }
 
@@ -198,7 +195,7 @@
     //  カメラの状態に応じてGUIの表示を切り替える
     
     //  フラッシュの有り無しでflashボタンの表示/非表示
-    _flashButton.hidden = ![[CameraManager sharedManager].stillCamera.inputCamera hasTorch];
+    _flashButton.hidden = ![[CameraManager sharedManager] hasFlash];
     
     //  フロントカメラ、もしくはリアカメラのみの場合にrotateアイコン消す
     BOOL isFrontCameraAvailable = [UIImagePickerController isCameraDeviceAvailable:UIImagePickerControllerCameraDeviceFront];
@@ -220,10 +217,13 @@
     //
     [self cameraGUIUpdate];
     
+    //  ここでもあらためて明示的に書いておく
+    _previewView.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+    
     //
     [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
         //
-        _previewViewA.alpha = 1.0;
+        _previewView.alpha = 1.0;
         
     } completion:^(BOOL finished) {
         //
@@ -231,13 +231,8 @@
         _cameraRotateButton.enabled = YES;
         _flashButton.enabled = YES;
         _changeCameraModeButton.enabled = YES;
-        _chooseFilterButton.enabled = YES;
         _silentSwitch.enabled = YES;
     }];
-    
-    //  previewにつないでみる
-    [_previewViewA.previewLayer setVideoGravity:AVLayerVideoGravityResizeAspectFill];
-    [_previewViewA.previewLayer setSession:[CameraManager sharedManager].stillCamera.captureSession];
 }
 
 - (void)cameraManagerClosed:(NSNotification*)notification
@@ -249,28 +244,9 @@
     _cameraRotateButton.enabled = NO;
     _flashButton.enabled = NO;
     _changeCameraModeButton.enabled = NO;
-    _chooseFilterButton.enabled = NO;
     _silentSwitch.enabled = NO;
     
-    _previewViewA.alpha = 0.0;
-}
-
-- (void)cameraManagerAdjustingFocus:(NSNotification*)notification
-{
-    NSNumber *stateNum = notification.userInfo[@"value"];
-    BOOL state = stateNum.boolValue;
-    
-    NSLog(@"cameraManager:adjustingFocus(value = %d)", state);
-}
-
-- (void)cameraManagerAdjustFocusStart:(NSNotification*)notification
-{
-    NSLog(@"cameraManager:adjustFocusStart");
-}
-
-- (void)cameraManagerAdjustFocusComplete:(NSNotification*)notification
-{
-    NSLog(@"cameraManager:adjustFocusComplete");
+    _previewView.alpha = 0.0;
 }
 
 - (void)cameraManagerdidChangeDeviceOrientation:(NSNotification*)notification
@@ -302,44 +278,6 @@
     } completion:nil];
 }
 
-- (void)cameraManagerDidPlayShutterSound:(NSNotification*)notification
-{
-    UIImage *image = notification.userInfo[@"image"];
-    
-    NSLog(@"cameraManager:didPlayShutterSound(image = %@)", NSStringFromCGSize(image.size));
-    
-//    if(image)
-//    {
-//        //  アニメーションの処理はここに書くとすぐに実行される
-//        UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-//        
-//        CGFloat width = image.size.width/image.size.height*self.view.bounds.size.height;
-//        imageView.frame = CGRectMake(CGRectGetWidth(self.view.bounds)/2.0 - width/2.0, 0.0, width, self.view.bounds.size.height);
-//        
-//        //
-//        [self.view addSubview:imageView];
-//        [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
-//            //
-//            imageView.transform = CGAffineTransformMakeScale(0.0, 0.0);
-//            
-//        } completion:^(BOOL finished) {
-//            
-//            [imageView removeFromSuperview];
-//        }];
-//    }
-    
-    _previewViewA.alpha = 0.0;
-    
-    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
-        //
-        _previewViewA.alpha = 1.0;
-        
-    } completion:^(BOOL finished) {
-        //
-        
-    }];
-}
-
 - (void)cameraManagerDidCapturedImage:(NSNotification*)notification
 {
     UIImage *image = notification.userInfo[@"image"];
@@ -353,15 +291,37 @@
     
     //
     _changeCameraModeButton.enabled = YES;
-    _chooseFilterButton.enabled = YES;
     _silentSwitch.enabled = YES;
+}
+
+- (void)cameraManagerDidCapturedImageForAnimation:(NSNotification*)notification
+{
+    UIImage *image = notification.userInfo[@"image"];
     
-//    //
-//    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-//    imageView.alpha = 0.2;
-//    [self.view addSubview:imageView];
-//    
-//    [imageView performSelector:@selector(removeFromSuperview) withObject:Nil afterDelay:2.0];
+    NSLog(@"cameraManager:didCapturedImageForAnimation(image = %@)", NSStringFromCGSize(image.size));
+    
+    //  アニメーション表示してみる
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+    
+    CGFloat scaleW = CGRectGetWidth(self.view.bounds)/image.size.width;
+    CGFloat scaleH = CGRectGetHeight(self.view.bounds)/image.size.height;
+    CGFloat scale = MAX(scaleW, scaleH);
+    
+    imageView.frame = CGRectMake(0.0, 0.0, scale*image.size.width, scale*image.size.height);
+    imageView.center = CGPointMake(CGRectGetWidth(self.view.bounds)/2.0, CGRectGetHeight(self.view.bounds)/2.0);
+    
+    [self.view addSubview:imageView];
+    
+    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //
+        imageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
+        //imageView.alpha = 0.0;
+        
+    } completion:^(BOOL finished) {
+        //
+        [imageView removeFromSuperview];
+        
+    }];
 }
 
 - (void)cameraManagerWillStartVideoRecording:(NSNotification*)notification
@@ -370,7 +330,6 @@
     
     //  操作してほしくないGUIを消す
     _changeCameraModeButton.hidden = YES;
-    _chooseFilterButton.hidden = YES;
     
     //  Shutter以外消す
     _flashButton.hidden = YES;
@@ -405,7 +364,6 @@
     //  録画完了時    
     //  GUIを元に戻す
     _changeCameraModeButton.hidden = NO;
-    _chooseFilterButton.hidden = NO;
     _flashButton.hidden = NO;
     _cameraRotateButton.hidden = NO;
     _silentSwitch.hidden = NO;
@@ -417,7 +375,6 @@
     
     //
     _changeCameraModeButton.enabled = YES;
-    _chooseFilterButton.enabled = YES;
     _silentSwitch.enabled = YES;
     
     //  秒数出すLabel消す
@@ -490,8 +447,14 @@
     
     //
     _changeCameraModeButton.enabled = YES;
-    _chooseFilterButton.enabled = YES;
     _silentSwitch.enabled = YES;
+    
+    //  画面を元に
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        _previewView.alpha = 1.0;
+        
+    } completion:nil];
 }
 
 - (void)cameraManagerWillChangeCameraFrontBack:(NSNotification*)notification
@@ -518,91 +481,18 @@
     
     //
     _changeCameraModeButton.enabled = YES;
-    _chooseFilterButton.enabled = YES;
     _silentSwitch.enabled = YES;
     
     //  切替時に画面に変化をいれてみる
     [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
         //
-        _previewViewA.alpha = 1.0;
+        _previewView.alpha = 1.0;
         
     } completion:^(BOOL finished) {
         //
     }];
 
 }
-
-- (void)cameraManagerWillChangeFilter:(NSNotification*)notification
-{
-    NSString *name = notification.userInfo[@"name"];
-    NSNumber *indexNum = notification.userInfo[@"index"];
-    NSInteger index = indexNum.integerValue;
-    
-    NSLog(@"cameraManager:willChangeFilter(name = %@, index = %d)", name, (int)index);
-}
-
-- (void)cameraManagerDidChangeFilter:(NSNotification*)notification
-{
-    NSString *name = notification.userInfo[@"name"];
-    NSNumber *indexNum = notification.userInfo[@"index"];
-    NSInteger index = indexNum.integerValue;
-    
-    NSLog(@"cameraManager:didChangeFilter(name = %@, index = %d)", name, (int)index);
-    
-    //
-    _filterNameLabel.text = name;
-    
-    //
-    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
-        //
-        _filterNameLabel.alpha = 1.0;
-        _silentSwitch.alpha = 1.0;
-        
-    } completion:^(BOOL finished) {
-        //
-    }];
-}
-
-- (void)cameraManagerShowChangeFilterGUI:(NSNotification*)notification
-{
-    NSLog(@"cameraManager:showChangeFilterGUI");
-    
-    //  ボタン類を非アクティブに
-    _cameraRotateButton.enabled = NO;
-    _shutterButton.enabled = NO;
-    _flashButton.enabled = NO;
-    
-    //
-    _changeCameraModeButton.enabled = NO;
-    _chooseFilterButton.enabled = NO;
-    _silentSwitch.enabled = NO;
-}
-
-- (void)cameraManagerDismissChangeFilterGUI:(NSNotification*)notification
-{
-    NSString *name = notification.userInfo[@"name"];
-    NSNumber *indexNum = notification.userInfo[@"index"];
-    NSInteger index = indexNum.integerValue;
-    
-    NSLog(@"cameraManager:dismissChangeFilterGUI(name = %@, index = %d)", name, (int)index);
-    
-    //  ボタン類をアクティブに
-    _cameraRotateButton.enabled = YES;
-    _shutterButton.enabled = YES;
-    _flashButton.enabled = YES;
-    
-    //
-    _changeCameraModeButton.enabled = YES;
-    _chooseFilterButton.enabled = YES;
-    _silentSwitch.enabled = YES;
-    
-    //  フィルターのが「なし」の時だけpreviewModeをAVCaptureに
-    if(index == 0)
-    {
-        _previewViewA.previewMode = PreviewViewMode_AVCapture;
-    }
-}
-
 - (void)cameraManagerShowFocusCursor:(NSNotification*)notification
 {
     //  フィルター選択画面中は表示しない
@@ -611,10 +501,12 @@
     
     NSValue *positionValue = notification.userInfo[@"position"];
     CGPoint focusPos = positionValue.CGPointValue;
+    CGPoint fixFocusPos = [_previewView.previewLayer pointForCaptureDevicePointOfInterest:focusPos];
+    
     NSNumber *isContinuousNum = notification.userInfo[@"isContinuous"];
     BOOL isContinuous = isContinuousNum.boolValue;
     
-    NSLog(@"cameraManager:showFocusCursor(postion = %@, isContinuous = %d)", NSStringFromCGPoint(focusPos), isContinuous);
+    NSLog(@"cameraManager:showFocusCursor(postion = %@, isContinuous = %d)", NSStringFromCGPoint(fixFocusPos), isContinuous);
     
     //  フォーカスが出てくるアニメーション
     if(isContinuous)
@@ -622,7 +514,7 @@
     else
         _focusView.bounds = CGRectMake(0.0, 0.0, _originalFocusCursorSize.width*4.0, _originalFocusCursorSize.height*4.0);
 
-    _focusView.center = focusPos;
+    _focusView.center = fixFocusPos;
 
     //
     [_focusView.layer removeAllAnimations];
@@ -631,7 +523,7 @@
     [UIView animateWithDuration:0.1 delay:0.0 options:7<<16 animations:^{
         //
         _focusView.bounds = CGRectMake(0.0, 0.0, _originalFocusCursorSize.width, _originalFocusCursorSize.height);
-        _focusView.center = focusPos;
+        _focusView.center = fixFocusPos;
 
         //
         _focusView.alpha = 1.0;
@@ -706,30 +598,77 @@
     }
 }
 
-////////////
-
-#pragma mark -
-
-- (IBAction)pushedChangeFilter:(id)sender
+- (void)cameraManagerDidChangeIsCapturingStillImage:(NSNotification*)notification
 {
-    if(![CameraManager sharedManager].isChooseFilterMode)
+    NSNumber *stateNum = notification.userInfo[@"state"];
+    BOOL state = stateNum.boolValue;
+    
+    NSLog(@"cameraManagerDidChangeIsCapturingStillImage:%d", state);
+    
+    if(state)
     {
-        [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
+        //  アニメーションいれてみる
+        _previewView.alpha = 0.0;
+        
+        [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
             //
-            _filterNameLabel.alpha = 0.0;
-            _silentSwitch.alpha = 0.0;
+            _previewView.alpha = 1.0;
             
         } completion:^(BOOL finished) {
             //
+            
         }];
-        
-        //
-        [[CameraManager sharedManager] showChooseEffectInPreviewView:_previewViewA];
     }
+}
+
+- (void)cameraManagerDidChangeIsRecordingVideo:(NSNotification*)notification
+{
+    NSNumber *stateNum = notification.userInfo[@"state"];
+    BOOL state = stateNum.boolValue;
+    
+    NSLog(@"cameraManagerDidChangeIsRecordingVideo:%d", state);
+    
+}
+
+- (void)cameraManagerWillChangeSilentMode:(NSNotification*)notification
+{
+    NSLog(@"cameraManagerWillChangeSilentMode");
+    
+    //  画面を暗く
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        _previewView.alpha = 0.0;
+        
+    } completion:nil];
+}
+
+- (void)cameraManagerDidChangeSilentMode:(NSNotification*)notification
+{
+    NSLog(@"cameraManagerDidChangeSilentMode");
+    
+    //  画面を戻す
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        _previewView.alpha = 1.0;
+        
+    } completion:nil];
+}
+
+////////////
+
+#pragma mark - 
+
+/// カメラのオンオフ
+- (IBAction)didChangeCameraEnableSwitch:(UISwitch*)sender
+{
+	if( sender.isOn )
+    {
+		[[CameraManager sharedManager] openCamera];
+	}
     else
     {
-        [[CameraManager sharedManager] dissmissChooseEffect];
-    }
+		[[CameraManager sharedManager] closeCamera];
+	}
 }
 
 - (IBAction)didChangeSilentSwitch:(id)sender
@@ -746,18 +685,35 @@
     
     //
     _changeCameraModeButton.enabled = NO;
-    _chooseFilterButton.enabled = NO;
     _silentSwitch.enabled = NO;
     
     //
     [[CameraManager sharedManager] toggleCameraMode];
+    
+    //  画面を暗く
+    [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+        //
+        _previewView.alpha = 0.0;
+        
+    } completion:nil];
 }
 
 - (IBAction)pushedShutterButton:(id)sender
 {
-    //  スチールの時はShutter非アクティブに
-//    if([CameraManager sharedManager].cameraMode == CMCameraModeStill)
-//        _shutterButton.enabled = NO;
+    if([CameraManager sharedManager].cameraMode == CMCameraModeStill && [CameraManager sharedManager].silentShutterMode)
+    {
+        //  アニメーションいれてみる
+        _previewView.alpha = 0.0;
+        
+        [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
+            //
+            _previewView.alpha = 1.0;
+            
+        } completion:^(BOOL finished) {
+            //
+            
+        }];
+    }
     
     //  その他のGUIも操作できないように消す
     _cameraRotateButton.enabled = NO;
@@ -765,7 +721,6 @@
     
     //
     _changeCameraModeButton.enabled = NO;
-    _chooseFilterButton.enabled = NO;
     _silentSwitch.enabled = NO;
     
     //
@@ -786,18 +741,15 @@
     
     //
     _changeCameraModeButton.enabled = NO;
-    _chooseFilterButton.enabled = NO;
     _silentSwitch.enabled = NO;
     
+    //  入れ替え処理
+    [[CameraManager sharedManager] rotateCameraPosition];
+
     //  切替時に画面に変化をいれてみる
     [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
-        //
-        _previewViewA.alpha = 0.0;
-        
-    } completion:^(BOOL finished) {
-        //
-        [[CameraManager sharedManager] rotateCameraPosition];
-    }];
+        _previewView.alpha = 0.0;
+    } completion:nil];
 }
 
 #pragma mark - zoom
