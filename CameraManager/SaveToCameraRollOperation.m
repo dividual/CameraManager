@@ -57,8 +57,6 @@
 		 } else {
 			 NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
 		 }
-		isExecuting = NO;
-		isFinished = YES;
 		[self setValue:[NSNumber numberWithBool:NO] forKey:@"isExecuting"];
 		[self setValue:[NSNumber numberWithBool:YES] forKey:@"isFinished"];
 	 }];
