@@ -65,7 +65,7 @@
     _pinchGesture.enabled = YES;
     
     //  カメラロールへの保存するかどうか
-    [CameraManager sharedManager].autoSaveToCameraroll = NO;
+    [CameraManager sharedManager].autoSaveToCameraroll = YES;
         
     //
     _movieRecordedTime.hidden = YES;

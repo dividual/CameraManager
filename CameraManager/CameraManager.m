@@ -1068,28 +1068,23 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 				NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
 				UIImage *image = [[UIImage alloc] initWithData:imageData];
                 
+				[self saveToCameraRoll:imageData];// カメラロールに保存
                 completion(image, nil);
 			}
 		}];
 	});
 }
 
-- (void)capturedImage:(UIImage*)originalImage error:(NSError*)error
-{
-    //  イベント発行
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":originalImage }];
-    });
-    
-    //
-    if(_autoSaveToCameraroll)
-    {
+
+/// カメラロールに保存
+// jpegStillImageNSDataRepresentation したデータをそのまま渡しましょう。
+-(void)saveToCameraRoll:(NSData*)data{
+	if(_autoSaveToCameraroll){
         dispatch_async(_saveQueue, ^{
-            
             @autoreleasepool {
+				NSLog( @"カメラロールに保存します" );
                 ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                
-                [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(originalImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
+                [library writeImageDataToSavedPhotosAlbum:data metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
                  {
                      if(error)
                      {
@@ -1102,8 +1097,16 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
                  }];
             }
         });
-        
     }
+}
+
+
+- (void)capturedImage:(UIImage*)originalImage error:(NSError*)error
+{
+    //  イベント発行
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":originalImage }];
+    });
 }
 
 #pragma mark - video
