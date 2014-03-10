@@ -17,6 +17,7 @@
 #import "UIImage+Normalize.h"
 #import "NSDate+stringUtility.h"
 #import "PreviewView.h"
+#import "SaveToCameraRollOperation.h"
 
 //  KVOで追いかけるときに使うポインタ（メモリ番地をcontextとして使う）
 static void * CapturingStillImageContext = &CapturingStillImageContext;
@@ -72,7 +73,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark -
 
-@implementation CameraManager
+@implementation CameraManager{
+	NSOperationQueue* _saveToCameraRoll_queue;
+}
 
 #pragma mark singleton
 
@@ -160,6 +163,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     
     //  保存用キュー
     _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);
+	
+	_saveToCameraRoll_queue = [[NSOperationQueue alloc] init];
+	_saveToCameraRoll_queue.maxConcurrentOperationCount = 4;// これを超えるとiPodTouchで保存失敗が発生する可能性があります。
     
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
@@ -1068,11 +1074,23 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 				NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
 				UIImage *image = [[UIImage alloc] initWithData:imageData];
                 
+				[self saveToCameraRoll:imageData];// カメラロールに保存
                 completion(image, nil);
 			}
 		}];
 	});
 }
+
+
+/// カメラロールに保存
+// jpegStillImageNSDataRepresentation したデータをそのまま渡しましょう。
+-(void)saveToCameraRoll:(NSData*)data{
+	if(_autoSaveToCameraroll){
+		SaveToCameraRollOperation* op = [[SaveToCameraRollOperation alloc] initWithData:data];
+		[_saveToCameraRoll_queue addOperation:op];
+    }
+}
+
 
 - (void)capturedImage:(UIImage*)originalImage error:(NSError*)error
 {
@@ -1080,30 +1098,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     dispatch_async(dispatch_get_main_queue(), ^{
         [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":originalImage }];
     });
-    
-    //
-    if(_autoSaveToCameraroll)
-    {
-        dispatch_async(_saveQueue, ^{
-            
-            @autoreleasepool {
-                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                
-                [library writeImageDataToSavedPhotosAlbum:UIImageJPEGRepresentation(originalImage, _jpegQuality) metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
-                 {
-                     if(error)
-                     {
-                         NSLog(@"ERROR: the image failed to be written");
-                     }
-                     else
-                     {
-                         NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
-                     }
-                 }];
-            }
-        });
-        
-    }
 }
 
 #pragma mark - video
