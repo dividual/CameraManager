@@ -323,6 +323,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 			});
 		}];
         
+		_session.sessionPreset = AVCaptureSessionPresetPhoto;
+		
         //  カメラ処理開始
 		[_session startRunning];
         
@@ -333,7 +335,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         [self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];
         
         //  カメラモードを指定
-        [self setCameraMode:CMCameraModeStill];
+//        [self setCameraMode:CMCameraModeStill];// ここでセットすると画面が乱れる。startRunning前にプロパティをセットすべし
         
         //  フラッシュモード指定しておく
         [self setDeviceFlashMode:_flashMode];
