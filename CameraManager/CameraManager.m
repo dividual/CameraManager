@@ -17,6 +17,7 @@
 #import "UIImage+Normalize.h"
 #import "NSDate+stringUtility.h"
 #import "PreviewView.h"
+#import "SaveToCameraRollOperation.h"
 
 //  KVOで追いかけるときに使うポインタ（メモリ番地をcontextとして使う）
 static void * CapturingStillImageContext = &CapturingStillImageContext;
@@ -72,7 +73,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark -
 
-@implementation CameraManager
+@implementation CameraManager{
+	NSOperationQueue* _saveToCameraRoll_queue;
+}
 
 #pragma mark singleton
 
@@ -160,6 +163,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     
     //  保存用キュー
     _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);
+	
+	_saveToCameraRoll_queue = [[NSOperationQueue alloc] init];
+	_saveToCameraRoll_queue.maxConcurrentOperationCount = 1;
     
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
@@ -1080,23 +1086,29 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 // jpegStillImageNSDataRepresentation したデータをそのまま渡しましょう。
 -(void)saveToCameraRoll:(NSData*)data{
 	if(_autoSaveToCameraroll){
-        dispatch_async(_saveQueue, ^{
-            @autoreleasepool {
-				NSLog( @"カメラロールに保存します" );
-                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-                [library writeImageDataToSavedPhotosAlbum:data metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
-                 {
-                     if(error)
-                     {
-                         NSLog(@"ERROR: the image failed to be written");
-                     }
-                     else
-                     {
-                         NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
-                     }
-                 }];
-            }
-        });
+		
+		SaveToCameraRollOperation* op = [[SaveToCameraRollOperation alloc] initWithData:data];
+		[_saveToCameraRoll_queue addOperation:op];
+		
+		
+		
+//        dispatch_async(_saveQueue, ^{
+//            @autoreleasepool {
+//				NSLog( @"カメラロールに保存します" );
+//                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+//                [library writeImageDataToSavedPhotosAlbum:data metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
+//                 {
+//                     if(error)
+//                     {
+//                         NSLog(@"ERROR: the image failed to be written");
+//                     }
+//                     else
+//                     {
+//                         NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
+//                     }
+//                 }];
+//            }
+//        });
     }
 }
 

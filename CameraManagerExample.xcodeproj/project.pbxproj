@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4D0BEC7118B32BAA0083C5EC /* CameraManager.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */; };
+		4DD9418518CD826500843444 /* SaveToCameraRollOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */; };
 		8989D7C9A72D4CC7985717D7 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 971C7FEA367F4C929489A80B /* libPods.a */; };
 		D5055320187EDE2A007355BE /* recStopButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D505531E187EDE2A007355BE /* recStopButton.png */; };
 		D5055321187EDE2A007355BE /* recStopButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D505531F187EDE2A007355BE /* recStopButton@2x.png */; };
@@ -54,6 +55,8 @@
 
 /* Begin PBXFileReference section */
 		4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = CameraManager.bundle; sourceTree = "<group>"; };
+		4DD9418318CD826500843444 /* SaveToCameraRollOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SaveToCameraRollOperation.h; sourceTree = "<group>"; };
+		4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SaveToCameraRollOperation.m; sourceTree = "<group>"; };
 		508A94FF15A04474875392D0 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
 		971C7FEA367F4C929489A80B /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		D505531E187EDE2A007355BE /* recStopButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = recStopButton.png; sourceTree = "<group>"; };
@@ -77,7 +80,7 @@
 		D52A8AEF1817F2EB00F4ADFD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		D52A8AF11817F2EB00F4ADFD /* CameraViewTestTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CameraViewTestTests.m; sourceTree = "<group>"; };
 		D52A8B141817F69100F4ADFD /* CameraManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CameraManager.h; sourceTree = "<group>"; };
-		D52A8B151817F69100F4ADFD /* CameraManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraManager.m; sourceTree = "<group>"; };
+		D52A8B151817F69100F4ADFD /* CameraManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CameraManager.m; sourceTree = "<group>"; wrapsLines = 0; };
 		D52A8B161817F69100F4ADFD /* UIView+utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+utility.h"; sourceTree = "<group>"; };
 		D52A8B171817F69100F4ADFD /* UIView+utility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+utility.m"; sourceTree = "<group>"; };
 		D52A8B1B1817F71100F4ADFD /* cameraFrontBack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cameraFrontBack.png; sourceTree = "<group>"; };
@@ -202,12 +205,14 @@
 				4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */,
 				D52A8B141817F69100F4ADFD /* CameraManager.h */,
 				D52A8B151817F69100F4ADFD /* CameraManager.m */,
-				D5D9221C18C57B6B00612CA7 /* PreviewView.h */,
-				D5D9221D18C57B6B00612CA7 /* PreviewView.m */,
 				D5D035791827C14B00233B58 /* DeviceOrientation.h */,
 				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
 				D5055322187EEB29007355BE /* NSDate+stringUtility.h */,
 				D5055323187EEB29007355BE /* NSDate+stringUtility.m */,
+				D5D9221C18C57B6B00612CA7 /* PreviewView.h */,
+				D5D9221D18C57B6B00612CA7 /* PreviewView.m */,
+				4DD9418318CD826500843444 /* SaveToCameraRollOperation.h */,
+				4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */,
 				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
 				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
@@ -396,6 +401,7 @@
 				D52A8AD71817F2EA00F4ADFD /* AppDelegate.m in Sources */,
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
 				D52A8B181817F69100F4ADFD /* CameraManager.m in Sources */,
+				4DD9418518CD826500843444 /* SaveToCameraRollOperation.m in Sources */,
 				D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
 				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
