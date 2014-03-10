@@ -165,7 +165,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);
 	
 	_saveToCameraRoll_queue = [[NSOperationQueue alloc] init];
-	_saveToCameraRoll_queue.maxConcurrentOperationCount = 1;
+	_saveToCameraRoll_queue.maxConcurrentOperationCount = 4;// これを超えるとiPodTouchで保存失敗が発生する可能性があります。
     
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
@@ -1086,29 +1086,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 // jpegStillImageNSDataRepresentation したデータをそのまま渡しましょう。
 -(void)saveToCameraRoll:(NSData*)data{
 	if(_autoSaveToCameraroll){
-		
 		SaveToCameraRollOperation* op = [[SaveToCameraRollOperation alloc] initWithData:data];
 		[_saveToCameraRoll_queue addOperation:op];
-		
-		
-		
-//        dispatch_async(_saveQueue, ^{
-//            @autoreleasepool {
-//				NSLog( @"カメラロールに保存します" );
-//                ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-//                [library writeImageDataToSavedPhotosAlbum:data metadata:nil completionBlock:^(NSURL *assetURL, NSError *error)
-//                 {
-//                     if(error)
-//                     {
-//                         NSLog(@"ERROR: the image failed to be written");
-//                     }
-//                     else
-//                     {
-//                         NSLog(@"PHOTO SAVED - assetURL: %@", assetURL);
-//                     }
-//                 }];
-//            }
-//        });
     }
 }
 
