@@ -335,7 +335,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         [self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];
         
         //  カメラモードを指定
-//        [self setCameraMode:CMCameraModeStill];// ここでセットすると画面が乱れる。startRunning前にプロパティをセットすべし
+        [self setCameraMode:_cameraMode];// ここでセットすると画面が乱れる。startRunning前にプロパティをセットすべし
         
         //  フラッシュモード指定しておく
         [self setDeviceFlashMode:_flashMode];

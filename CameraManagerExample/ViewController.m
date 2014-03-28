@@ -38,6 +38,10 @@
     //  通常撮影の静止画の時
     [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
     [CameraManager sharedManager].sessionPresetForFrontStill = AVCaptureSessionPresetPhoto;
+	
+	// 動画撮影時の画質
+	[CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPresetMedium;
+	[CameraManager sharedManager].sessionPresetForFrontVideo = AVCaptureSessionPresetMedium;
     
     //  サイレントモードの時の設定
     [CameraManager sharedManager].sessionPresetForSilentStill = AVCaptureSessionPresetHigh;
