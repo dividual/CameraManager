@@ -6,8 +6,10 @@
 //  Copyright (c) 2013 Shinya Matsuyama. All rights reserved.
 //
 
+@import MediaPlayer;
 #import "ViewController.h"
 #import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
+
 
 #import "UIImage+Normalize.h"
 #import "CameraManager.h"
@@ -33,7 +35,7 @@
     _focusView.image = [[UIImage imageNamed:@"focusFrame"] stretchableImageWithLeftCapWidth:4.0 topCapHeight:4.0];
     
     //  カメラを開く前に設定をしておく
-    [CameraManager sharedManager].videoDuration = 3.0; //   動画撮影時間
+    [CameraManager sharedManager].videoDuration = 10.0; //   動画撮影時間
     
     //  通常撮影の静止画の時
     [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
@@ -194,6 +196,35 @@
 
 #pragma mark - animations
 
+/// 写真撮影後のアニメーション
+-(void)captureAnimation:(UIImage*)image{
+	
+    //  アニメーション表示してみる
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+    
+    CGFloat scaleW = CGRectGetWidth(self.view.bounds)/image.size.width;
+    CGFloat scaleH = CGRectGetHeight(self.view.bounds)/image.size.height;
+    CGFloat scale = MAX(scaleW, scaleH);
+    
+    imageView.frame = CGRectMake(0.0, 0.0, scale*image.size.width, scale*image.size.height);
+    imageView.center = CGPointMake(CGRectGetWidth(self.view.bounds)/2.0, CGRectGetHeight(self.view.bounds)/2.0);
+    
+    [self.view addSubview:imageView];
+    
+    [UIView animateWithDuration:0.5 delay:0.0 options:0 animations:^{
+        //
+        imageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
+        //imageView.alpha = 0.0;
+        
+    } completion:^(BOOL finished) {
+        //
+        [imageView removeFromSuperview];
+        
+    }];
+}
+
+
+
 - (void)cameraGUIUpdate
 {
     //  カメラの状態に応じてGUIの表示を切り替える
@@ -303,29 +334,8 @@
     UIImage *image = notification.userInfo[@"image"];
     
     NSLog(@"cameraManager:didCapturedImageForAnimation(image = %@)", NSStringFromCGSize(image.size));
-    
-    //  アニメーション表示してみる
-    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
-    
-    CGFloat scaleW = CGRectGetWidth(self.view.bounds)/image.size.width;
-    CGFloat scaleH = CGRectGetHeight(self.view.bounds)/image.size.height;
-    CGFloat scale = MAX(scaleW, scaleH);
-    
-    imageView.frame = CGRectMake(0.0, 0.0, scale*image.size.width, scale*image.size.height);
-    imageView.center = CGPointMake(CGRectGetWidth(self.view.bounds)/2.0, CGRectGetHeight(self.view.bounds)/2.0);
-    
-    [self.view addSubview:imageView];
-    
-    [UIView animateWithDuration:0.3 delay:0.0 options:0 animations:^{
-        //
-        imageView.transform = CGAffineTransformMakeScale(0.01, 0.01);
-        //imageView.alpha = 0.0;
-        
-    } completion:^(BOOL finished) {
-        //
-        [imageView removeFromSuperview];
-        
-    }];
+	
+	[self captureAnimation:image];
 }
 
 - (void)cameraManagerWillStartVideoRecording:(NSNotification*)notification
@@ -359,9 +369,13 @@
     NSLog(@"cameraManager:didStartVideoRecording");
 }
 
+
+
+/// ビデオ撮影完了時
 - (void)cameraManagerDidFinishedVideoRecording:(NSNotification*)notification
 {
     NSURL *movieURL = notification.userInfo[@"movieURL"];
+	UIImage* thumbnail = notification.userInfo[@"thumbnail"];
     
     NSLog(@"cameraManager:didFinishedVideoRecording(URL = %@)", movieURL);
     
@@ -391,6 +405,10 @@
         [_shutterButton setImage:[UIImage imageNamed:@"recButton"] forState:UIControlStateNormal];
         
     } completion:nil];
+	
+	[self captureAnimation:thumbnail];
+	
+	
     
     //  本来ならここでアップロード処理など行う
     {

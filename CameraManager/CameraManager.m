@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Shinya Matsuyama. All rights reserved.
 //
 
+
 #import "CameraManager.h"
 
 #import <mach/mach.h>
@@ -1283,6 +1284,31 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     return _videoDuration - self.recordedTime;
 }
 
+
+/// 動画のパスから動画サムネイルのUIImageを作成
+// http://stackoverflow.com/questions/19105721/thumbnailimageattime-now-deprecated-whats-the-alternative
+- (UIImage*)createThumbnailImage:(NSURL*)movieURL{
+	AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:movieURL options:nil];
+    if ([asset tracksWithMediaCharacteristic:AVMediaTypeVideo]) {
+        AVAssetImageGenerator *imageGen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+        [imageGen setAppliesPreferredTrackTransform:YES];
+		
+        Float64 durationSeconds = CMTimeGetSeconds([asset duration]);
+        CMTime midpoint =   CMTimeMakeWithSeconds(durationSeconds, 600);
+        NSError* error = nil;
+        CMTime actualTime;
+		
+        CGImageRef halfWayImageRef = [imageGen copyCGImageAtTime:midpoint actualTime:&actualTime error:&error];
+		
+        if (halfWayImageRef != NULL) {
+            UIImage* myImage = [[UIImage alloc]initWithCGImage:halfWayImageRef];
+            CGImageRelease(halfWayImageRef);
+            return myImage;
+        }
+    }
+    return nil;
+}
+
 #pragma mark - AVCaptureDeviceFileOutputDelegate
 
 - (void)captureOutput:(AVCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL fromConnections:(NSArray *)connections error:(NSError *)error
@@ -1319,9 +1345,14 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     }
     else
     {
+		// サムネイル作成
+//		MPMoviePlayerController *player = [[MPMoviePlayerController alloc] initWithContentURL:outputFileURL];
+//		UIImage  *thumbnail = [player thumbnailImageAtTime:1.0 timeOption:MPMovieTimeOptionNearestKeyFrame];// deprecated
+		UIImage* thumbnail = [self createThumbnailImage:outputFileURL];
+		
         //  イベント発行
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self dispatchEvent:@"didFinishedVideoRecording" userInfo:@{ @"movieURL":outputFileURL } ];
+            [self dispatchEvent:@"didFinishedVideoRecording" userInfo:@{ @"movieURL":outputFileURL, @"thumbnail":thumbnail } ];
         });
         
         //  保存処理
