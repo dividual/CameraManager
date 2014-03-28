@@ -335,8 +335,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  フォーカスを中心でcontinuesで
         [self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];
         
-        //  カメラモードを指定
-        [self setCameraMode:_cameraMode];// ここでセットすると画面が乱れる。startRunning前にプロパティをセットすべし
+        //  カメラモードを指定（なぜかstartRunningの後に呼ばないと正常に映像が表示されません。）
+		// この中で_session.sessionPresetをセットしているが、それが現状から変更になると、映像が一瞬固まります。ホントはsessionPresetだけstartRunning前にセットしたほうがよさそう。
+        [self setCameraMode:_cameraMode];
         
         //  フラッシュモード指定しておく
         [self setDeviceFlashMode:_flashMode];

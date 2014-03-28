@@ -289,7 +289,7 @@
     NSNumber *orientationNum = notification.userInfo[@"orientation"];
     UIDeviceOrientation orientation = orientationNum.integerValue;
     
-    NSLog(@"cameraManager:didChangeDeviceOrientation(orientation = %d)", (int)orientation);
+//    NSLog(@"cameraManager:didChangeDeviceOrientation(orientation = %d)", (int)orientation);
     
     //  UIを回す
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -528,7 +528,7 @@
     NSNumber *isContinuousNum = notification.userInfo[@"isContinuous"];
     BOOL isContinuous = isContinuousNum.boolValue;
     
-    NSLog(@"cameraManager:showFocusCursor(postion = %@, isContinuous = %d)", NSStringFromCGPoint(fixFocusPos), isContinuous);
+//    NSLog(@"cameraManager:showFocusCursor(postion = %@, isContinuous = %d)", NSStringFromCGPoint(fixFocusPos), isContinuous);
     
     //  フォーカスが出てくるアニメーション
     if(isContinuous)
@@ -568,7 +568,7 @@
 
 - (void)cameraManagerHideFocusCursor:(NSNotification*)notification
 {
-    NSLog(@"cameraManager:hideFocusCursor");
+//    NSLog(@"cameraManager:hideFocusCursor");
     
     //  フォーカスを消す
     [UIView animateWithDuration:0.2 delay:0.0 options:7<<16 animations:^{
@@ -725,7 +725,7 @@
     if([CameraManager sharedManager].cameraMode == CMCameraModeStill && [CameraManager sharedManager].silentShutterMode)
     {
         //  アニメーションいれてみる
-        _previewView.alpha = 0.0;
+//        _previewView.alpha = 0.0;
         
         [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
             //
@@ -770,7 +770,7 @@
 
     //  切替時に画面に変化をいれてみる
     [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
-        _previewView.alpha = 0.0;
+//        _previewView.alpha = 0.0;
     } completion:nil];
 }
 
