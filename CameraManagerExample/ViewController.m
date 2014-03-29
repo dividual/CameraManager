@@ -375,7 +375,7 @@
 - (void)cameraManagerDidFinishedVideoRecording:(NSNotification*)notification
 {
     NSURL *movieURL = notification.userInfo[@"movieURL"];
-	UIImage* thumbnail = notification.userInfo[@"thumbnail"];
+	UIImage* thumbnail = notification.userInfo[@"lastFrame_img"];
     
     NSLog(@"cameraManager:didFinishedVideoRecording(URL = %@)", movieURL);
     

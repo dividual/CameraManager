@@ -1287,15 +1287,21 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 
 /// 動画のパスから動画サムネイルのUIImageを作成
+// lastFrame が YES だと最後のフレームをキャプチャ。NO だと最初のフレームをキャプチャ
 // http://stackoverflow.com/questions/19105721/thumbnailimageattime-now-deprecated-whats-the-alternative
-- (UIImage*)createThumbnailImage:(NSURL*)movieURL{
+- (UIImage*)createThumbnailImage:(NSURL*)movieURL lastFrame:(BOOL)lastFrame{
 	AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:movieURL options:nil];
     if ([asset tracksWithMediaCharacteristic:AVMediaTypeVideo]) {
         AVAssetImageGenerator *imageGen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
         [imageGen setAppliesPreferredTrackTransform:YES];
 		
-        Float64 durationSeconds = CMTimeGetSeconds([asset duration]);
-        CMTime midpoint =   CMTimeMakeWithSeconds(durationSeconds, 600);
+		Float64 seconds;
+		if( lastFrame ){
+			seconds = CMTimeGetSeconds([asset duration]);
+		} else {
+			seconds = 0;
+		}
+        CMTime midpoint =   CMTimeMakeWithSeconds( seconds, 600 );
         NSError* error = nil;
         CMTime actualTime;
 		
@@ -1349,11 +1355,12 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		// サムネイル作成
 //		MPMoviePlayerController *player = [[MPMoviePlayerController alloc] initWithContentURL:outputFileURL];
 //		UIImage  *thumbnail = [player thumbnailImageAtTime:1.0 timeOption:MPMovieTimeOptionNearestKeyFrame];// deprecated
-		UIImage* thumbnail = [self createThumbnailImage:outputFileURL];
+		UIImage* firstFrame_img = [self createThumbnailImage:outputFileURL lastFrame:NO];
+		UIImage* lastFrame_img = [self createThumbnailImage:outputFileURL lastFrame:YES];
 		
         //  イベント発行
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self dispatchEvent:@"didFinishedVideoRecording" userInfo:@{ @"movieURL":outputFileURL, @"thumbnail":thumbnail } ];
+            [self dispatchEvent:@"didFinishedVideoRecording" userInfo:@{ @"movieURL":outputFileURL, @"firstFrame_img":firstFrame_img, @"lastFrame_img":lastFrame_img } ];
         });
         
         //  保存処理
