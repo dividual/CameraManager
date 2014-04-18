@@ -13,6 +13,7 @@
 
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
+#import <KVOController/FBKVOController.h>
 
 #import "DeviceOrientation.h"
 #import "UIImage+Normalize.h"
@@ -76,6 +77,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 @implementation CameraManager{
 	NSOperationQueue* _saveToCameraRoll_queue;
+	BOOL _autoFocusEnabled;
+	FBKVOController* _kvoController;
 }
 
 #pragma mark singleton
@@ -121,9 +124,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark -
 
+/// 初期化時に1度だけ呼ばれます
 - (void)setup
 {
+	_kvoController = [[FBKVOController alloc] initWithObserver:self];
+	
     //  初期化処理
+	_autoFocusEnabled = YES;
     
     //  デフォルトのフラッシュモード指定しておく
     _flashMode = CMFlashModeOff;
@@ -257,6 +264,21 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             //  保持
             _videoDataOutput = dataOutput;
         }
+		
+		/// 各種イベント監視
+		// フォーカス
+		[_kvoController observe:videoDevice keyPath:@"adjustingFocus" options:NSKeyValueObservingOptionNew block:^(id observer, id object, NSDictionary *change) {
+			NSNumber* value = change[@"new"];
+			if( value.boolValue == YES ){
+				// フォーカス開始
+			} else {
+				// フォーカス完了
+				// ビデオ撮影中なら、タップしてフォーカス後にオートフォーカスをオフにする
+				if( _movieFileOutput.isRecording ){
+					[self disableAutoFocus];
+				}
+			}
+		}];
 	});
 }
 
@@ -527,9 +549,71 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - utility
 
+/// オートフォーカスオン
+-(void)enableAutoFocus{
+	_autoFocusEnabled = YES;
+	dispatch_async([self sessionQueue], ^{
+        AVCaptureDevice *device = [_videoDeviceInput device];
+        NSError *error = nil;
+        if( [device lockForConfiguration:&error] ){
+            if( [device isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]){
+				device.focusMode = AVCaptureFocusModeContinuousAutoFocus;//  フォーカスモードを設定
+            }
+            if( [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure] ){
+                device.exposureMode = AVCaptureExposureModeContinuousAutoExposure;//  露出モードを設定
+            }
+            [device unlockForConfiguration];//  unlock
+        } else {
+            NSLog(@"%@", error);
+        }
+    });
+}
+
+/// オートフォーカスオフ
+// ビデオ撮影前に呼ぶと、純正と同じように、撮影中はオートフォーカスしないようになります
+-(void)disableAutoFocus{
+	_autoFocusEnabled = NO;
+	dispatch_async([self sessionQueue], ^{
+        AVCaptureDevice *device = [_videoDeviceInput device];
+        NSError *error = nil;
+        if( [device lockForConfiguration:&error] ){
+            if( [device isFocusModeSupported:AVCaptureFocusModeLocked]){
+				device.focusMode = AVCaptureFocusModeLocked;//  フォーカスモードを設定
+            }
+            if( [device isExposureModeSupported:AVCaptureExposureModeLocked] ){
+                device.exposureMode = AVCaptureExposureModeLocked;//  露出モードを設定
+            }
+            [device unlockForConfiguration];//  unlock
+        } else {
+            NSLog(@"%@", error);
+        }
+    });
+}
+
+/// 指定したポイントにフォーカスを合わせる
+-(void)setFocusToPoint:(CGPoint)point{
+	dispatch_async([self sessionQueue], ^{
+        AVCaptureDevice *device = [_videoDeviceInput device];
+        NSError *error = nil;
+        if([device lockForConfiguration:&error]){
+            if([device isFocusPointOfInterestSupported] ){
+                [device setFocusPointOfInterest:point];//  フォーカスを設定
+            }
+            if([device isExposurePointOfInterestSupported] ){
+                [device setExposurePointOfInterest:point];//  露出モードを設定
+            }
+            
+            [device unlockForConfiguration];//  unlock
+        } else {
+            NSLog(@"%@", error);
+        }
+    });
+}
+
+
+
 //  フォーカスをあわせる処理を実行するメソッド
-- (void)focusWithMode:(AVCaptureFocusMode)focusMode exposeWithMode:(AVCaptureExposureMode)exposureMode atDevicePoint:(CGPoint)point monitorSubjectAreaChange:(BOOL)monitorSubjectAreaChange
-{
+- (void)focusWithMode:(AVCaptureFocusMode)focusMode exposeWithMode:(AVCaptureExposureMode)exposureMode atDevicePoint:(CGPoint)point monitorSubjectAreaChange:(BOOL)monitorSubjectAreaChange{
     dispatch_async([self sessionQueue], ^{
         //
         AVCaptureDevice *device = [_videoDeviceInput device];
@@ -736,6 +820,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _adjustingFocus = YES;
         
         [self focusWithMode:AVCaptureFocusModeAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:pos monitorSubjectAreaChange:YES];
+//		[self setFocusToPoint:pos];
         
         //  アニメーションスタート
         [self showFocusCursorWithPos:pos isContinuous:NO];
@@ -1170,6 +1255,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		{
             //  録画開始
 			_lockInterfaceRotation = YES;
+			
+			[self disableAutoFocus];// 純正に合わせるため、オートフォーカスをオフに
 			
 			if ([[UIDevice currentDevice] isMultitaskingSupported])
 			{

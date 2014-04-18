@@ -1,7 +1,9 @@
 PODS:
+  - KVOController (1.0.1)
   - NSObject+EventDispatcher (0.1.0)
 
 DEPENDENCIES:
+  - KVOController
   - NSObject+EventDispatcher (from `https://github.com/noughts/NSObject-EventDispatcher.git`)
 
 EXTERNAL SOURCES:
@@ -9,6 +11,7 @@ EXTERNAL SOURCES:
     :git: https://github.com/noughts/NSObject-EventDispatcher.git
 
 SPEC CHECKSUMS:
+  KVOController: 2205f0d1a24f919e92a8f0b3254ac3ca40412f1a
   NSObject+EventDispatcher: c7d763bb1ec42ee492e0ef3d45e3fac0aec3a3ab
 
-COCOAPODS: 0.29.0
+COCOAPODS: 0.32.1
