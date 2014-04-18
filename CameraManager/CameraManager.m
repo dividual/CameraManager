@@ -210,19 +210,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             _videoDeviceInput = videoDeviceInput;
 		}
 		
-        //  動画用にオーディオデバイスも取得
-		AVCaptureDevice *audioDevice = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeAudio] firstObject];
-		AVCaptureDeviceInput *audioDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:audioDevice error:&error];
-		
-		if(error)
-		{
-			NSLog(@"%@", error);
-		}
-		
-		if([_session canAddInput:audioDeviceInput])
-		{
-			[_session addInput:audioDeviceInput];
-		}
 		
         //  動画書き出し用のインスタンス用意
 		AVCaptureMovieFileOutput *movieFileOutput = [[AVCaptureMovieFileOutput alloc] init];
@@ -1602,6 +1589,17 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             
             if(![_session.outputs containsObject:_movieFileOutput] && [_session canAddOutput:_movieFileOutput])  //  動画で使うoutputを追加
                 [_session addOutput:_movieFileOutput];
+			
+			//  動画用にオーディオデバイスも取得(このタイミングでマイクへのアクセスの許可リクエストアラートが表示されます)
+			NSError* error;
+			AVCaptureDevice *audioDevice = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeAudio] firstObject];
+			AVCaptureDeviceInput *audioDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:audioDevice error:&error];
+			if( error ){
+				NSLog(@"%@", error);
+			}
+			if([_session canAddInput:audioDeviceInput]){
+				[_session addInput:audioDeviceInput];
+			}
 
             //  sessionPreset変更する
             if(device.position == AVCaptureDevicePositionFront)
