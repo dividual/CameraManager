@@ -559,9 +559,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             if( [device isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]){
 				device.focusMode = AVCaptureFocusModeContinuousAutoFocus;//  フォーカスモードを設定
             }
-            if( [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure] ){
-                device.exposureMode = AVCaptureExposureModeContinuousAutoExposure;//  露出モードを設定
-            }
             [device unlockForConfiguration];//  unlock
         } else {
             NSLog(@"%@", error);
@@ -579,9 +576,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         if( [device lockForConfiguration:&error] ){
             if( [device isFocusModeSupported:AVCaptureFocusModeLocked]){
 				device.focusMode = AVCaptureFocusModeLocked;//  フォーカスモードを設定
-            }
-            if( [device isExposureModeSupported:AVCaptureExposureModeLocked] ){
-                device.exposureMode = AVCaptureExposureModeLocked;//  露出モードを設定
             }
             [device unlockForConfiguration];//  unlock
         } else {
@@ -820,7 +814,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _adjustingFocus = YES;
         
         [self focusWithMode:AVCaptureFocusModeAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:pos monitorSubjectAreaChange:YES];
-//		[self setFocusToPoint:pos];
         
         //  アニメーションスタート
         [self showFocusCursorWithPos:pos isContinuous:NO];
