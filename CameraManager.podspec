@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.platform = :ios
   s.requires_arc = true
 
-  #s.dependency 'GPUImage'
+  s.dependency 'MotionOrientation@PTEz'
   s.dependency "KVOController"
 
   s.source_files = 'CameraManager/**/*.{h,m}'

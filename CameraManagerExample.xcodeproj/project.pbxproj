@@ -38,7 +38,6 @@
 		D52A8B321817F71100F4ADFD /* shutterButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D52A8B261817F71100F4ADFD /* shutterButton@2x.png */; };
 		D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABAE187E425B00392583 /* recButton@2x.png */; };
 		D5CAABB1187E427100392583 /* recButton.png in Resources */ = {isa = PBXBuildFile; fileRef = D5CAABB0187E427100392583 /* recButton.png */; };
-		D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357A1827C14B00233B58 /* DeviceOrientation.m */; };
 		D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D0357F1827D03600233B58 /* UIImage+Normalize.m */; };
 		D5D9221E18C57B6B00612CA7 /* PreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = D5D9221D18C57B6B00612CA7 /* PreviewView.m */; };
 /* End PBXBuildFile section */
@@ -97,8 +96,6 @@
 		D52A8B261817F71100F4ADFD /* shutterButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "shutterButton@2x.png"; sourceTree = "<group>"; };
 		D5CAABAE187E425B00392583 /* recButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "recButton@2x.png"; sourceTree = "<group>"; };
 		D5CAABB0187E427100392583 /* recButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = recButton.png; sourceTree = "<group>"; };
-		D5D035791827C14B00233B58 /* DeviceOrientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DeviceOrientation.h; sourceTree = "<group>"; };
-		D5D0357A1827C14B00233B58 /* DeviceOrientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DeviceOrientation.m; sourceTree = "<group>"; };
 		D5D0357E1827D03600233B58 /* UIImage+Normalize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Normalize.h"; sourceTree = "<group>"; };
 		D5D0357F1827D03600233B58 /* UIImage+Normalize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Normalize.m"; sourceTree = "<group>"; };
 		D5D9221C18C57B6B00612CA7 /* PreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreviewView.h; sourceTree = "<group>"; };
@@ -205,8 +202,6 @@
 				4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */,
 				D52A8B141817F69100F4ADFD /* CameraManager.h */,
 				D52A8B151817F69100F4ADFD /* CameraManager.m */,
-				D5D035791827C14B00233B58 /* DeviceOrientation.h */,
-				D5D0357A1827C14B00233B58 /* DeviceOrientation.m */,
 				D5055322187EEB29007355BE /* NSDate+stringUtility.h */,
 				D5055323187EEB29007355BE /* NSDate+stringUtility.m */,
 				D5D9221C18C57B6B00612CA7 /* PreviewView.h */,
@@ -404,7 +399,6 @@
 				4DD9418518CD826500843444 /* SaveToCameraRollOperation.m in Sources */,
 				D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
-				D5D0357B1827C14B00233B58 /* DeviceOrientation.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

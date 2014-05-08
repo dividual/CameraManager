@@ -15,11 +15,11 @@
 #import <NSObject+EventDispatcher/NSObject+EventDispatcher.h>
 #import <KVOController/FBKVOController.h>
 
-#import "DeviceOrientation.h"
 #import "UIImage+Normalize.h"
 #import "NSDate+stringUtility.h"
 #import "PreviewView.h"
 #import "SaveToCameraRollOperation.h"
+#import <MotionOrientation@PTEz/MotionOrientation.h>
 
 //  KVOで追いかけるときに使うポインタ（メモリ番地をcontextとして使う）
 static void * CapturingStillImageContext = &CapturingStillImageContext;
@@ -48,8 +48,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 @property (assign, nonatomic) BOOL lockInterfaceRotation;
 @property (strong, nonatomic) id runtimeErrorHandlingObserver;
 
-//
-@property (assign, nonatomic) UIDeviceOrientation orientation;
 @property (assign, nonatomic) BOOL isCameraRunning;
 @property (assign, nonatomic) BOOL isCameraOpened;
 
@@ -79,6 +77,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 	NSOperationQueue* _saveToCameraRoll_queue;
 	BOOL _autoFocusEnabled;
 	FBKVOController* _kvoController;
+	UIDeviceOrientation _orientation;
 }
 
 #pragma mark singleton
@@ -157,6 +156,10 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
     
+	// 画面の回転を監視
+	[MotionOrientation initialize];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(motionOrientationChanged:) name:MotionOrientationChangedNotification object:nil];
+	
     //  AVCaptureSessionを用意
 	_session = [[AVCaptureSession alloc] init];
     
@@ -269,6 +272,21 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 	});
 }
 
+
+/// デバイスの姿勢が変更された時に呼ばれます
+- (void)motionOrientationChanged:(NSNotification *)notification{
+	UIDeviceOrientation orientation = [MotionOrientation sharedInstance].deviceOrientation;
+	// 上向きと下向きは無視
+	if( orientation == UIDeviceOrientationFaceUp || orientation == UIDeviceOrientationFaceDown ){
+		return;
+	}
+	
+	_orientation = orientation;
+	[self dispatchEvent:@"didChangeDeviceOrientation" userInfo:@{ @"orientation":@(_orientation) }];//  UIDeviceOrientationを返してる
+}
+
+
+
 //  カメラの使用開始処理
 - (void)openCamera
 {
@@ -313,10 +331,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
         //  フォーカス状態をKVOで追いかける
         [self addObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:AdjustingFocusContext];
-        
-        //  Deviceの状態を常に監視してみる（ロックの時も）
-        [[DeviceOrientation sharedManager] startAccelerometer];
-        [[DeviceOrientation sharedManager] addObserver:self forKeyPath:@"orientation" options:NSKeyValueObservingOptionNew context:DeviceOrientationContext];
         
         //  画面が大きく変化したときのイベントを受けるように
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(subjectAreaDidChange:) name:AVCaptureDeviceSubjectAreaDidChangeNotification object:[_videoDeviceInput device]];
@@ -395,9 +409,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self removeObserver:self forKeyPath:@"stillImageOutput.capturingStillImage" context:CapturingStillImageContext];
             [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
             [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
-            
-            [[DeviceOrientation sharedManager] removeObserver:self forKeyPath:@"orientation" context:DeviceOrientationContext];
-            [[DeviceOrientation sharedManager] stopAccelerometer];
         });
         
         //
@@ -512,20 +523,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
                     [self doTakePhoto];
                 }
             }
-        }
-    }
-    else if(context == DeviceOrientationContext)
-    {
-        //  デバイス回転の変化
-        if([DeviceOrientation sharedManager].orientation == UIDeviceOrientationFaceDown || [DeviceOrientation sharedManager].orientation == UIDeviceOrientationFaceUp)
-            return;
-        
-        if(_orientation != [DeviceOrientation sharedManager].orientation)
-        {
-            _orientation = [DeviceOrientation sharedManager].orientation;
-            
-            //
-            [self dispatchEvent:@"didChangeDeviceOrientation" userInfo:@{ @"orientation":@(_orientation) }];//  UIDeviceOrientationを返してる
         }
     }
     else
