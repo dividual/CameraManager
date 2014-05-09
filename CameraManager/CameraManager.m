@@ -365,18 +365,14 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  フラッシュモード指定しておく
         [self setDeviceFlashMode:_flashMode];
         
-//        //  iPhone5sの手ブレをONにしてみる
-//        //  設定する
-//        if(floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_6_1)
-//        {
-//            dispatch_async([self sessionQueue], ^{
-//                //
-//                if(_stillImageOutput.stillImageStabilizationSupported)
-//                {
-//                    _stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = YES;
-//                }
-//            });
-//        }
+        //  iPhone5sの手ブレをONにしてみる
+		dispatch_async([self sessionQueue], ^{
+			//
+			if(_stillImageOutput.stillImageStabilizationSupported){
+				_stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = YES;
+			}
+		});
+
     });
 }
 
