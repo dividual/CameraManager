@@ -200,17 +200,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		AVCaptureDevice *videoDevice = [CameraManager deviceWithMediaType:AVMediaTypeVideo preferringPosition:findPosition];
 		AVCaptureDeviceInput *videoDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
 		
-		if(error)
-		{
+		if(error){
 			NSLog(@"%@", error);
 		}
 		
-		if([_session canAddInput:videoDeviceInput])
-		{
+		if([_session canAddInput:videoDeviceInput]){
 			[_session addInput:videoDeviceInput];
-            
-            //  保持
-            _videoDeviceInput = videoDeviceInput;
+            _videoDeviceInput = videoDeviceInput;//  保持
 		}
 		
 		
@@ -1083,46 +1079,31 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 - (void)captureImage
 {
     //  キャプチャー処理
-    if(_silentShutterMode)
-    {
+    if(_silentShutterMode){
         //  サイレントモードの時は別処理
         [self captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *image) {
-            //
+			// フロントカメラで撮影したものならフリップ
             AVCaptureDevice *device = _videoDeviceInput.device;
             BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
-            UIImage *imageForAnimation = [UIImage imageWithCGImage:image.CGImage scale:1.0f orientation:isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight];
+			UIImage* flipped_img = [UIImage imageWithCGImage:image.CGImage scale:1.0f orientation:isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight];
             
-            //
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":imageForAnimation }];
-            });
-            
-            //
-            [self capturedImage:image error:nil];
+			NSData* jpegData = UIImageJPEGRepresentation(image, 0.8);
+			[self saveToCameraRoll:jpegData];// カメラロールに保存
+            [self capturedImage:flipped_img originalJpegData:jpegData error:nil];
         }];
-    }
-    else
-    {
-        //  アニメーション用にサイレント撮影する
-        [self captureCurrentPreviewImageForAnimation:YES completion:^(UIImage *imageForAnimation) {
-            //
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self dispatchEvent:@"didCapturedImageForAnimation" userInfo:@{ @"image":imageForAnimation }];
-            });
-            
-            //  通常撮影
-            [self captureStillWithCompletion:^(UIImage *image, NSError *error) {
-                //
-                [self capturedImage:image error:error];
-            }];
-        }];
-        
+    } else {
+		// 先にstillImageOutputのほうで撮影して、完了時に画面キャプチャしたほうが、映像のギャップが少ないです
+		[self captureStillWithCompletion:^(NSData *jpegData, NSError *error) {
+			[self captureCurrentPreviewImageForAnimation:YES completion:^(UIImage *imageForAnimation) {
+				[self capturedImage:imageForAnimation originalJpegData:jpegData error:error];
+			}];
+		}];
+		
 
     }
 }
 
-- (void)captureStillWithCompletion:(void(^)(UIImage *image, NSError *error))completion
-{
+- (void)captureStillWithCompletion:(void(^)(NSData *jpegData, NSError *error))completion{
     dispatch_async(_sessionQueue, ^{
         
 		//  orientationを設定
@@ -1130,15 +1111,15 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 				
 		//  撮影処理
 		[_stillImageOutput captureStillImageAsynchronouslyFromConnection:[_stillImageOutput connectionWithMediaType:AVMediaTypeVideo] completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
-			
-			if (imageDataSampleBuffer)
-			{
-				NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
-				UIImage *image = [[UIImage alloc] initWithData:imageData];
-                
-				[self saveToCameraRoll:imageData];// カメラロールに保存
-                completion(image, nil);
+			if( error ){
+				completion( nil, error );
+				return;
 			}
+			
+			NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
+//			UIImage *image = [[UIImage alloc] initWithData:imageData];
+			[self saveToCameraRoll:imageData];// カメラロールに保存
+			completion(imageData, nil);
 		}];
 	});
 }
@@ -1154,11 +1135,10 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 }
 
 
-- (void)capturedImage:(UIImage*)originalImage error:(NSError*)error
-{
+- (void)capturedImage:(UIImage*)originalImage originalJpegData:(NSData*)jpegData error:(NSError*)error{
     //  イベント発行
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":originalImage }];
+        [self dispatchEvent:@"didCapturedImage" userInfo:@{ @"image":originalImage, @"originalJpegData":jpegData }];
     });
 }
 

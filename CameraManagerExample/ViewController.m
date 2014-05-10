@@ -37,18 +37,6 @@
     //  カメラを開く前に設定をしておく
     [CameraManager sharedManager].videoDuration = 10.0; //   動画撮影時間
     
-    //  通常撮影の静止画の時
-    [CameraManager sharedManager].sessionPresetForStill = AVCaptureSessionPresetPhoto;
-    [CameraManager sharedManager].sessionPresetForFrontStill = AVCaptureSessionPresetPhoto;
-	
-	// 動画撮影時の画質
-	[CameraManager sharedManager].sessionPresetForVideo = AVCaptureSessionPresetMedium;
-	[CameraManager sharedManager].sessionPresetForFrontVideo = AVCaptureSessionPresetMedium;
-    
-    //  サイレントモードの時の設定
-    [CameraManager sharedManager].sessionPresetForSilentStill = AVCaptureSessionPresetHigh;
-    [CameraManager sharedManager].sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
-    
     //  フォーカスのビューを消しておく
     _focusView.alpha = 0.0;
     _originalFocusCursorSize = _focusView.bounds.size;
@@ -316,9 +304,16 @@
 - (void)cameraManagerDidCapturedImage:(NSNotification*)notification
 {
     UIImage *image = notification.userInfo[@"image"];
+	NSData* jpegData = notification.userInfo[@"originalJpegData"];
+	
 
     NSLog(@"cameraManager:didCapturedImage(image = %@)", NSStringFromCGSize(image.size));
     
+	[self saveDataToDisk:jpegData withExtension:@"jpg"];
+	[self captureAnimation:image];
+
+
+	
     //  GUIを元に戻す
     _shutterButton.enabled = YES;
     _cameraRotateButton.enabled = YES;
@@ -328,6 +323,17 @@
     _changeCameraModeButton.enabled = YES;
     _silentSwitch.enabled = YES;
 }
+
+-(NSString*)saveDataToDisk:(NSData*)data withExtension:(NSString*)extension{
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentDirectory = [paths objectAtIndex:0];
+	
+	NSString *uuid = [[NSUUID UUID] UUIDString];
+	NSString* path = [NSString stringWithFormat:@"%@/%@.%@", documentDirectory, uuid, extension];
+	[data writeToFile:path atomically:NO];
+	return path;
+}
+
 
 - (void)cameraManagerDidCapturedImageForAnimation:(NSNotification*)notification
 {
@@ -626,21 +632,6 @@
     BOOL state = stateNum.boolValue;
     
     NSLog(@"cameraManagerDidChangeIsCapturingStillImage:%d", state);
-    
-    if(state)
-    {
-        //  アニメーションいれてみる
-        _previewView.alpha = 0.0;
-        
-        [UIView animateWithDuration:0.2 delay:0.0 options:0 animations:^{
-            //
-            _previewView.alpha = 1.0;
-            
-        } completion:^(BOOL finished) {
-            //
-            
-        }];
-    }
 }
 
 - (void)cameraManagerDidChangeIsRecordingVideo:(NSNotification*)notification
