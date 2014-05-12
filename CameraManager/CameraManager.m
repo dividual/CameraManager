@@ -1094,7 +1094,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     } else {
 		// 先にstillImageOutputのほうで撮影して、完了時に画面キャプチャしたほうが、映像のギャップが少ないです
 		[self captureStillWithCompletion:^(NSData *jpegData, NSError *error) {
-			[self captureCurrentPreviewImageForAnimation:YES completion:^(UIImage *imageForAnimation) {
+			[self captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *imageForAnimation) {
 				[self capturedImage:imageForAnimation originalJpegData:jpegData error:error];
 			}];
 		}];

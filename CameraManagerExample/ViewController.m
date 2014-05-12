@@ -307,7 +307,7 @@
 	NSData* jpegData = notification.userInfo[@"originalJpegData"];
 	
 
-    NSLog(@"cameraManager:didCapturedImage(image = %@)", NSStringFromCGSize(image.size));
+    NSLog(@"cameraManager:didCapturedImage(image = %@) imageOrientation=%d", NSStringFromCGSize(image.size), image.imageOrientation);
     
 	[self saveDataToDisk:jpegData withExtension:@"jpg"];
 	[self captureAnimation:image];
