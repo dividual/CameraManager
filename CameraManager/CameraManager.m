@@ -1083,13 +1083,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  サイレントモードの時は別処理
         [self captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *image) {
 			// フロントカメラで撮影したものならフリップ
-            AVCaptureDevice *device = _videoDeviceInput.device;
-            BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
-			UIImage* flipped_img = [UIImage imageWithCGImage:image.CGImage scale:1.0f orientation:isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight];
+//            AVCaptureDevice *device = _videoDeviceInput.device;
+//            BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
+//			UIImage* flipped_img = [UIImage imageWithCGImage:image.CGImage scale:1.0f orientation:isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight];
             
 			NSData* jpegData = UIImageJPEGRepresentation(image, 0.8);
 			[self saveToCameraRoll:jpegData];// カメラロールに保存
-            [self capturedImage:flipped_img originalJpegData:jpegData error:nil];
+            [self capturedImage:image originalJpegData:jpegData error:nil];
         }];
     } else {
 		// 先にstillImageOutputのほうで撮影して、完了時に画面キャプチャしたほうが、映像のギャップが少ないです
