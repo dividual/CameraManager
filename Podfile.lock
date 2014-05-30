@@ -1,13 +1,20 @@
 PODS:
-  - GPUImage (0.1.2)
-  - Overline (0.3.0)
+  - KVOController (1.0.1)
+  - MotionOrientation@PTEz (1.1.0)
+  - NSObject+EventDispatcher (0.1.0)
 
 DEPENDENCIES:
-  - GPUImage
-  - Overline
+  - KVOController
+  - MotionOrientation@PTEz
+  - NSObject+EventDispatcher (from `https://github.com/noughts/NSObject-EventDispatcher.git`)
+
+EXTERNAL SOURCES:
+  NSObject+EventDispatcher:
+    :git: https://github.com/noughts/NSObject-EventDispatcher.git
 
 SPEC CHECKSUMS:
-  GPUImage: 007145faa0e27f1ddbcab93e07f026c9776e2fa2
-  Overline: 9c8bada0893600907f96cdafdc2c83b43ebcc1cf
+  KVOController: 2205f0d1a24f919e92a8f0b3254ac3ca40412f1a
+  MotionOrientation@PTEz: 8765538bc6ff037dc153d1cca83f2b66d9c766b9
+  NSObject+EventDispatcher: c7d763bb1ec42ee492e0ef3d45e3fac0aec3a3ab
 
-COCOAPODS: 0.27.1
+COCOAPODS: 0.32.1
