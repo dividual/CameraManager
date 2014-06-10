@@ -98,8 +98,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 #pragma mark - memory utility
 
 //  空きメモリ量を取得（MB）
-+ (float)getFreeMemory
-{
++ (float)getFreeMemory{
+	return (float)1024.0;
+	
     mach_port_t hostPort;
     mach_msg_type_number_t hostSize;
     vm_size_t pagesize;
