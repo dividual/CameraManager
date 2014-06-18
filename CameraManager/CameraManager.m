@@ -1030,7 +1030,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 - (void)startVideoRec{
     //  event発行
-    [self dispatchEvent:@"willStartVideoRecording" userInfo:nil];
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self dispatchEvent:@"willStartVideoRecording" userInfo:nil];
+	});
     dispatch_async([self sessionQueue], ^{
 		if(!_movieFileOutput.isRecording){
             //  録画開始
