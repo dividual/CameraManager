@@ -269,7 +269,11 @@
     _changeCameraModeButton.enabled = NO;
     _silentSwitch.enabled = NO;
     
-    _previewView.alpha = 0.0;
+	[UIView animateWithDuration:0.25 animations:^{
+		_previewView.alpha = 0.0;
+	}];
+	
+    
 }
 
 - (void)cameraManagerdidChangeDeviceOrientation:(NSNotification*)notification

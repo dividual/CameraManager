@@ -313,10 +313,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
     
 	
-	
-	//  カメラモードを指定（なぜかstartRunningの後に呼ばないと正常に映像が表示されません。）
-	// この中で_session.sessionPresetをセットしているが、それが現状から変更になると、映像が一瞬固まります。ホントはsessionPresetだけstartRunning前にセットしたほうがよさそう。
-	[self setCameraMode:_cameraMode];
+	//  カメラモードを指定
+//	[self setCameraMode:_cameraMode];
 
 	//  ブーストをONにできればONに
 	[self setLowLightBoost:YES];
@@ -1484,18 +1482,16 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 - (void)setCameraMode:(CMCameraMode)cameraMode{
     _cameraMode = cameraMode;
-    
-    //  イベント発行
-    [self dispatchEvent:@"willChangeCameraMode" userInfo:@{ @"mode":@(_cameraMode)} ];
-    
+    [self dispatchEvent:@"willChangeCameraMode" userInfo:@{ @"mode":@(_cameraMode)} ];//  イベント発行
     dispatch_async(_sessionQueue, ^{
-        
         //  sessionpreset変更
         AVCaptureDevice *device = _videoDeviceInput.device;
-        
+		      
+		NSError* error;
+		[device lockForConfiguration:&error];
+				
         if(_cameraMode == CMCameraModeStill){
             //  静止画モードに切り替えるとき
-            
             //  outputの設定
             if([_session.outputs containsObject:_movieFileOutput])  //  動画で使うoutputを抜く
                 [_session removeOutput:_movieFileOutput];
@@ -1559,13 +1555,17 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
                     _session.sessionPreset = AVCaptureSessionPresetHigh;
             }
         }
-        
+		[device unlockForConfiguration];
+
         //  イベント発行
         dispatch_async(dispatch_get_main_queue(), ^{
             [self dispatchEvent:@"didChangeCameraMode" userInfo:@{ @"mode":@(_cameraMode)} ];
         });
     });
 }
+
+
+
 
 #pragma mark - silentShutterMode
 
