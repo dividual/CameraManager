@@ -312,6 +312,21 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     if(!_sessionPresetForSilentFrontStill)
         _sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
     
+	
+	
+	//  カメラモードを指定（なぜかstartRunningの後に呼ばないと正常に映像が表示されません。）
+	// この中で_session.sessionPresetをセットしているが、それが現状から変更になると、映像が一瞬固まります。ホントはsessionPresetだけstartRunning前にセットしたほうがよさそう。
+	[self setCameraMode:_cameraMode];
+
+	//  ブーストをONにできればONに
+	[self setLowLightBoost:YES];
+	
+	//  フォーカスを中心でcontinuesで
+	[self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];
+
+	//  フラッシュモード指定しておく
+	[self setDeviceFlashMode:_flashMode];
+		
     //  開始処理
     dispatch_async(_sessionQueue, ^{
         
@@ -346,30 +361,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
 		_session.sessionPreset = AVCaptureSessionPresetPhoto;
 		
-        //  カメラ処理開始
-		[_session startRunning];
-        
-        //  ブーストをONにできればONに
-        [self setLowLightBoost:YES];
-        
-        //  フォーカスを中心でcontinuesで
-        [self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];
-        
-        //  カメラモードを指定（なぜかstartRunningの後に呼ばないと正常に映像が表示されません。）
-		// この中で_session.sessionPresetをセットしているが、それが現状から変更になると、映像が一瞬固まります。ホントはsessionPresetだけstartRunning前にセットしたほうがよさそう。
-        [self setCameraMode:_cameraMode];
-        
-        //  フラッシュモード指定しておく
-        [self setDeviceFlashMode:_flashMode];
-        
         //  iPhone5sの手ブレをONにしてみる
-		dispatch_async([self sessionQueue], ^{
-			//
-			if(_stillImageOutput.stillImageStabilizationSupported){
-				_stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = YES;
-			}
-		});
-
+		if(_stillImageOutput.stillImageStabilizationSupported){
+			_stillImageOutput.automaticallyEnablesStillImageStabilizationWhenAvailable = YES;
+		}
+		
+		//  カメラ処理開始
+		[_session startRunning];
     });
 }
 
@@ -593,15 +591,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         if([device lockForConfiguration:&error])
         {
             //  フォーカスモードを設定
-            if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:focusMode])
-            {
+            if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:focusMode]){
                 [device setFocusPointOfInterest:point];
                 [device setFocusMode:focusMode];
             }
             
             //  露出モードを設定
-            if([device isExposurePointOfInterestSupported] && [device isExposureModeSupported:exposureMode])
-            {
+            if([device isExposurePointOfInterestSupported] && [device isExposureModeSupported:exposureMode]){
                 [device setExposurePointOfInterest:point];
                 [device setExposureMode:exposureMode];
             }
@@ -611,26 +607,20 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             
             //  unlock
             [device unlockForConfiguration];
-        }
-        else
-        {
+        } else {
             NSLog(@"%@", error);
         }
     });
 }
 
 //  暗い時のブーストをかけるかどうか設定
-- (void)setLowLightBoost:(BOOL)state
-{
+- (void)setLowLightBoost:(BOOL)state{
     dispatch_async([self sessionQueue], ^{
-        //
         AVCaptureDevice *device = [[self videoDeviceInput] device];
         
         NSError *error = nil;
-        if([device lockForConfiguration:&error])
-        {
-            if(device.isLowLightBoostSupported)
-            {
+        if([device lockForConfiguration:&error]){
+            if(device.isLowLightBoostSupported){
                 NSLog(@"lowLightBoost:%d", state);
                 device.automaticallyEnablesLowLightBoostWhenAvailable = state;
             }
@@ -808,21 +798,15 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     [self dispatchEvent:@"didChangeFlashMode" userInfo:@{ @"mode":@(_flashMode) }];
 }
 
-- (void)setDeviceFlashMode:(CMFlashMode)flashMode
-{
+- (void)setDeviceFlashMode:(CMFlashMode)flashMode{
     AVCaptureDevice *device = _videoDeviceInput.device;
     
-    if([device hasFlash])
-    {
+    if([device hasFlash]){
         //  設定する
         dispatch_async([self sessionQueue], ^{
-            //
-            
             NSError *error = nil;
-            if([device lockForConfiguration:&error])
-            {
-                switch(flashMode)
-                {
+            if([device lockForConfiguration:&error]){
+                switch(flashMode){
                     case CMFlashModeAuto:
                         device.flashMode = AVCaptureFlashModeAuto;
                         break;
@@ -835,11 +819,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
                         device.flashMode = AVCaptureFlashModeOff;
                         break;
                 }
-                
                 [device unlockForConfiguration];
-            }
-            else
-            {
+            } else {
                 NSLog(@"error:%@", error);
             }
         });
@@ -1491,23 +1472,17 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 #pragma mark - cameraMode
 
 //  カメラモードを切り替える
-- (void)toggleCameraMode
-{
-    if(_cameraMode == CMCameraModeStill)
-    {
+- (void)toggleCameraMode{
+    if(_cameraMode == CMCameraModeStill){
         self.cameraMode = CMCameraModeVideo;
         [self offTorch];
-    }
-    else
-    {
+    } else {
         self.cameraMode = CMCameraModeStill;
         self.flashMode = _flashMode;
     }
 }
 
-- (void)setCameraMode:(CMCameraMode)cameraMode
-{
-    //
+- (void)setCameraMode:(CMCameraMode)cameraMode{
     _cameraMode = cameraMode;
     
     //  イベント発行
@@ -1518,8 +1493,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  sessionpreset変更
         AVCaptureDevice *device = _videoDeviceInput.device;
         
-        if(_cameraMode == CMCameraModeStill)
-        {
+        if(_cameraMode == CMCameraModeStill){
             //  静止画モードに切り替えるとき
             
             //  outputの設定
@@ -1533,25 +1507,20 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
                 [_session addOutput:_videoDataOutput];
             
             //  sessionPreset変更する
-            if(device.position == AVCaptureDevicePositionFront)
-            {
+            if(device.position == AVCaptureDevicePositionFront){
                 //  フロントカメラの時
                 if([device supportsAVCaptureSessionPreset:_sessionPresetForFrontStill])
                     _session.sessionPreset = !_silentShutterMode?_sessionPresetForFrontStill:_sessionPresetForSilentFrontStill;
                 else
                     _session.sessionPreset = AVCaptureSessionPresetPhoto;
-            }
-            else
-            {
+            } else {
                 //  リアカメラの時
                 if([device supportsAVCaptureSessionPreset:_sessionPresetForStill])
                     _session.sessionPreset = !_silentShutterMode?_sessionPresetForStill:_sessionPresetForSilentStill;
                 else
                     _session.sessionPreset = AVCaptureSessionPresetPhoto;
             }
-        }
-        else
-        {
+        } else {
             //  動画モードに切り替えるとき
             
             //  outputの設定
@@ -1576,23 +1545,19 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 			}
 
             //  sessionPreset変更する
-            if(device.position == AVCaptureDevicePositionFront)
-            {
+            if(device.position == AVCaptureDevicePositionFront){
                 //  フロントカメラの時
                 if([device supportsAVCaptureSessionPreset:_sessionPresetForFrontVideo])
                     _session.sessionPreset = _sessionPresetForFrontVideo;
                 else
                     _session.sessionPreset = AVCaptureSessionPresetHigh;
-            }
-            else
-            {
+            } else {
                 //  リアカメラの時
                 if([device supportsAVCaptureSessionPreset:_sessionPresetForVideo])
                     _session.sessionPreset = _sessionPresetForVideo;
                 else
                     _session.sessionPreset = AVCaptureSessionPresetHigh;
             }
-
         }
         
         //  イベント発行
@@ -1600,7 +1565,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self dispatchEvent:@"didChangeCameraMode" userInfo:@{ @"mode":@(_cameraMode)} ];
         });
     });
-    
 }
 
 #pragma mark - silentShutterMode
