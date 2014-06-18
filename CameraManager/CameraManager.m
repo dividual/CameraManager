@@ -125,32 +125,15 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 #pragma mark -
 
 /// 初期化時に1度だけ呼ばれます
-- (void)setup
-{
+- (void)setup{
 	_kvoController = [[FBKVOController alloc] initWithObserver:self];
-	
-    //  初期化処理
-	_autoFocusEnabled = YES;
-    
-    //  デフォルトのフラッシュモード指定しておく
-    _flashMode = CMFlashModeOff;
-    
-    //  デフォルトのdelaytime
-    _delayTimeForFlash = 0.25;
-    
-    //  デフォルトはカメラロール保存自動
-//    _autoSaveToCameraroll = YES;
-    
-    //  デフォルトはサイレントモードはOFF
-    _silentShutterMode = NO;
-    
-    //  デフォルトのJpegQuality
-    _jpegQuality = 0.9;
-    
-    //  デフォルト動画撮影時間は10秒としておく
-    _videoDuration = 10.0;
-    
-    //
+	_autoFocusEnabled = YES;//  初期化処理
+    _flashMode = CMFlashModeOff;//  デフォルトのフラッシュモード指定しておく
+    _delayTimeForFlash = 0.25;//  デフォルトのdelaytime
+//    _autoSaveToCameraroll = YES;//  デフォルトはカメラロール保存自動
+    _silentShutterMode = NO;//  デフォルトはサイレントモードはOFF
+    _jpegQuality = 0.9;//  デフォルトのJpegQuality
+    _videoDuration = 10.0;//  デフォルト動画撮影時間は10秒としておく
     _tmpMovieSavePathArray = [NSMutableArray array];
     
     //  iPhoneがスリープするときやバックグラウンドにいくときにカメラをoffに
@@ -161,27 +144,18 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 	[MotionOrientation initialize];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(motionOrientationChanged:) name:MotionOrientationChangedNotification object:nil];
 	
-    //  AVCaptureSessionを用意
-	_session = [[AVCaptureSession alloc] init];
     
-	//  使用許可の確認
-	[self checkDeviceAuthorizationStatus];
-	
-    //  Session Queueの作成
-	_sessionQueue = dispatch_queue_create("jp.dividual.CameraManager.session", DISPATCH_QUEUE_SERIAL);
-    
-    //
+	_session = [[AVCaptureSession alloc] init];//  AVCaptureSessionを用意
+	[self checkDeviceAuthorizationStatus];//  使用許可の確認
+	_sessionQueue = dispatch_queue_create("jp.dividual.CameraManager.session", DISPATCH_QUEUE_SERIAL);//  Session Queueの作成
     _captureCurrentFrameQueue = dispatch_queue_create("jp.dividual.CameraManager.captureCurrentFrame", DISPATCH_QUEUE_SERIAL);
-    
-    //  保存用キュー
-    _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);
+    _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);//  保存用キュー
 	
 	_saveToCameraRoll_queue = [[NSOperationQueue alloc] init];
 	_saveToCameraRoll_queue.maxConcurrentOperationCount = 4;// これを超えるとiPodTouchで保存失敗が発生する可能性があります。
     
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
-        //
         _backgroundRecordingID = UIBackgroundTaskInvalid;
 		
 		NSError *error = nil;
@@ -213,30 +187,24 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		
         //  動画書き出し用のインスタンス用意
 		AVCaptureMovieFileOutput *movieFileOutput = [[AVCaptureMovieFileOutput alloc] init];
-		if([_session canAddOutput:movieFileOutput])
-		{
+		if([_session canAddOutput:movieFileOutput]){
             //  動画モードの時だけ追加して使う
 			//[_session addOutput:movieFileOutput];
-            
 			AVCaptureConnection *connection = [movieFileOutput connectionWithMediaType:AVMediaTypeVideo];
             
             //  動画の手ぶれ補正機能が使える時はとにかくONにしておく（iOS6以降）
-			if([connection isVideoStabilizationSupported])
+			if([connection isVideoStabilizationSupported]){
 				[connection setEnablesVideoStabilizationWhenAvailable:YES];
-            
-            //  保持
-            _movieFileOutput = movieFileOutput;
+			}
+            _movieFileOutput = movieFileOutput;//  保持
 		}
 		
         //  静止画撮影用のインスタンス用意
 		AVCaptureStillImageOutput *stillImageOutput = [[AVCaptureStillImageOutput alloc] init];
-		if([_session canAddOutput:stillImageOutput])
-		{
+		if([_session canAddOutput:stillImageOutput]){
 			[stillImageOutput setOutputSettings: @{AVVideoCodecKey : AVVideoCodecJPEG} ];
 			[_session addOutput:stillImageOutput];
-            
-            //  保持
-            _stillImageOutput = stillImageOutput;
+            _stillImageOutput = stillImageOutput;//  保持
 		}
         
         //  サイレントモード用のdataOutput作成
@@ -244,12 +212,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         dataOutput.videoSettings = @{ (id)kCVPixelBufferPixelFormatTypeKey:@(kCVPixelFormatType_32BGRA) };
         [dataOutput setSampleBufferDelegate:self queue:_captureCurrentFrameQueue];
         dataOutput.alwaysDiscardsLateVideoFrames = YES;
-        if([_session canAddOutput:dataOutput])
-        {
+        if([_session canAddOutput:dataOutput]){
             [_session addOutput:dataOutput];
-            
-            //  保持
-            _videoDataOutput = dataOutput;
+            _videoDataOutput = dataOutput;//  保持
         }
 		
 		/// 各種イベント監視
@@ -285,10 +250,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 
 //  カメラの使用開始処理
-- (void)openCamera
-{
-    if(_isCameraOpened)
-    {
+- (void)openCamera{
+    if(_isCameraOpened){
         NSLog( @"カメラはすでにオープンされています" );
         return;
     }
@@ -313,21 +276,14 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
     
 	
-	//  カメラモードを指定
-//	[self setCameraMode:_cameraMode];
-
-	//  ブーストをONにできればONに
-	[self setLowLightBoost:YES];
 	
-	//  フォーカスを中心でcontinuesで
-	[self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];
-
-	//  フラッシュモード指定しておく
-	[self setDeviceFlashMode:_flashMode];
+//	[self setCameraMode:_cameraMode];//  カメラモードを指定
+	[self setLowLightBoost:YES];//  ブーストをONにできればONに
+	[self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];//  フォーカスを中心でcontinuesで
+	[self setDeviceFlashMode:_flashMode];//  フラッシュモード指定しておく
 		
     //  開始処理
     dispatch_async(_sessionQueue, ^{
-        
         _isCameraOpened = YES;
         
         //  sessionRunningAndDeviceAuthorizedの変化をKVOで追いかける
@@ -371,23 +327,16 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 
 //  カメラの使用停止処理
-- (void)closeCamera
-{
-    if(!_isCameraOpened)
-    {
+- (void)closeCamera{
+    if(!_isCameraOpened){
         NSLog( @"すでにカメラは閉じています" );
         return;
     }
     
     //  停止処理
     dispatch_async(_sessionQueue, ^{
-        
-        //  セッション停止
-        [self.session stopRunning];
-        
-        
+        [self.session stopRunning];//  セッション停止
         dispatch_async(dispatch_get_main_queue(), ^{
-            
             //  登録したNotificationObserverを削除
             [[NSNotificationCenter defaultCenter] removeObserver:self name:AVCaptureDeviceSubjectAreaDidChangeNotification object:[_videoDeviceInput device]];
             [[NSNotificationCenter defaultCenter] removeObserver:_runtimeErrorHandlingObserver];
@@ -399,8 +348,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
             [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
         });
-        
-        //
         _isCameraOpened = NO;
     });
 }
@@ -408,8 +355,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 #pragma mark - Notification
 
 //  カメラからの映像が大きく変化した時のイベントをNotificationで受ける
-- (void)subjectAreaDidChange:(NSNotification*)notification
-{
+- (void)subjectAreaDidChange:(NSNotification*)notification{
     //  真ん中をcontinuesでフォーカス合わせるように（露出もcontinuesで）
     CGPoint devicePoint = CGPointMake(.5, .5);
     [self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:devicePoint monitorSubjectAreaChange:NO];
@@ -417,12 +363,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - kvo
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context{
     //  contextで切り分ける
-    
-    if(context == CapturingStillImageContext)
-    {
+    if(context == CapturingStillImageContext){
         //  静止画撮影中フラグの変化
         BOOL isCapturingStillImage = [change[NSKeyValueChangeNewKey] boolValue];
         
@@ -431,63 +374,47 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self dispatchEvent:@"didChangeIsCapturingStillImage" userInfo:@{@"state":@(isCapturingStillImage)}];
         });
         
-        //
-        if(isCapturingStillImage == NO)
-        {
-            if(self.isReadyForTakePhoto)
-            {
+        if(isCapturingStillImage == NO){
+            if(self.isReadyForTakePhoto){
                 //  Shutter予約がある場合は撮影する
-                if(_shutterReserveCount)
-                {
+                if(_shutterReserveCount){
                     [self doTakePhoto];
                 }
             }
         }
-    }
-    else if(context == RecordingContext)
-    {
+    } else if(context == RecordingContext){
         //  recordingStateの変化
         BOOL isRecording = [change[NSKeyValueChangeNewKey] boolValue];
         
         dispatch_async(dispatch_get_main_queue(), ^{
             [self dispatchEvent:@"didChangeIsRecordingVideo" userInfo:@{@"state":@(isRecording)}];
         });
-    }
-    else if(context == SessionRunningAndDeviceAuthorizedContext)
-    {
+    } else if(context == SessionRunningAndDeviceAuthorizedContext){
         //  カメラ利用許可フラグの変化を追従（準備が完了したかどうかという意味合いで使える）
         BOOL isRunning = [change[NSKeyValueChangeNewKey] boolValue];
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (isRunning)
-            {
+            if (isRunning){
                 //  開始イベント発行
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self dispatchEvent:@"open" userInfo:nil];
                 });
-            }
-            else
-            {
+            } else {
                 //  終了イベント発行
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self dispatchEvent:@"close" userInfo:nil];
                 });
             }
         });
-    }
-    else if(context == AdjustingFocusContext)
-    {
+    }else if(context == AdjustingFocusContext){
         //  フォーカスの変化
         BOOL isAdjustingFocus = [change[NSKeyValueChangeNewKey] boolValue];
         
         //  カーソルを消すとか表示するとか
-        if(isAdjustingFocus == NO)
-        {
+        if(isAdjustingFocus == NO){
             [self dispatchEvent:@"hideFocusCursor" userInfo:nil];
             _focusViewShowHide = NO;
-        }
-        else if(_focusViewShowHide == NO)
-        {
+        } else if(_focusViewShowHide == NO){
             //  フォーカス開始で、かつfocusViewが表示されてない場合（continuesで呼ばれた場合となる）
             CGPoint focusPos;
             if(_videoDeviceInput.device.focusPointOfInterestSupported)
@@ -498,24 +425,17 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self showFocusCursorWithPos:focusPos isContinuous:YES];
         }
         
-        //
         _adjustingFocus = isAdjustingFocus;
         
-        //
-        if(_adjustingFocus == NO)
-        {
-            if(self.isReadyForTakePhoto)
-            {
+        if(_adjustingFocus == NO){
+            if(self.isReadyForTakePhoto){
                 //  Shutter予約がある場合は撮影する
-                if(_shutterReserveCount)
-                {
+                if(_shutterReserveCount){
                     [self doTakePhoto];
                 }
             }
         }
-    }
-    else
-    {
+    } else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
 }
@@ -586,8 +506,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         AVCaptureDevice *device = [_videoDeviceInput device];
         
         NSError *error = nil;
-        if([device lockForConfiguration:&error])
-        {
+        if([device lockForConfiguration:&error]){
             //  フォーカスモードを設定
             if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:focusMode]){
                 [device setFocusPointOfInterest:point];
@@ -631,52 +550,36 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 #pragma mark -
 
 //  ユーザーがカメラ機能へのアクセスを許可するかどうか確認
-- (void)checkDeviceAuthorizationStatus
-{
+- (void)checkDeviceAuthorizationStatus{
     NSString *mediaType = AVMediaTypeVideo;
     
-    if(floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1)
-    {
+    if(floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_6_1){
         // iOS 6.1以前
         self.deviceAuthorized = YES;
-    }
-    else
-    {
+    } else {
         // iOS 7.0以降
         [AVCaptureDevice requestAccessForMediaType:mediaType completionHandler:^(BOOL granted) {
-            
-            if(granted)
-            {
+            if(granted){
                 //  Granted access to mediaType
                 self.deviceAuthorized = YES;
-            }
-            else
-            {
+            } else {
                 //  Not granted access to mediaType
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    
                     [[[UIAlertView alloc] initWithTitle:nil
                                                 message:@"CameraManager doesn't have permission to use Camera, please change privacy settings"
                                                delegate:self
                                       cancelButtonTitle:@"OK"
                                       otherButtonTitles:nil] show];
-                    
                     self.deviceAuthorized = NO;
                 });
             }
         }];
-        
     }
-   
 }
 
-- (void)applicationDidEnterBackground:(NSNotification*)notification
-{
+- (void)applicationDidEnterBackground:(NSNotification*)notification{
     NSLog(@"applicationDidEnterBackground");
-    
-    //
-    if(_isCameraOpened)
-    {
+    if(_isCameraOpened){
         _lastOpenState = YES;
         
         //  画面消すためにここで送っておく
@@ -684,25 +587,21 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
         //
         [self closeCamera];
-    }
-    else
+    } else {
         _lastOpenState = NO;
+	}
 }
 
-- (void)applicationWillEnterForeground:(NSNotification*)notification
-{
+- (void)applicationWillEnterForeground:(NSNotification*)notification{
     NSLog(@"applicationWillEnterForeground");
-    
-    if(_lastOpenState)
-    {
+    if(_lastOpenState){
         [self openCamera];
     }
 }
 
 #pragma mark - ClassMethod
 
-+ (AVCaptureDevice *)deviceWithMediaType:(NSString *)mediaType preferringPosition:(AVCaptureDevicePosition)position
-{
++ (AVCaptureDevice *)deviceWithMediaType:(NSString *)mediaType preferringPosition:(AVCaptureDevicePosition)position{
     NSArray *devices = [AVCaptureDevice devicesWithMediaType:mediaType];
     AVCaptureDevice *captureDevice = [devices firstObject];
     
@@ -726,13 +625,11 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     return [_session isRunning] && [self isDeviceAuthorized];
 }
 
-+ (NSSet*)keyPathsForValuesAffectingSessionRunningAndDeviceAuthorized
-{
++ (NSSet*)keyPathsForValuesAffectingSessionRunningAndDeviceAuthorized{
     return [NSSet setWithObjects:@"session.running", @"deviceAuthorized", nil];
 }
 
-- (BOOL)isReadyForTakePhoto
-{
+- (BOOL)isReadyForTakePhoto{
     AVCaptureDevice *device =_videoDeviceInput.device;
     
     BOOL freeMemory = [CameraManager getFreeMemory]>10.0?YES:NO;
@@ -745,8 +642,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - focus関連
 
-- (void)showFocusCursorWithPos:(CGPoint)pos isContinuous:(BOOL)isContinuous
-{
+- (void)showFocusCursorWithPos:(CGPoint)pos isContinuous:(BOOL)isContinuous{
     _focusViewShowHide = YES;
     
     //  とにかくイベントを送る
@@ -755,11 +651,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark -
 
-- (id)init
-{
+- (id)init{
     self = [super init];
-    if(self)
-    {
+    if(self){
         [self setup];
     }
     return self;
@@ -767,14 +661,12 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark -
 
-- (void)setFocusPoint:(CGPoint)pos
-{
+- (void)setFocusPoint:(CGPoint)pos{
     //
     AVCaptureDevice *device = _videoDeviceInput.device;
     
     //  タッチした位置へのフォーカスをサポートするかチェック
-    if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])
-    {
+    if([device isFocusPointOfInterestSupported] && [device isFocusModeSupported:AVCaptureFocusModeAutoFocus])    {
         //  フォーカス合わせ始めたことにする
         _adjustingFocus = YES;
         
@@ -785,8 +677,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     }
 }
 
-- (void)setFlashMode:(CMFlashMode)flashMode
-{
+- (void)setFlashMode:(CMFlashMode)flashMode{
     _flashMode = flashMode;
     
     //  デバイス側にも指定
@@ -798,61 +689,64 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 - (void)setDeviceFlashMode:(CMFlashMode)flashMode{
     AVCaptureDevice *device = _videoDeviceInput.device;
+	
+	if( [device hasFlash] == NO ){
+		return;
+	}
     
-    if([device hasFlash]){
-        //  設定する
-        dispatch_async([self sessionQueue], ^{
-            NSError *error = nil;
-            if([device lockForConfiguration:&error]){
-                switch(flashMode){
-                    case CMFlashModeAuto:
-                        device.flashMode = AVCaptureFlashModeAuto;
-                        break;
-                        
-                    case CMFlashModeOn:
-                        device.flashMode = AVCaptureFlashModeOn;
-                        break;
-                        
-                    case CMFlashModeOff:
-                        device.flashMode = AVCaptureFlashModeOff;
-                        break;
-                }
-                [device unlockForConfiguration];
-            } else {
-                NSLog(@"error:%@", error);
-            }
-        });
-    }
+	void(^process)(void) = ^(){
+		NSError *error = nil;
+		if([device lockForConfiguration:&error]){
+			switch(flashMode){
+				case CMFlashModeAuto:
+					device.flashMode = AVCaptureFlashModeAuto;
+					break;
+					
+				case CMFlashModeOn:
+					device.flashMode = AVCaptureFlashModeOn;
+					break;
+					
+				case CMFlashModeOff:
+					device.flashMode = AVCaptureFlashModeOff;
+					break;
+			}
+			[device unlockForConfiguration];
+		} else {
+			NSLog(@"error:%@", error);
+		}
+	};
+
+	if( [NSThread isMainThread] ){
+		dispatch_async( [self sessionQueue], process );
+	} else {
+		process();
+	}
 }
 
 #pragma mark - IBAction
 
-- (void)changeFlashMode
-{
+- (void)changeFlashMode{
     //  flashモードのボタンを押された（順に切り替える）
     self.flashMode = (_flashMode+1)%3;
 }
 
 //  撮影処理を内部的に呼ぶ場合はここ
-- (void)doTakePhoto
-{
+- (void)doTakePhoto{
     //  静止画の時だけ状態によりブロック
-    if(!self.isReadyForTakePhoto && _cameraMode == CMCameraModeStill)
+    if(!self.isReadyForTakePhoto && _cameraMode == CMCameraModeStill){
         return;
+	}
     
     //  カウントデクリメント
-    if(_shutterReserveCount)
+    if(_shutterReserveCount){
         _shutterReserveCount--;
+	}
     
-    //
-    if(_cameraMode == CMCameraModeStill)
-    {
+    if(_cameraMode == CMCameraModeStill){
         //  静止画撮影モード
         NSLog(@"freeMemory:%f", [CameraManager getFreeMemory]);
         [self captureImage];
-    }
-    else
-    {
+    } else {
         //  動画モード
         if(!_recordingProgressTimer)
             [self startVideoRec];//  動画撮影
@@ -862,8 +756,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 }
 
 //  シャッターボタンを押された
-- (void)takePhoto
-{
+- (void)takePhoto{
     //  フォーカスに対応してないとき用の処理
     AVCaptureDevice *device = _videoDeviceInput.device;
     
@@ -871,60 +764,47 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _adjustingFocus = NO;
     
     //  ビデオモードの時は予約処理いらない
-    if(_cameraMode == CMCameraModeVideo)
-    {
+    if(_cameraMode == CMCameraModeVideo){
         _shutterReserveCount = 0;
-    }
-    else
-    {
+    } else {
         //  フォーカスを合わせてる途中だったら予約処理にする
-        if(!self.isReadyForTakePhoto)
-        {
-            if(_shutterReserveCount<1)
+        if(!self.isReadyForTakePhoto){
+            if(_shutterReserveCount<1){
                 _shutterReserveCount++;
+			}
             
             BOOL freeMemory = [CameraManager getFreeMemory]>10.0?YES:NO;
-            if(freeMemory == NO)
-            {
+            if(freeMemory == NO){
                 _shutterReserveCount = 0;
                 return;
             }
         }
     }
-    
-    if(_shutterReserveCount == 0)
+    if(_shutterReserveCount == 0){
         [self doTakePhoto];
+	}
 }
 
 //
-- (void)rotateCameraPosition
-{
+- (void)rotateCameraPosition{
     //  回転させるときに一旦focusの表示消すように送る
-    if(_focusViewShowHide)
-    {
+    if(_focusViewShowHide){
         [self dispatchEvent:@"hideFocusCursor" userInfo:nil];
         _focusViewShowHide = NO;
     }
     
-    //
     dispatch_async([self sessionQueue], ^{
-        //
 		AVCaptureDevice *currentVideoDevice = [_videoDeviceInput device];
-        
-        //
 		AVCaptureDevicePosition preferredPosition = AVCaptureDevicePositionUnspecified;
 		AVCaptureDevicePosition currentPosition = [currentVideoDevice position];
 		
-		switch(currentPosition)
-		{
+		switch(currentPosition){
 			case AVCaptureDevicePositionUnspecified:
 				preferredPosition = AVCaptureDevicePositionBack;
 				break;
-                
 			case AVCaptureDevicePositionBack:
 				preferredPosition = AVCaptureDevicePositionFront;
 				break;
-                
 			case AVCaptureDevicePositionFront:
 				preferredPosition = AVCaptureDevicePositionBack;
 				break;
@@ -940,7 +820,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		AVCaptureDevice *videoDevice = [CameraManager deviceWithMediaType:AVMediaTypeVideo preferringPosition:preferredPosition];
 		AVCaptureDeviceInput *videoDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:nil];
 		
-        //
 		[_session beginConfiguration];
 		
         //  sessionから今のデバイスを外す
@@ -948,26 +827,22 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
         //  sessionに追加するまえにpresetを変更
         NSString *lastPreset = _session.sessionPreset;
-        if(preferredPosition == AVCaptureDevicePositionBack)
-        {
-            if(_cameraMode == CMCameraModeStill)
-            {
+        if(preferredPosition == AVCaptureDevicePositionBack){
+            if(_cameraMode == CMCameraModeStill){
                 _session.sessionPreset = !_silentShutterMode?_sessionPresetForStill:_sessionPresetForSilentStill;
-            }
-            else
+            } else {
                 _session.sessionPreset = _sessionPresetForVideo;
-        }
-        else
-        {
-            if(_cameraMode == CMCameraModeStill)
+			}
+        } else {
+            if(_cameraMode == CMCameraModeStill){
                 _session.sessionPreset = !_silentShutterMode?_sessionPresetForFrontStill:_sessionPresetForSilentFrontStill;
-            else
+			} else {
                 _session.sessionPreset = _sessionPresetForFrontVideo;
+			}
         }
         
         //  追加できるか調べて追加
-		if ([_session canAddInput:videoDeviceInput])
-		{
+		if ([_session canAddInput:videoDeviceInput]){
             //  変更できれば変更
 			[[NSNotificationCenter defaultCenter] removeObserver:self name:AVCaptureDeviceSubjectAreaDidChangeNotification object:currentVideoDevice];
 			[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(subjectAreaDidChange:) name:AVCaptureDeviceSubjectAreaDidChangeNotification object:videoDevice];
@@ -978,17 +853,11 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 			_videoDeviceInput = videoDeviceInput;
             
             [self addObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:AdjustingFocusContext];
-		}
-		else
-		{
-            //  sessionに追加するまえにpresetを変更
-            _session.sessionPreset = lastPreset;
-            
-            //  ダメな場合戻す
-			[_session addInput:_videoDeviceInput];
+		} else {
+            _session.sessionPreset = lastPreset;//  sessionに追加するまえにpresetを変更
+			[_session addInput:_videoDeviceInput];//  ダメな場合戻す
 		}
 		
-        //
 		[_session commitConfiguration];
 		
         //  イベント発行
@@ -1000,14 +869,12 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - orientation utility
 
-- (UIImageOrientation)currentImageOrientation
-{
+- (UIImageOrientation)currentImageOrientation{
     AVCaptureDevice *device = _videoDeviceInput.device;
     
     BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
     UIImageOrientation imageOrientation = UIImageOrientationLeft;
-    switch (_orientation)
-    {
+    switch (_orientation){
         case UIDeviceOrientationPortrait:
             imageOrientation = UIImageOrientationRight;
             break;
@@ -1028,11 +895,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     return imageOrientation;
 }
 
-- (AVCaptureVideoOrientation)currentVideoOrientation
-{    
+- (AVCaptureVideoOrientation)currentVideoOrientation{
     AVCaptureVideoOrientation videoOrientation = AVCaptureVideoOrientationPortrait;
-    switch (_orientation)
-    {
+    switch (_orientation){
         case UIDeviceOrientationPortrait:
             videoOrientation = AVCaptureVideoOrientationPortrait;
             break;
@@ -1056,8 +921,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - capture
 
-- (void)captureImage
-{
+- (void)captureImage{
     //  キャプチャー処理
     if(_silentShutterMode){
         //  サイレントモードの時は別処理
@@ -1078,8 +942,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 				[self capturedImage:imageForAnimation originalJpegData:jpegData error:error];
 			}];
 		}];
-		
-
     }
 }
 
@@ -1124,75 +986,52 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - video
 
-- (void)setupTorch
-{
+- (void)setupTorch{
     AVCaptureDevice *device = _videoDeviceInput.device;
-    
-    if([device hasFlash])
-    {
+    if([device hasFlash]){
         //  フラッシュの設定
         NSError *error = nil;
-        if (![device lockForConfiguration:&error])
-        {
+        if (![device lockForConfiguration:&error]){
             NSLog(@"Error locking for configuration: %@", error);
         }
         
         //  フラッシュの準備（上記のロックをかけてからでないと処理できないっぽい）
-        if(_flashMode == CMFlashModeAuto && [device hasTorch])
-        {
-            //  自動
-            device.torchMode = AVCaptureTorchModeAuto;
+        if(_flashMode == CMFlashModeAuto && [device hasTorch]){
+            device.torchMode = AVCaptureTorchModeAuto;//  自動
+        } else if(_flashMode == CMFlashModeOn && [device hasTorch]){
+            device.torchMode = AVCaptureTorchModeOn;//  ON
+        } else if([device hasTorch]){
+            device.torchMode = AVCaptureTorchModeOff;//  OFF
         }
-        else if(_flashMode == CMFlashModeOn && [device hasTorch])
-        {
-            //  ON
-            device.torchMode = AVCaptureTorchModeOn;
-        }
-        else if([device hasTorch])
-        {
-            //  OFF
-            device.torchMode = AVCaptureTorchModeOff;
-        }
-        
         [device unlockForConfiguration];
     }
 }
 
-- (void)offTorch
-{
+- (void)offTorch{
     AVCaptureDevice *device = _videoDeviceInput.device;
-    
-    if([device hasFlash])
-    {
+    if([device hasFlash]){
         [device lockForConfiguration:nil];
         [device setTorchMode:AVCaptureTorchModeOff];
         [device unlockForConfiguration];
     }
 }
 
-- (NSString*)makeTempMovieFileName
-{
+- (NSString*)makeTempMovieFileName{
     NSString *uuidString = [[NSUUID UUID] UUIDString];
     return [NSString stringWithFormat:@"%@.m4v", uuidString];
 }
 
-- (void)startVideoRec
-{
+- (void)startVideoRec{
     //  event発行
     [self dispatchEvent:@"willStartVideoRecording" userInfo:nil];
-    
-    //
     dispatch_async([self sessionQueue], ^{
-        
-		if(!_movieFileOutput.isRecording)
-		{
+		if(!_movieFileOutput.isRecording){
             //  録画開始
 			_lockInterfaceRotation = YES;
 			
 			[self disableAutoFocus];// 純正に合わせるため、オートフォーカスをオフに
 			
-			if ([[UIDevice currentDevice] isMultitaskingSupported])
-			{
+			if ([[UIDevice currentDevice] isMultitaskingSupported]){
 				[self setBackgroundRecordingID:[[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:nil]];
 			}
 			
@@ -1218,26 +1057,20 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             
             //  タイマースタート
             dispatch_async(dispatch_get_main_queue(), ^{
-                //
                 [self startRecordingProgressTimer];
-                
-                //event発行
-                [self dispatchEvent:@"didStartVideoRecording" userInfo:nil];
+                [self dispatchEvent:@"didStartVideoRecording" userInfo:nil];//event発行
             });
         }
 	});
 }
 
-- (void)stopVideoRec
-{
+- (void)stopVideoRec{
     dispatch_async([self sessionQueue], ^{
-        
         [_movieFileOutput stopRecording];
     });
 }
 
-- (void)startRecordingProgressTimer
-{
+- (void)startRecordingProgressTimer{
     if(_recordingProgressTimer)
         [self stopRecordingProgressTimer];
     
@@ -1245,27 +1078,20 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     [[NSRunLoop currentRunLoop] addTimer:_recordingProgressTimer forMode:NSRunLoopCommonModes];
 }
 
-- (void)stopRecordingProgressTimer
-{
-    if(_recordingProgressTimer)
-    {
+- (void)stopRecordingProgressTimer{
+    if(_recordingProgressTimer){
         [_recordingProgressTimer invalidate];
         _recordingProgressTimer = nil;
     }
 }
 
-- (void)doProgressRecording:(NSTimer*)timer
-{
-    if(_recordingProgressTimer == timer)
-    {
+- (void)doProgressRecording:(NSTimer*)timer{
+    if(_recordingProgressTimer == timer){
         //  残り時間のチェック
-        if(self.remainRecordTime<0.0)
-        {
+        if(self.remainRecordTime<0.0){
             //  終了
             [self stopVideoRec];
-        }
-        else
-        {
+        } else {
             //  イベント発行
             [self dispatchEvent:@"recordingVideo" userInfo:@{ @"time":@(self.recordedTime), @"remainTime":@(self.remainRecordTime)}];
         }
@@ -1273,35 +1099,27 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 }
 
 //  tmpFileはもういらないよの通知
-- (void)removeTempMovieFile:(NSURL*)tmpURL
-{
+- (void)removeTempMovieFile:(NSURL*)tmpURL{
     NSString *path = tmpURL.path;
     //
-    if([_tmpMovieSavePathArray containsObject:path])
-    {
+    if([_tmpMovieSavePathArray containsObject:path]){
         //  まだ消してはいけない
         //  リストからは消しておく
         [_tmpMovieSavePathArray removeObject:path];
-    }
-    else
-    {
+    } else {
         //  もう処理が終わってるらしいので消す
         [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-        
         NSLog(@"removeFile:%@", path);
     }
 }
 
 //
-- (NSTimeInterval)recordedTime
-{
+- (NSTimeInterval)recordedTime{
     CMTime time = _movieFileOutput.recordedDuration;
-    
     return CMTimeGetSeconds(time);
 }
 
-- (NSTimeInterval)remainRecordTime
-{
+- (NSTimeInterval)remainRecordTime{
     return _videoDuration - self.recordedTime;
 }
 
@@ -1338,40 +1156,29 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - AVCaptureDeviceFileOutputDelegate
 
-- (void)captureOutput:(AVCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL fromConnections:(NSArray *)connections error:(NSError *)error
-{
+- (void)captureOutput:(AVCaptureFileOutput *)captureOutput didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL fromConnections:(NSArray *)connections error:(NSError *)error{
     BOOL recordedSuccessfully = YES;
-    if ([error code] != noErr)
-    {
+    if ([error code] != noErr){
         id value = [[error userInfo] objectForKey:AVErrorRecordingSuccessfullyFinishedKey];
-        if (value)
-        {
+        if (value){
             recordedSuccessfully = [value boolValue];
         }
     }
     
 	_lockInterfaceRotation = NO;
 	
-    //
 	UIBackgroundTaskIdentifier backgroundRecordingID = _backgroundRecordingID;
     _backgroundRecordingID = UIBackgroundTaskInvalid;
 
-    //  プログレスのタイマー止める
-    [self stopRecordingProgressTimer];
+    [self stopRecordingProgressTimer];//  プログレスのタイマー止める
+    [self offTorch];//  照明必ず消す
     
-    //  照明必ず消す
-    [self offTorch];
-    
-    //
-    if(recordedSuccessfully == NO)
-    {
+    if(recordedSuccessfully == NO){
         //  イベント発行
         dispatch_async(dispatch_get_main_queue(), ^{
             [self dispatchEvent:@"didFinishedVideoRecording" userInfo:nil ];
         });
-    }
-    else
-    {
+    } else {
 		// サムネイル作成
 //		MPMoviePlayerController *player = [[MPMoviePlayerController alloc] initWithContentURL:outputFileURL];
 //		UIImage  *thumbnail = [player thumbnailImageAtTime:1.0 timeOption:MPMovieTimeOptionNearestKeyFrame];// deprecated
@@ -1384,32 +1191,25 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         });
         
         //  保存処理
-        if(_autoSaveToCameraroll)
-        {
+        if(_autoSaveToCameraroll){
             dispatch_async(_saveQueue, ^{
-                //
                 [[[ALAssetsLibrary alloc] init] writeVideoAtPathToSavedPhotosAlbum:outputFileURL completionBlock:^(NSURL *assetURL, NSError *error) {
-                    
                     if (error)
                         NSLog(@"%@", error);
                     
                     NSLog(@"saveVideo to CameraRoll Finished:%@", outputFileURL);
                     
-                    if([_tmpMovieSavePathArray containsObject:outputFileURL.path])
-                    {
+                    if([_tmpMovieSavePathArray containsObject:outputFileURL.path]){
                         //  まだ消してはいけない
                         //  リストからは消しておく
                         [_tmpMovieSavePathArray removeObject:outputFileURL.path];
-                    }
-                    else
-                    {
+                    } else {
                         //  もう処理が終わってるらしいので消す
                         [[NSFileManager defaultManager] removeItemAtURL:outputFileURL error:nil];
                         
                         NSLog(@"removeFile:%@", outputFileURL.path);
                     }
                     
-                    //
                     if (backgroundRecordingID != UIBackgroundTaskInvalid)
                         [[UIApplication sharedApplication] endBackgroundTask:backgroundRecordingID];
                 }];
@@ -1420,10 +1220,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - AVCaptureVideoDataOutputSampleBufferDelegate
 
-- (void)captureOutput:(AVCaptureOutput*)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection*)connection
-{
-    if(_captureCompletion)
-    {
+- (void)captureOutput:(AVCaptureOutput*)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection*)connection{
+    if(_captureCompletion){
         // イメージバッファの取得
         CVImageBufferRef    buffer;
         buffer = CMSampleBufferGetImageBuffer(sampleBuffer);
