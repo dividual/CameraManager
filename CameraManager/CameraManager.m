@@ -175,6 +175,13 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		AVCaptureDevice *videoDevice = [CameraManager deviceWithMediaType:AVMediaTypeVideo preferringPosition:findPosition];
 		AVCaptureDeviceInput *videoDeviceInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
 		
+		// 暗い場所でのISOブーストをオン
+		if( videoDevice.lowLightBoostSupported ){
+			[videoDevice lockForConfiguration:&error];
+			videoDevice.automaticallyEnablesLowLightBoostWhenAvailable = YES;
+			[videoDevice unlockForConfiguration];
+		}
+		
 		if(error){
 			NSLog(@"%@", error);
 		}
@@ -244,17 +251,25 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 	}
 	
 	_orientation = orientation;
-	[self dispatchEvent:@"didChangeDeviceOrientation" userInfo:@{ @"orientation":@(_orientation) }];//  UIDeviceOrientationを返してる
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self dispatchEvent:@"didChangeDeviceOrientation" userInfo:@{ @"orientation":@(_orientation) }];//  UIDeviceOrientationを返してる
+	});
 }
 
 
 
-//  カメラの使用開始処理
+///  カメラの使用開始処理
 - (void)openCamera{
     if(_isCameraOpened){
         NSLog( @"カメラはすでにオープンされています" );
+		UIAlertView* alertView = [[UIAlertView alloc] init];
+		alertView.message = @"すでにカメラは起動しています";
+		[alertView addButtonWithTitle:@"OK"];
+		[alertView show];
         return;
     }
+	
+	 _isCameraOpened = YES;
     
     //  解像度設定の未設定チェック
     if(!_sessionPresetForStill )
@@ -278,14 +293,10 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 	
 	
 //	[self setCameraMode:_cameraMode];//  カメラモードを指定
-	[self setLowLightBoost:YES];//  ブーストをONにできればONに
-	[self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];//  フォーカスを中心でcontinuesで
-	[self setDeviceFlashMode:_flashMode];//  フラッシュモード指定しておく
+
 		
     //  開始処理
     dispatch_async(_sessionQueue, ^{
-        _isCameraOpened = YES;
-        
         //  sessionRunningAndDeviceAuthorizedの変化をKVOで追いかける
 		[self addObserver:self forKeyPath:@"sessionRunningAndDeviceAuthorized" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:SessionRunningAndDeviceAuthorizedContext];
         
@@ -304,7 +315,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         //  エラーの受け取りをblockで指定
 		__weak CameraManager *weakSelf = self;
 		_runtimeErrorHandlingObserver = [[NSNotificationCenter defaultCenter] addObserverForName:AVCaptureSessionRuntimeErrorNotification object:_session queue:nil usingBlock:^(NSNotification *note) {
-            //
 			CameraManager *strongSelf = weakSelf;
 			dispatch_async(strongSelf.sessionQueue, ^{
 				//  リスタートかける
@@ -322,6 +332,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		
 		//  カメラ処理開始
 		[_session startRunning];
+		
+		[self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];//  フォーカスを中心でcontinuesで
+		[self setDeviceFlashMode:_flashMode];//  フラッシュモード指定しておく
     });
 }
 
@@ -412,7 +425,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
         //  カーソルを消すとか表示するとか
         if(isAdjustingFocus == NO){
-            [self dispatchEvent:@"hideFocusCursor" userInfo:nil];
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[self dispatchEvent:@"hideFocusCursor" userInfo:nil];
+			});
             _focusViewShowHide = NO;
         } else if(_focusViewShowHide == NO){
             //  フォーカス開始で、かつfocusViewが表示されてない場合（continuesで呼ばれた場合となる）
@@ -501,9 +516,8 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 //  フォーカスをあわせる処理を実行するメソッド
 - (void)focusWithMode:(AVCaptureFocusMode)focusMode exposeWithMode:(AVCaptureExposureMode)exposureMode atDevicePoint:(CGPoint)point monitorSubjectAreaChange:(BOOL)monitorSubjectAreaChange{
-    dispatch_async([self sessionQueue], ^{
-        //
-        AVCaptureDevice *device = [_videoDeviceInput device];
+	void(^process)(void) = ^(){
+		AVCaptureDevice *device = [_videoDeviceInput device];
         
         NSError *error = nil;
         if([device lockForConfiguration:&error]){
@@ -519,33 +533,20 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
                 [device setExposureMode:exposureMode];
             }
             
-            //  画面変化を追従するかの設定
-            [device setSubjectAreaChangeMonitoringEnabled:monitorSubjectAreaChange];
-            
-            //  unlock
-            [device unlockForConfiguration];
+            [device setSubjectAreaChangeMonitoringEnabled:monitorSubjectAreaChange];//  画面変化を追従するかの設定
+            [device unlockForConfiguration];//  unlock
         } else {
             NSLog(@"%@", error);
         }
-    });
+	};
+
+	if( [NSThread isMainThread] ){
+		dispatch_async( self.sessionQueue, process );
+	} else {
+		process();
+	}
 }
 
-//  暗い時のブーストをかけるかどうか設定
-- (void)setLowLightBoost:(BOOL)state{
-    dispatch_async([self sessionQueue], ^{
-        AVCaptureDevice *device = [[self videoDeviceInput] device];
-        
-        NSError *error = nil;
-        if([device lockForConfiguration:&error]){
-            if(device.isLowLightBoostSupported){
-                NSLog(@"lowLightBoost:%d", state);
-                device.automaticallyEnablesLowLightBoostWhenAvailable = state;
-            }
-            //  unlock
-            [device unlockForConfiguration];
-        }
-    });
-}
 
 #pragma mark -
 
@@ -583,7 +584,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _lastOpenState = YES;
         
         //  画面消すためにここで送っておく
-        [self dispatchEvent:@"close" userInfo:nil];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[self dispatchEvent:@"close" userInfo:nil];
+		});
         
         //
         [self closeCamera];
@@ -619,8 +622,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark -
 
-- (BOOL)isSessionRunningAndDeviceAuthorized
-{
+- (BOOL)isSessionRunningAndDeviceAuthorized{
     //  ここの変化を使ってopen/closeを呼ぶ（使用許可とセッション状態）
     return [_session isRunning] && [self isDeviceAuthorized];
 }
@@ -646,7 +648,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     _focusViewShowHide = YES;
     
     //  とにかくイベントを送る
-    [self dispatchEvent:@"showFocusCursor" userInfo:@{ @"position":[NSValue valueWithCGPoint:pos], @"isContinuous":@(isContinuous) }];
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self dispatchEvent:@"showFocusCursor" userInfo:@{ @"position":[NSValue valueWithCGPoint:pos], @"isContinuous":@(isContinuous) }];
+	});
 }
 
 #pragma mark -
@@ -684,7 +688,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     [self setDeviceFlashMode:_flashMode];
         
     //  イベント発行
-    [self dispatchEvent:@"didChangeFlashMode" userInfo:@{ @"mode":@(_flashMode) }];
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self dispatchEvent:@"didChangeFlashMode" userInfo:@{ @"mode":@(_flashMode) }];
+	});
 }
 
 - (void)setDeviceFlashMode:(CMFlashMode)flashMode{
@@ -789,7 +795,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 - (void)rotateCameraPosition{
     //  回転させるときに一旦focusの表示消すように送る
     if(_focusViewShowHide){
-        [self dispatchEvent:@"hideFocusCursor" userInfo:nil];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[self dispatchEvent:@"hideFocusCursor" userInfo:nil];
+		});
         _focusViewShowHide = NO;
     }
     
@@ -812,7 +820,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         
         //  イベント発行
         dispatch_async(dispatch_get_main_queue(), ^{
-            //  イベント発行
             [self dispatchEvent:@"willChangeCameraFrontBack" userInfo:@{ @"position":@(preferredPosition)} ];
         });
         
@@ -1093,7 +1100,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self stopVideoRec];
         } else {
             //  イベント発行
-            [self dispatchEvent:@"recordingVideo" userInfo:@{ @"time":@(self.recordedTime), @"remainTime":@(self.remainRecordTime)}];
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[self dispatchEvent:@"recordingVideo" userInfo:@{ @"time":@(self.recordedTime), @"remainTime":@(self.remainRecordTime)}];
+			});
         }
     }
 }
@@ -1280,7 +1289,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 - (void)setCameraMode:(CMCameraMode)cameraMode{
     _cameraMode = cameraMode;
-    [self dispatchEvent:@"willChangeCameraMode" userInfo:@{ @"mode":@(_cameraMode)} ];//  イベント発行
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[self dispatchEvent:@"willChangeCameraMode" userInfo:@{ @"mode":@(_cameraMode)} ];//  イベント発行
+	});
     dispatch_async(_sessionQueue, ^{
         //  sessionpreset変更
         AVCaptureDevice *device = _videoDeviceInput.device;
@@ -1367,29 +1378,23 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 #pragma mark - silentShutterMode
 
-- (void)setSilentShutterMode:(BOOL)silentShutterMode
-{
+- (void)setSilentShutterMode:(BOOL)silentShutterMode{
     _silentShutterMode = silentShutterMode;
     
-    if(_cameraMode == CMCameraModeStill)
-    {
-        [self dispatchEvent:@"willChangeSilentMode" userInfo:nil];
+    if(_cameraMode == CMCameraModeStill){
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[self dispatchEvent:@"willChangeSilentMode" userInfo:nil];
+		});
         
-        //
         dispatch_async(_sessionQueue, ^{
-            
             AVCaptureDevice *device = _videoDeviceInput.device;
-            if(device.position == AVCaptureDevicePositionBack)
-            {
+            if(device.position == AVCaptureDevicePositionBack){
                 _session.sessionPreset = !_silentShutterMode?_sessionPresetForStill:_sessionPresetForSilentStill;
-            }
-            else
-            {
+            } else {
                 _session.sessionPreset = !_silentShutterMode?_sessionPresetForFrontStill:_sessionPresetForSilentFrontStill;
             }
             
             dispatch_async(dispatch_get_main_queue(), ^{
-                //
                 [self dispatchEvent:@"didChangeSilentMode" userInfo:nil];
             });
         });
