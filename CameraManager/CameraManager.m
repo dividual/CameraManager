@@ -21,7 +21,6 @@
 #import "SaveToCameraRollOperation.h"
 #import <MotionOrientation@PTEz/MotionOrientation.h>
 #import <NNProfiler/NNProfiler.h>
-#import "UIImage+Resize.h"
 
 //  KVOで追いかけるときに使うポインタ（メモリ番地をcontextとして使う）
 static void * CapturingStillImageContext = &CapturingStillImageContext;
@@ -287,10 +286,10 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         _sessionPresetForFrontVideo = AVCaptureSessionPresetHigh;
     
     if(!_sessionPresetForSilentStill)
-        _sessionPresetForSilentStill = AVCaptureSessionPresetHigh;
+        _sessionPresetForSilentStill = AVCaptureSessionPresetiFrame1280x720;
     
     if(!_sessionPresetForSilentFrontStill)
-        _sessionPresetForSilentFrontStill = AVCaptureSessionPresetHigh;
+        _sessionPresetForSilentFrontStill = AVCaptureSessionPresetiFrame1280x720;
     
 	
 	
@@ -943,12 +942,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             
 			NSData* jpegData = UIImageJPEGRepresentation(image, 0.8);
 			[weakSelf saveToCameraRoll:jpegData];// カメラロールに保存
-			
-			
-			[NNProfiler start:@"resize"];
-			UIImage* resized_img = [image resizedImage:CGSizeMake(image.size.width*0.2, image.size.height*0.2) interpolationQuality:kCGInterpolationLow];
-			[NNProfiler end:@"resize"];
-            [weakSelf capturedImage:resized_img originalJpegData:jpegData error:nil];
+            [weakSelf capturedImage:image originalJpegData:jpegData error:nil];
         }];
     } else {
 		// 先にstillImageOutputのほうで撮影して、完了時に画面キャプチャしたほうが、映像のギャップが少ないです
