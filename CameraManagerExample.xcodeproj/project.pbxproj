@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		4D05AC27195C017800905146 /* sample.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4D05AC26195C017800905146 /* sample.jpg */; };
+		4D05AC2A195C05AC00905146 /* UIImage+Resize.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D05AC29195C05AC00905146 /* UIImage+Resize.m */; };
+		4D05AC2D195C05CD00905146 /* UIImage+RoundedCorner.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D05AC2C195C05CD00905146 /* UIImage+RoundedCorner.m */; };
+		4D05AC30195C05D200905146 /* UIImage+Alpha.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D05AC2F195C05D200905146 /* UIImage+Alpha.m */; };
 		4D0BEC7118B32BAA0083C5EC /* CameraManager.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */; };
 		4DD9418518CD826500843444 /* SaveToCameraRollOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */; };
 		8989D7C9A72D4CC7985717D7 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 971C7FEA367F4C929489A80B /* libPods.a */; };
@@ -55,6 +58,12 @@
 
 /* Begin PBXFileReference section */
 		4D05AC26195C017800905146 /* sample.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = sample.jpg; sourceTree = "<group>"; };
+		4D05AC28195C05AC00905146 /* UIImage+Resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Resize.h"; sourceTree = "<group>"; };
+		4D05AC29195C05AC00905146 /* UIImage+Resize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Resize.m"; sourceTree = "<group>"; };
+		4D05AC2B195C05CD00905146 /* UIImage+RoundedCorner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+RoundedCorner.h"; sourceTree = "<group>"; };
+		4D05AC2C195C05CD00905146 /* UIImage+RoundedCorner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+RoundedCorner.m"; sourceTree = "<group>"; };
+		4D05AC2E195C05D200905146 /* UIImage+Alpha.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Alpha.h"; sourceTree = "<group>"; };
+		4D05AC2F195C05D200905146 /* UIImage+Alpha.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Alpha.m"; sourceTree = "<group>"; };
 		4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = CameraManager.bundle; sourceTree = "<group>"; };
 		4DD9418318CD826500843444 /* SaveToCameraRollOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SaveToCameraRollOperation.h; sourceTree = "<group>"; };
 		4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SaveToCameraRollOperation.m; sourceTree = "<group>"; };
@@ -211,8 +220,14 @@
 				D5D9221D18C57B6B00612CA7 /* PreviewView.m */,
 				4DD9418318CD826500843444 /* SaveToCameraRollOperation.h */,
 				4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */,
+				4D05AC2E195C05D200905146 /* UIImage+Alpha.h */,
+				4D05AC2F195C05D200905146 /* UIImage+Alpha.m */,
 				D5D0357E1827D03600233B58 /* UIImage+Normalize.h */,
 				D5D0357F1827D03600233B58 /* UIImage+Normalize.m */,
+				4D05AC28195C05AC00905146 /* UIImage+Resize.h */,
+				4D05AC29195C05AC00905146 /* UIImage+Resize.m */,
+				4D05AC2B195C05CD00905146 /* UIImage+RoundedCorner.h */,
+				4D05AC2C195C05CD00905146 /* UIImage+RoundedCorner.m */,
 				D52A8B161817F69100F4ADFD /* UIView+utility.h */,
 				D52A8B171817F69100F4ADFD /* UIView+utility.m */,
 			);
@@ -400,10 +415,13 @@
 				D52A8AD71817F2EA00F4ADFD /* AppDelegate.m in Sources */,
 				D52A8AD31817F2EA00F4ADFD /* main.m in Sources */,
 				D52A8B181817F69100F4ADFD /* CameraManager.m in Sources */,
+				4D05AC2D195C05CD00905146 /* UIImage+RoundedCorner.m in Sources */,
 				4DD9418518CD826500843444 /* SaveToCameraRollOperation.m in Sources */,
 				D5055324187EEB29007355BE /* NSDate+stringUtility.m in Sources */,
+				4D05AC30195C05D200905146 /* UIImage+Alpha.m in Sources */,
 				D52A8B191817F69100F4ADFD /* UIView+utility.m in Sources */,
 				D5D035801827D03600233B58 /* UIImage+Normalize.m in Sources */,
+				4D05AC2A195C05AC00905146 /* UIImage+Resize.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
