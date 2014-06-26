@@ -1,20 +1,25 @@
 PODS:
   - KVOController (1.0.1)
   - MotionOrientation@PTEz (1.1.0)
+  - NNProfiler (0.1.0)
   - NSObject+EventDispatcher (0.1.0)
 
 DEPENDENCIES:
   - KVOController
   - MotionOrientation@PTEz
+  - NNProfiler (from `https://github.com/noughts/NNProfiler`)
   - NSObject+EventDispatcher (from `https://github.com/noughts/NSObject-EventDispatcher.git`)
 
 EXTERNAL SOURCES:
+  NNProfiler:
+    :git: https://github.com/noughts/NNProfiler
   NSObject+EventDispatcher:
     :git: https://github.com/noughts/NSObject-EventDispatcher.git
 
 SPEC CHECKSUMS:
-  KVOController: 2205f0d1a24f919e92a8f0b3254ac3ca40412f1a
-  MotionOrientation@PTEz: 8765538bc6ff037dc153d1cca83f2b66d9c766b9
+  KVOController: e6ad4a058ab0ceed546802361adb89d322a22cf2
+  MotionOrientation@PTEz: ec58ced639faa14d30e63db9ef5cba8ded38b3b5
+  NNProfiler: 330eed9bf91be62d94e189f61df579ece9bbcc35
   NSObject+EventDispatcher: c7d763bb1ec42ee492e0ef3d45e3fac0aec3a3ab
 
-COCOAPODS: 0.32.1
+COCOAPODS: 0.33.1

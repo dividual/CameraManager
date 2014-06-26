@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D05AC27195C017800905146 /* sample.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4D05AC26195C017800905146 /* sample.jpg */; };
 		4D0BEC7118B32BAA0083C5EC /* CameraManager.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */; };
 		4DD9418518CD826500843444 /* SaveToCameraRollOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */; };
 		8989D7C9A72D4CC7985717D7 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 971C7FEA367F4C929489A80B /* libPods.a */; };
@@ -53,6 +54,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4D05AC26195C017800905146 /* sample.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = sample.jpg; sourceTree = "<group>"; };
 		4D0BEC7018B32BAA0083C5EC /* CameraManager.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = CameraManager.bundle; sourceTree = "<group>"; };
 		4DD9418318CD826500843444 /* SaveToCameraRollOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SaveToCameraRollOperation.h; sourceTree = "<group>"; };
 		4DD9418418CD826500843444 /* SaveToCameraRollOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SaveToCameraRollOperation.m; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 		D52A8ACC1817F2EA00F4ADFD /* CameraManagerExample */ = {
 			isa = PBXGroup;
 			children = (
+				4D05AC26195C017800905146 /* sample.jpg */,
 				D52A8AD51817F2EA00F4ADFD /* AppDelegate.h */,
 				D52A8AD61817F2EA00F4ADFD /* AppDelegate.m */,
 				D52A8AD81817F2EA00F4ADFD /* Main.storyboard */,
@@ -339,6 +342,7 @@
 				D52A8B2A1817F71100F4ADFD /* flashAuto@2x.png in Resources */,
 				D52A8B281817F71100F4ADFD /* cameraFrontBack@2x.png in Resources */,
 				D5CAABAF187E425B00392583 /* recButton@2x.png in Resources */,
+				4D05AC27195C017800905146 /* sample.jpg in Resources */,
 				D52A8ADA1817F2EA00F4ADFD /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -534,7 +538,7 @@
 				GCC_PREFIX_HEADER = "CameraManagerExample/CameraManagerExample-Prefix.pch";
 				INFOPLIST_FILE = "CameraManagerExample/CameraManagerExample-Info.plist";
 				PRODUCT_NAME = CameraManagerExample;
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "82E99449-A21F-463F-9A8E-15D71BC3D7CB";
 				USER_HEADER_SEARCH_PATHS = "GPUImage/framework/**";
 				WRAPPER_EXTENSION = app;
 			};
@@ -553,7 +557,7 @@
 				GCC_PREFIX_HEADER = "CameraManagerExample/CameraManagerExample-Prefix.pch";
 				INFOPLIST_FILE = "CameraManagerExample/CameraManagerExample-Info.plist";
 				PRODUCT_NAME = CameraManagerExample;
-				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE = "82E99449-A21F-463F-9A8E-15D71BC3D7CB";
 				USER_HEADER_SEARCH_PATHS = "GPUImage/framework/**";
 				WRAPPER_EXTENSION = app;
 			};

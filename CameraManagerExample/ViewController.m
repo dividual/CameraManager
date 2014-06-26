@@ -278,7 +278,7 @@
 
 - (void)cameraManagerdidChangeDeviceOrientation:(NSNotification*)notification
 {
-    NSNumber *orientationNum = notification.userInfo[@"orientation"];
+    NSNumber *orientationNum = notiefication.userInfo[@"orientation"];
     UIDeviceOrientation orientation = orientationNum.integerValue;
     
 //    NSLog(@"cameraManager:didChangeDeviceOrientation(orientation = %d)", (int)orientation);

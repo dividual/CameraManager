@@ -20,6 +20,7 @@
 #import "PreviewView.h"
 #import "SaveToCameraRollOperation.h"
 #import <MotionOrientation@PTEz/MotionOrientation.h>
+#import <NNProfiler/NNProfiler.h>
 
 //  KVOで追いかけるときに使うポインタ（メモリ番地をcontextとして使う）
 static void * CapturingStillImageContext = &CapturingStillImageContext;
@@ -99,8 +100,6 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 //  空きメモリ量を取得（MB）
 + (float)getFreeMemory{
-	return (float)1024.0;
-	
     mach_port_t hostPort;
     mach_msg_type_number_t hostSize;
     vm_size_t pagesize;
@@ -118,7 +117,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     
     natural_t freeMemory = vmStat.free_count * pagesize;
     
-    return (float)freeMemory/1024.0/1024.0;
+//    return (float)freeMemory/1024.0/1024.0;
+//	NSLog( @"free memory = %fMB", (float)freeMemory/1024.0/1024.0 );
+	return (float)1024.0;
 }
 
 
@@ -152,7 +153,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     _saveQueue = dispatch_queue_create("jp.dividual.CameraManager.saveQueue", DISPATCH_QUEUE_SERIAL);//  保存用キュー
 	
 	_saveToCameraRoll_queue = [[NSOperationQueue alloc] init];
-	_saveToCameraRoll_queue.maxConcurrentOperationCount = 4;// これを超えるとiPodTouchで保存失敗が発生する可能性があります。
+	_saveToCameraRoll_queue.maxConcurrentOperationCount = 5;// これを超えるとiPodTouchで保存失敗が発生する可能性があります。
     
 	//  キューを使って処理
 	dispatch_async(_sessionQueue, ^{
@@ -750,7 +751,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
     
     if(_cameraMode == CMCameraModeStill){
         //  静止画撮影モード
-        NSLog(@"freeMemory:%f", [CameraManager getFreeMemory]);
+//        NSLog(@"freeMemory:%f", [CameraManager getFreeMemory]);
         [self captureImage];
     } else {
         //  動画モード
@@ -930,6 +931,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 
 - (void)captureImage{
     //  キャプチャー処理
+	__weak typeof(self) weakSelf = self;
     if(_silentShutterMode){
         //  サイレントモードの時は別処理
         [self captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *image) {
@@ -939,24 +941,26 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 //			UIImage* flipped_img = [UIImage imageWithCGImage:image.CGImage scale:1.0f orientation:isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight];
             
 			NSData* jpegData = UIImageJPEGRepresentation(image, 0.8);
-			[self saveToCameraRoll:jpegData];// カメラロールに保存
-            [self capturedImage:image originalJpegData:jpegData error:nil];
+			[weakSelf saveToCameraRoll:jpegData];// カメラロールに保存
+            [weakSelf capturedImage:image originalJpegData:jpegData error:nil];
         }];
     } else {
 		// 先にstillImageOutputのほうで撮影して、完了時に画面キャプチャしたほうが、映像のギャップが少ないです
 		[self captureStillWithCompletion:^(NSData *jpegData, NSError *error) {
-			[self captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *imageForAnimation) {
-				[self capturedImage:imageForAnimation originalJpegData:jpegData error:error];
+			[weakSelf captureCurrentPreviewImageForAnimation:NO completion:^(UIImage *imageForAnimation) {
+				[weakSelf capturedImage:imageForAnimation originalJpegData:jpegData error:error];
 			}];
 		}];
     }
 }
 
+
 - (void)captureStillWithCompletion:(void(^)(NSData *jpegData, NSError *error))completion{
+	__weak typeof(self) weakSelf = self;
     dispatch_async(_sessionQueue, ^{
         
 		//  orientationを設定
-		[[_stillImageOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:[self currentVideoOrientation]];
+		[[_stillImageOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:[weakSelf currentVideoOrientation]];
 				
 		//  撮影処理
 		[_stillImageOutput captureStillImageAsynchronouslyFromConnection:[_stillImageOutput connectionWithMediaType:AVMediaTypeVideo] completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
@@ -966,8 +970,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 			}
 			
 			NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
-//			UIImage *image = [[UIImage alloc] initWithData:imageData];
-			[self saveToCameraRoll:imageData];// カメラロールに保存
+			[weakSelf saveToCameraRoll:imageData];// カメラロールに保存
 			completion(imageData, nil);
 		}];
 	});
