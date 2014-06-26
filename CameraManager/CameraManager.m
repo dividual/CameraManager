@@ -946,7 +946,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 			
 			
 			[NNProfiler start:@"resize"];
-			UIImage* resized_img = [image resizedImage:CGSizeMake(image.size.width*0.2, image.size.height*0.2) interpolationQuality:kCGInterpolationNone];
+			UIImage* resized_img = [image resizedImage:CGSizeMake(image.size.width*0.2, image.size.height*0.2) interpolationQuality:kCGInterpolationLow];
 			[NNProfiler end:@"resize"];
             [weakSelf capturedImage:resized_img originalJpegData:jpegData error:nil];
         }];
