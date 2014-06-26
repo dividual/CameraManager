@@ -896,7 +896,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             imageOrientation = isFront?UIImageOrientationUp:UIImageOrientationDown;
             break;
         default:
-            imageOrientation = UIImageOrientationUp;
+            imageOrientation = UIImageOrientationRight;
             break;
     }
     
@@ -1259,6 +1259,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
         AVCaptureDevice *device = _videoDeviceInput.device;
         BOOL isFront = device.position == AVCaptureDevicePositionFront?YES:NO;
         UIImage *image = [UIImage imageWithCGImage:cgImage scale:1.0f orientation:_isImageForAnimation?(isFront?UIImageOrientationLeftMirrored:UIImageOrientationRight):[self currentImageOrientation]];
+		NSLog( @"%d", image.imageOrientation );
         CGImageRelease(cgImage);
         CGContextRelease(cgContext);
         
