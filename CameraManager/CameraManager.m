@@ -263,14 +263,14 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 - (void)openCamera{
     if(_isCameraOpened){
         NSLog( @"カメラはすでにオープンされています" );
-		UIAlertView* alertView = [[UIAlertView alloc] init];
-		alertView.message = @"すでにカメラは起動しています";
-		[alertView addButtonWithTitle:@"OK"];
-		[alertView show];
+//		UIAlertView* alertView = [[UIAlertView alloc] init];
+//		alertView.message = @"すでにカメラは起動しています";
+//		[alertView addButtonWithTitle:@"OK"];
+//		[alertView show];
         return;
     }
 	
-	 _isCameraOpened = YES;
+	
     
     //  解像度設定の未設定チェック
     if(!_sessionPresetForStill )
@@ -336,6 +336,9 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
 		
 		[self focusWithMode:AVCaptureFocusModeContinuousAutoFocus exposeWithMode:AVCaptureExposureModeContinuousAutoExposure atDevicePoint:CGPointMake(0.5, 0.5) monitorSubjectAreaChange:NO];//  フォーカスを中心でcontinuesで
 		[self setDeviceFlashMode:_flashMode];//  フラッシュモード指定しておく
+		
+		NSLog( @"カメラを開始しました" );
+		 _isCameraOpened = YES;
     });
 }
 
@@ -362,6 +365,7 @@ static void * DeviceOrientationContext = &DeviceOrientationContext;
             [self removeObserver:self forKeyPath:@"movieFileOutput.recording" context:RecordingContext];
             [self removeObserver:self forKeyPath:@"videoDeviceInput.device.adjustingFocus" context:AdjustingFocusContext];
         });
+		NSLog( @"カメラを停止しました" );
         _isCameraOpened = NO;
     });
 }
